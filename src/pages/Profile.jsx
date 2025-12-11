@@ -25,45 +25,45 @@ export default function Profile() {
     const [uploadingImage, setUploadingImage] = useState(false)
 
     const [profile, setProfile] = useState({
-        // Personal Info
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'john.doe@company.com',
-        phone: '+91 98765 43210',
-        dateOfBirth: '1990-05-15',
-        gender: 'Male',
+        // Personal Info - Empty defaults, will be filled from database
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        dateOfBirth: '',
+        gender: '',
         profileImage: null,
 
         // Professional Info
-        jobTitle: 'Marketing Manager',
-        company: 'Tech Solutions Inc.',
-        department: 'Digital Marketing',
-        employeeId: 'EMP-2024-001',
-        joiningDate: '2023-01-15',
+        jobTitle: '',
+        company: '',
+        department: '',
+        employeeId: '',
+        joiningDate: '',
 
         // Location
-        address: '123 Business Street',
-        city: 'Mumbai',
-        state: 'Maharashtra',
-        country: 'India',
-        zipCode: '400001',
+        address: '',
+        city: '',
+        state: '',
+        country: '',
+        zipCode: '',
         timezone: 'Asia/Kolkata',
 
         // Social Links
-        website: 'https://johndoe.com',
-        twitter: '@johndoe',
-        linkedin: 'linkedin.com/in/johndoe',
-        github: 'github.com/johndoe',
-        instagram: '@johndoe_official',
+        website: '',
+        twitter: '',
+        linkedin: '',
+        github: '',
+        instagram: '',
 
         // Bio
-        bio: 'Experienced marketing professional with 5+ years in digital marketing and automation.',
+        bio: '',
 
-        // Stats
-        projectsCompleted: 47,
-        campaignsLaunched: 156,
-        clientsServed: 23,
-        reportsGenerated: 892
+        // Stats - Start at 0
+        projectsCompleted: 0,
+        campaignsLaunched: 0,
+        clientsServed: 0,
+        reportsGenerated: 0
     })
 
     // Load profile from MongoDB on mount
@@ -85,13 +85,23 @@ export default function Profile() {
                 headers: { Authorization: `Bearer ${token}` }
             })
 
-            // Merge loaded profile with default values
-            if (response.data.profile) {
-                setProfile(prev => ({
-                    ...prev,
-                    ...response.data.profile
-                }))
-            }
+            const userData = response.data
+
+            // Extract name parts from user's name
+            const nameParts = (userData.name || '').split(' ')
+            const firstName = nameParts[0] || ''
+            const lastName = nameParts.slice(1).join(' ') || ''
+
+            // Merge loaded profile with user data
+            setProfile(prev => ({
+                ...prev,
+                // Set from main user data
+                firstName: userData.profile?.firstName || firstName,
+                lastName: userData.profile?.lastName || lastName,
+                email: userData.email || '',
+                // Merge any saved profile data
+                ...(userData.profile || {})
+            }))
 
             setLoading(false)
         } catch (error) {
@@ -242,7 +252,7 @@ export default function Profile() {
                             {profile.profileImage ? (
                                 <img src={profile.profileImage} alt="Profile" className="w-full h-full object-cover" />
                             ) : (
-                                <span>{profile.firstName[0]}{profile.lastName[0]}</span>
+                                <span>{(profile.firstName || 'U')[0]}{(profile.lastName || 'ser')[0]}</span>
                             )}
                         </div>
                         <label className="absolute bottom-0 right-0 bg-white text-blue-600 p-2 rounded-full shadow-lg hover:scale-110 transition-transform cursor-pointer">
@@ -261,15 +271,27 @@ export default function Profile() {
                     <div className="flex-1">
                         <div className="flex items-start justify-between">
                             <div>
-                                <h1 className="text-4xl font-bold mb-2">{profile.firstName} {profile.lastName}</h1>
-                                <p className="text-white/90 text-lg mb-4">{profile.jobTitle} at {profile.company}</p>
+                                <h1 className="text-4xl font-bold mb-2">
+                                    {profile.firstName || profile.lastName
+                                        ? `${profile.firstName} ${profile.lastName}`.trim()
+                                        : 'Your Profile'}
+                                </h1>
+                                <p className="text-white/90 text-lg mb-4">
+                                    {profile.jobTitle && profile.company
+                                        ? `${profile.jobTitle} at ${profile.company}`
+                                        : profile.jobTitle || profile.company || 'Complete your profile to get started'}
+                                </p>
                                 <div className="flex items-center gap-4 text-sm">
-                                    <span className="flex items-center gap-1">
-                                        <Mail size={16} /> {profile.email}
-                                    </span>
-                                    <span className="flex items-center gap-1">
-                                        <Phone size={16} /> {profile.phone}
-                                    </span>
+                                    {profile.email && (
+                                        <span className="flex items-center gap-1">
+                                            <Mail size={16} /> {profile.email}
+                                        </span>
+                                    )}
+                                    {profile.phone && (
+                                        <span className="flex items-center gap-1">
+                                            <Phone size={16} /> {profile.phone}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
 
