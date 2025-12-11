@@ -1,6 +1,6 @@
 /**
  * Email Service for OTP and Notifications
- * Supports Gmail, AWS SES, and Resend
+ * Supports Brevo (Sendinblue), Gmail, AWS SES, and Resend
  * @author Harsh J Kuhikar
  * @copyright 2025 All Rights Reserved
  */
@@ -13,9 +13,23 @@ dotenv.config();
 // Create transporter based on configuration
 let transporter;
 let useResend = false;
+let useBrevo = false;
 
-if (process.env.RESEND_API_KEY) {
-  // Resend Configuration (recommended for Railway)
+if (process.env.BREVO_API_KEY) {
+  // Brevo (Sendinblue) - FREE 300 emails/day, no domain verification needed
+  useBrevo = true;
+  transporter = nodemailer.createTransport({
+    host: 'smtp-relay.brevo.com',
+    port: 587,
+    secure: false,
+    auth: {
+      user: process.env.BREVO_EMAIL || process.env.EMAIL_USER,
+      pass: process.env.BREVO_API_KEY
+    }
+  });
+  console.log('✅ Email Service: Brevo configured');
+} else if (process.env.RESEND_API_KEY) {
+  // Resend Configuration (requires domain verification for non-owner emails)
   useResend = true;
   console.log('✅ Email Service: Resend configured');
 } else if (process.env.EMAIL_SERVICE === 'ses') {
@@ -48,7 +62,7 @@ if (process.env.RESEND_API_KEY) {
 }
 
 // Verify email configuration on startup (only for nodemailer)
-if (transporter) {
+if (transporter && !useResend) {
   transporter.verify((error, success) => {
     if (error) {
       console.log('⚠️ Email service not configured:', error.message);
@@ -154,9 +168,12 @@ export async function sendOTPEmail(email, otp, name) {
   try {
     if (useResend) {
       await sendViaResend(email, mailOptions.subject, mailOptions.html);
+    } else if (transporter) {
+      await sendMailWithTimeout(mailOptions, 10000); // 10 second timeout for SMTP
     } else {
-      await sendMailWithTimeout(mailOptions, 5000); // 5 second timeout
+      throw new Error('No email service configured');
     }
+    console.log('✅ OTP email sent to:', email);
     return { success: true };
   } catch (error) {
     console.error('Email send error:', error);
