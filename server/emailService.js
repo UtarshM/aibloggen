@@ -18,23 +18,9 @@ let useBrevo = false;
 console.log('[EMAIL] Checking BREVO_API_KEY:', process.env.BREVO_API_KEY ? 'SET' : 'NOT SET');
 
 if (process.env.BREVO_API_KEY) {
-  // Brevo (Sendinblue) - FREE 300 emails/day, no domain verification needed
+  // Brevo - Using HTTP API (SMTP is blocked on Railway)
   useBrevo = true;
-  const brevoEmail = process.env.BREVO_EMAIL || process.env.EMAIL_USER || 'scalezix@gmail.com';
-  console.log('[EMAIL] Using Brevo with email:', brevoEmail);
-  transporter = nodemailer.createTransport({
-    host: 'smtp-relay.brevo.com',
-    port: 587,
-    secure: false,
-    auth: {
-      user: brevoEmail,
-      pass: process.env.BREVO_API_KEY
-    },
-    connectionTimeout: 30000,
-    greetingTimeout: 30000,
-    socketTimeout: 30000
-  });
-  console.log('✅ Email Service: Brevo configured');
+  console.log('✅ Email Service: Brevo HTTP API configured');
 } else if (process.env.RESEND_API_KEY) {
   // Resend Configuration (requires domain verification for non-owner emails)
   useResend = true;
@@ -118,6 +104,39 @@ async function sendViaResend(to, subject, html) {
   return response.json();
 }
 
+// Send email via Brevo HTTP API (bypasses SMTP port blocking on Railway)
+async function sendViaBrevo(to, subject, html, senderName = 'AI Marketing Platform') {
+  const senderEmail = process.env.BREVO_EMAIL || 'scalezix@gmail.com';
+  
+  const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      'accept': 'application/json',
+      'api-key': process.env.BREVO_API_KEY,
+      'content-type': 'application/json'
+    },
+    body: JSON.stringify({
+      sender: {
+        name: senderName,
+        email: senderEmail
+      },
+      to: [{ email: to }],
+      subject: subject,
+      htmlContent: html
+    })
+  });
+  
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    console.error('Brevo API error:', errorData);
+    throw new Error(errorData.message || `Brevo API error: ${response.status}`);
+  }
+  
+  const result = await response.json();
+  console.log('✅ Brevo email sent successfully, messageId:', result.messageId);
+  return result;
+}
+
 // Send OTP Email
 export async function sendOTPEmail(email, otp, name) {
   const mailOptions = {
@@ -173,7 +192,10 @@ export async function sendOTPEmail(email, otp, name) {
   };
 
   try {
-    if (useResend) {
+    if (useBrevo) {
+      // Use Brevo HTTP API (works on Railway - bypasses SMTP port blocking)
+      await sendViaBrevo(email, mailOptions.subject, mailOptions.html);
+    } else if (useResend) {
       await sendViaResend(email, mailOptions.subject, mailOptions.html);
     } else if (transporter) {
       await sendMailWithTimeout(mailOptions, 30000); // 30 second timeout for SMTP
