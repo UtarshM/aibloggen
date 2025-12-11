@@ -25,10 +25,10 @@ fi
 echo -e "${YELLOW}📦 Updating system packages...${NC}"
 sudo apt update && sudo apt upgrade -y
 
-# Install Node.js 20
-echo -e "${YELLOW}📦 Installing Node.js 20...${NC}"
+# Install Node.js 22
+echo -e "${YELLOW}📦 Installing Node.js 22...${NC}"
 if ! command -v node &> /dev/null; then
-    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+    curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
     sudo apt install -y nodejs
 fi
 echo -e "${GREEN}✅ Node.js $(node -v) installed${NC}"
