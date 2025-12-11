@@ -519,6 +519,56 @@ export default function Settings() {
                                     <button className="w-full bg-red-600 text-white py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors">
                                         Change Password
                                     </button>
+
+                                    {/* Delete Account Section */}
+                                    <div className="mt-8 pt-6 border-t border-red-200">
+                                        <h3 className="text-lg font-bold text-red-600 mb-4">⚠️ Danger Zone</h3>
+                                        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                                            <p className="text-sm text-red-800 mb-4">
+                                                Once you delete your account, there is no going back. Please be certain.
+                                            </p>
+                                            <button
+                                                onClick={async () => {
+                                                    const confirmed = window.confirm('⚠️ Are you sure you want to delete your account? This action cannot be undone.');
+                                                    if (!confirmed) return;
+
+                                                    const password = window.prompt('Enter your password to confirm deletion:');
+                                                    if (!password) return;
+
+                                                    try {
+                                                        const token = localStorage.getItem('token');
+                                                        const API_URL = import.meta.env.PROD
+                                                            ? 'https://ai-automation-production-c35e.up.railway.app'
+                                                            : 'http://localhost:3001';
+
+                                                        const response = await fetch(`${API_URL}/api/auth/delete-account`, {
+                                                            method: 'DELETE',
+                                                            headers: {
+                                                                'Content-Type': 'application/json',
+                                                                'Authorization': `Bearer ${token}`
+                                                            },
+                                                            body: JSON.stringify({ password })
+                                                        });
+
+                                                        const data = await response.json();
+
+                                                        if (response.ok) {
+                                                            alert('✅ Account deleted successfully');
+                                                            localStorage.clear();
+                                                            window.location.href = '/';
+                                                        } else {
+                                                            alert(`❌ ${data.error || 'Failed to delete account'}`);
+                                                        }
+                                                    } catch (error) {
+                                                        alert('❌ Error deleting account. Please try again.');
+                                                    }
+                                                }}
+                                                className="w-full flex items-center justify-center gap-2 bg-red-600 text-white py-3 rounded-lg font-semibold hover:bg-red-700 transition-all"
+                                            >
+                                                <Trash2 size={20} /> Delete My Account
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         )}

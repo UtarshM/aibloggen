@@ -501,6 +501,41 @@ app.post('/api/auth/change-password', authenticateToken, async (req, res) => {
   }
 });
 
+// Delete Account (authenticated)
+app.delete('/api/auth/delete-account', authenticateToken, async (req, res) => {
+  try {
+    const { password } = req.body;
+    const userId = req.user.userId;
+
+    // Find user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Verify password before deletion
+    if (password) {
+      const validPassword = await bcrypt.compare(password, user.password);
+      if (!validPassword) {
+        return res.status(400).json({ error: 'Incorrect password' });
+      }
+    }
+
+    // Delete user's related data
+    await OTP.deleteMany({ email: user.email });
+    
+    // Delete the user
+    await User.findByIdAndDelete(userId);
+
+    console.log(`✅ Account deleted: ${user.email}`);
+    res.json({ success: true, message: 'Account deleted successfully' });
+
+  } catch (error) {
+    console.error('Delete account error:', error);
+    res.status(500).json({ error: 'Server error during account deletion' });
+  }
+});
+
 // Send reminder emails (cron job endpoint)
 app.post('/api/auth/send-reminders', async (req, res) => {
   try {
