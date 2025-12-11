@@ -1,12 +1,12 @@
-# Force Node.js detection
+# Force Node.js detection - Updated
 [phases.setup]
 nixPkgs = ["nodejs", "python311"]
 
 [phases.install]
-cmds = ["npm install"]
+cmds = ["npm ci || npm install"]
 
 [phases.build]
-cmds = ["pip install -r requirements.txt || true"]
+cmds = ["pip install -r requirements.txt || echo 'Python deps skipped'"]
 
 [start]
 cmd = "node server.js"
