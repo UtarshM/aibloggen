@@ -33,11 +33,24 @@ const upload = multer({
 router.get('/sites', async (req, res) => {
     try {
         if (!global.mongoConnected) {
+            console.log('[WordPress] MongoDB not connected, returning empty array');
             return res.json([]);
         }
-        const sites = await WordPressSite.find({ userId: req.user.userId });
+        
+        console.log('[WordPress] Fetching sites for user:', req.user.userId);
+        
+        // Try both string and ObjectId formats
+        const sites = await WordPressSite.find({ 
+            $or: [
+                { userId: req.user.userId },
+                { userId: req.user.userId.toString() }
+            ]
+        });
+        
+        console.log('[WordPress] Found sites:', sites.length);
         res.json(sites);
     } catch (error) {
+        console.error('[WordPress] Error fetching sites:', error.message);
         res.json([]);
     }
 });
@@ -79,9 +92,19 @@ router.post('/sites', async (req, res) => {
 
         console.log('[WordPress] Connection successful!');
 
-        // Create site
+        // Create site - ensure userId is stored correctly
+        const mongoose = await import('mongoose');
+        let userIdToSave = req.user.userId;
+        
+        // Convert to ObjectId if it's a valid ObjectId string
+        if (typeof userIdToSave === 'string' && mongoose.default.Types.ObjectId.isValid(userIdToSave)) {
+            userIdToSave = new mongoose.default.Types.ObjectId(userIdToSave);
+        }
+        
+        console.log('[WordPress] Saving site for userId:', userIdToSave);
+        
         const site = new WordPressSite({
-            userId: req.user.userId,
+            userId: userIdToSave,
             siteName,
             siteUrl,
             username,
@@ -91,6 +114,7 @@ router.post('/sites', async (req, res) => {
         });
 
         await site.save();
+        console.log('[WordPress] Site saved successfully:', site._id);
 
         res.json({
             success: true,
