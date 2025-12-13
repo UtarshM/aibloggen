@@ -1049,52 +1049,71 @@ app.post('/api/content/generate-human', async (req, res) => {
     const minWords = config.minWords || 3000;
     const numImages = config.numImages || 4;
 
-    // Enhanced prompt for longer, more detailed content
-    const prompt = `You are an expert content writer and SEO specialist. Write a VERY LONG, comprehensive, detailed article about "${topic}".
+    // Enhanced prompt with TOPIC-SPECIFIC headings
+    const prompt = `You are an expert content writer. Write a comprehensive, detailed article about "${topic}".
 
-CRITICAL LENGTH REQUIREMENT:
-- This article MUST be at least ${minWords} words long
-- Write 8-10 detailed sections minimum
-- Each section should have 300-400 words
-- Include subsections within each main section
+CRITICAL REQUIREMENTS:
+- Write at least ${minWords} words
+- Create 8-10 sections with TOPIC-SPECIFIC headings
+- Each section: 300-400 words with detailed information
+- Tone: ${tone}
 
-STRUCTURE (Follow this exactly):
-1. Introduction (300+ words) - Hook the reader, explain why this topic matters
-2. Background/History (300+ words) - Context and origins
-3. Main Concept Explained (400+ words) - Core explanation with examples
-4. Key Benefits/Advantages (350+ words) - Detailed benefits with real examples
-5. How It Works/Process (400+ words) - Step-by-step breakdown
-6. Best Practices (350+ words) - Expert tips and recommendations
-7. Common Mistakes to Avoid (300+ words) - What NOT to do
-8. Real-World Examples/Case Studies (400+ words) - Specific examples with data
-9. Future Trends (300+ words) - What's coming next
-10. Conclusion with Action Steps (250+ words) - Summary and next steps
+IMPORTANT - HEADINGS MUST BE SPECIFIC TO "${topic}":
+DO NOT use generic headings like "Introduction", "Background", "Benefits", "How It Works", "Best Practices", "Common Mistakes", "Future Trends", "Conclusion".
+
+INSTEAD, create headings that are UNIQUE and SPECIFIC to "${topic}".
+
+EXAMPLES OF GOOD TOPIC-SPECIFIC HEADINGS:
+
+If topic is "My Hero Academia":
+- The World of Quirks: Understanding Superpowers in MHA
+- Izuku Midoriya: From Quirkless to Symbol of Peace
+- Class 1-A: Meet the Future Heroes
+- The League of Villains: Threats to Hero Society
+- Best Story Arcs That Define My Hero Academia
+- Top 10 Most Powerful Quirks Ranked
+- UA High School: Training the Next Generation
+- All Might vs All For One: The Ultimate Showdown
+
+If topic is "iPhone 15":
+- What's New in iPhone 15: Complete Feature Breakdown
+- A17 Pro Chip: Performance That Redefines Mobile
+- Camera System: 48MP Main Sensor Deep Dive
+- Dynamic Island: How Apple Reinvented Notifications
+- USB-C Finally Arrives: What It Means for Users
+- Battery Life: Real-World Testing Results
+- iPhone 15 vs iPhone 14: Worth the Upgrade?
+- Best Accessories for Your New iPhone 15
+
+If topic is "Python Programming":
+- Why Python Dominates Modern Development
+- Setting Up Your Python Environment Right
+- Variables, Data Types, and Operators Explained
+- Control Flow: If Statements and Loops Mastered
+- Functions and Modules: Writing Reusable Code
+- Object-Oriented Programming in Python
+- Working with Files and Data Processing
+- Popular Python Libraries Every Developer Needs
+
+NOW CREATE SIMILAR TOPIC-SPECIFIC HEADINGS FOR "${topic}".
 
 CONTENT REQUIREMENTS:
-- Tone: ${tone}
-- Include specific statistics, percentages, and data points
-- Add real examples and case studies
-- Use bullet points and numbered lists
-- Include expert quotes or insights
-- Make it actionable and valuable
-
-WRITING STYLE:
-- Write like a human expert sharing knowledge
-- Use conversational but professional tone
-- Short paragraphs (2-3 sentences)
-- Active voice throughout
-- Include rhetorical questions
-- AVOID: "In today's world", "It's important to note", "In conclusion", "Let's dive in"
+- Include real facts, statistics, and specific details about ${topic}
+- Add examples, comparisons, and expert insights
+- Use bullet points and numbered lists where appropriate
+- Make content informative, engaging, and valuable
+- Write like a human expert, not AI
 
 HTML FORMAT:
-- Use <h2> for main sections
+- Use <h2> for main section headings (topic-specific!)
 - Use <h3> for subsections
 - Use <p> for paragraphs
 - Use <ul><li> for bullet lists
 - Use <ol><li> for numbered lists
 - Use <strong> for emphasis
 
-NOW WRITE THE COMPLETE ${minWords}+ WORD ARTICLE:`;
+START WITH A COMPELLING INTRODUCTION (without using "Introduction" as heading).
+Write the complete ${minWords}+ word article now with TOPIC-SPECIFIC headings:`;
 
     let content = null;
     let apiUsed = '';
