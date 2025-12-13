@@ -896,17 +896,6 @@ app.post('/api/content/generate-human', async (req, res) => {
     const tone = config.tone || 'professional';
     const minWords = config.minWords || 1500;
 
-    // Use OpenRouter API (more reliable than Google AI)
-    const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-    
-    console.log('[Content] OpenRouter API key configured:', !!OPENROUTER_API_KEY);
-    
-    if (!OPENROUTER_API_KEY) {
-      return res.status(500).json({ error: 'OpenRouter API key not configured' });
-    }
-
-    console.log('[Content] Generating content for:', topic);
-
     const prompt = `You are an expert content writer. Write a comprehensive, SEO-optimized article about "${topic}".
 
 STRICT REQUIREMENTS:
@@ -932,36 +921,86 @@ FORMAT: Write in clean HTML format with proper <h2>, <h3>, <p>, <ul>, <ol>, <li>
 
 Now write the complete ${minWords}+ word article:`;
 
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': process.env.FRONTEND_URL || 'http://localhost:5173',
-        'X-Title': 'AI Marketing Platform'
-      },
-      body: JSON.stringify({
-        model: 'anthropic/claude-3-haiku',
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: 8000,
-        temperature: 0.7
-      })
-    });
+    let content = null;
+    let apiUsed = '';
 
-    const data = await response.json();
-    
-    console.log('[Content] OpenRouter response status:', response.status);
-    
-    if (data.error) {
-      console.error('[Content] OpenRouter error:', JSON.stringify(data.error));
-      return res.status(500).json({ error: data.error.message || 'AI generation failed' });
+    // Try OpenRouter first
+    const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+    if (OPENROUTER_API_KEY) {
+      console.log('[Content] Trying OpenRouter API...');
+      try {
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': process.env.FRONTEND_URL || 'http://localhost:5173',
+            'X-Title': 'AI Marketing Platform'
+          },
+          body: JSON.stringify({
+            model: 'anthropic/claude-3-haiku',
+            messages: [{ role: 'user', content: prompt }],
+            max_tokens: 8000,
+            temperature: 0.7
+          })
+        });
+
+        const data = await response.json();
+        
+        if (response.ok && data.choices?.[0]?.message?.content) {
+          content = data.choices[0].message.content;
+          apiUsed = 'OpenRouter';
+          console.log('[Content] OpenRouter success');
+        } else {
+          console.log('[Content] OpenRouter failed:', data.error?.message || 'Unknown error');
+        }
+      } catch (err) {
+        console.log('[Content] OpenRouter error:', err.message);
+      }
     }
 
-    const content = data.choices?.[0]?.message?.content;
-    
+    // Fallback to Google AI
     if (!content) {
-      console.error('[Content] No content in response:', JSON.stringify(data));
-      return res.status(500).json({ error: 'No content generated. Please try again.' });
+      const GOOGLE_AI_KEY = process.env.GOOGLE_AI_KEY;
+      if (GOOGLE_AI_KEY) {
+        console.log('[Content] Trying Google AI API...');
+        try {
+          // Try gemini-1.5-flash-latest model
+          const googleResponse = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GOOGLE_AI_KEY}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: {
+                  temperature: 0.7,
+                  maxOutputTokens: 8000
+                }
+              })
+            }
+          );
+
+          const googleData = await googleResponse.json();
+          
+          if (googleResponse.ok && googleData.candidates?.[0]?.content?.parts?.[0]?.text) {
+            content = googleData.candidates[0].content.parts[0].text;
+            apiUsed = 'Google AI';
+            console.log('[Content] Google AI success');
+          } else {
+            console.log('[Content] Google AI failed:', googleData.error?.message || 'Unknown error');
+          }
+        } catch (err) {
+          console.log('[Content] Google AI error:', err.message);
+        }
+      }
+    }
+
+    // If all APIs fail, return error
+    if (!content) {
+      return res.status(500).json({ 
+        error: 'All AI services are currently unavailable. Please check your API keys in Railway environment variables.' 
+      });
     }
 
     // Generate title from topic
@@ -971,7 +1010,7 @@ Now write the complete ${minWords}+ word article:`;
     const textOnly = content.replace(/<[^>]*>/g, ' ');
     const wordCount = textOnly.split(/\s+/).filter(w => w.length > 0).length;
 
-    console.log('[Content] Generated successfully:', wordCount, 'words');
+    console.log(`[Content] Generated successfully using ${apiUsed}:`, wordCount, 'words');
 
     res.json({
       content: content,
@@ -982,7 +1021,6 @@ Now write the complete ${minWords}+ word article:`;
 
   } catch (error) {
     console.error('[Content] Generation error:', error.message);
-    console.error('[Content] Full error:', error);
     res.status(500).json({ error: error.message || 'An unexpected error occurred' });
   }
 });
