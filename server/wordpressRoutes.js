@@ -9,11 +9,9 @@ import multer from 'multer';
 import xlsx from 'xlsx';
 import { WordPressSite, WordPressPostQueue, BulkImportJob } from './wordpressModels.js';
 import { testWordPressConnection, postToWordPress, checkWordPressAPI } from './wordpressService.js';
-import { spawn } from 'child_process';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config();
 const router = express.Router();
 
 // Configure multer for Excel uploads
@@ -698,114 +696,166 @@ async function processBulkImport(jobId, site, posts) {
     }
 }
 
-// Generate ULTRA-HUMAN content
+// Generate content using JavaScript (no Python dependency)
 async function generateContentForTitle(title, excelRow = {}) {
-    return new Promise((resolve, reject) => {
-        const pythonScript = path.join(__dirname, 'ultra_human_writer.py');
-        const python = spawn('python', [pythonScript], {
-            cwd: __dirname
-        });
+    console.log(`[Bulk Content] Generating content for: "${title}"`);
+    
+    const GOOGLE_AI_KEY = process.env.GOOGLE_AI_KEY;
+    const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+    const SERPAPI_KEY = process.env.SERPAPI_KEY;
+    
+    // Build the prompt with topic-specific headings
+    const prompt = `You are an expert content writer. Write a comprehensive, detailed article about "${title}".
 
-        let result = '';
-        let error = '';
+CRITICAL REQUIREMENTS:
+- Write at least 1500 words
+- Create 6-8 sections with TOPIC-SPECIFIC headings
+- Each section: 200-300 words with detailed information
 
-        python.stdout.on('data', (data) => {
-            result += data.toString();
-        });
+IMPORTANT - HEADINGS MUST BE SPECIFIC TO "${title}":
+DO NOT use generic headings like "Introduction", "Background", "Benefits", "How It Works".
+INSTEAD, create headings that are UNIQUE and SPECIFIC to "${title}".
 
-        python.stderr.on('data', (data) => {
-            error += data.toString();
-            console.log('[Python]', data.toString());
-        });
+CONTENT REQUIREMENTS:
+- Include real facts, statistics, and specific details about ${title}
+- Add examples, comparisons, and expert insights
+- Use bullet points and numbered lists where appropriate
+- Make content informative, engaging, and valuable
+- Write like a human expert, not AI
 
-        python.on('close', (code) => {
-            if (code !== 0) {
-                console.error('[Python] Process exited with code:', code);
-                console.error('[Python] Error output:', error);
-                reject(new Error(error || 'Content generation failed'));
-            } else {
-                try {
-                    // Try to parse JSON from output
-                    const jsonMatch = result.match(/\{[\s\S]*\}/);
-                    if (!jsonMatch) {
-                        console.error('[Python] No JSON found in output:', result.substring(0, 500));
-                        reject(new Error('Failed to parse generated content - no JSON found'));
-                        return;
-                    }
-                    const data = JSON.parse(jsonMatch[0]);
-                    
-                    // Check if there's an error in the response
-                    if (data.error) {
-                        console.error('[Python] Error in response:', data.error);
-                        reject(new Error(data.error));
-                        return;
-                    }
-                    
-                    console.log('[Python] ✅ Successfully generated advanced content with TOC');
-                    resolve(data);
-                } catch (e) {
-                    console.error('[Python] JSON parse error:', e.message);
-                    console.error('[Python] Output:', result.substring(0, 500));
-                    reject(new Error('Failed to parse generated content: ' + e.message));
+HTML FORMAT:
+- Use <h2> for main section headings (topic-specific!)
+- Use <h3> for subsections
+- Use <p> for paragraphs
+- Use <ul><li> for bullet lists
+- Use <strong> for emphasis
+
+Write the complete article now with TOPIC-SPECIFIC headings:`;
+
+    let content = null;
+    
+    // Try OpenRouter first
+    if (OPENROUTER_API_KEY) {
+        try {
+            console.log('[Bulk Content] Trying OpenRouter API...');
+            const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+                    'Content-Type': 'application/json',
+                    'HTTP-Referer': process.env.FRONTEND_URL || 'http://localhost:5173',
+                    'X-Title': 'AI Marketing Platform'
+                },
+                body: JSON.stringify({
+                    model: 'anthropic/claude-3-haiku',
+                    messages: [{ role: 'user', content: prompt }],
+                    max_tokens: 8000,
+                    temperature: 0.7
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.choices?.[0]?.message?.content) {
+                    content = data.choices[0].message.content;
+                    console.log('[Bulk Content] ✅ OpenRouter success');
                 }
             }
-        });
-
-        python.on('error', (err) => {
-            reject(new Error('Python not found'));
-        });
-
-        // Parse Excel row data
-        const hTags = excelRow['H tags'] || excelRow['h tags'] || excelRow['htags'] || '';
-        const keywords = excelRow['keywords'] || excelRow['Keywords'] || '';
-        const references = excelRow['reference'] || excelRow['Reference'] || excelRow['references'] || '';
-        const eeatRaw = excelRow['EEAT'] || excelRow['eeat'] || '';
-        const scheduleDate = excelRow['Date'] || excelRow['date'] || '';
-        const scheduleTime = excelRow['time'] || excelRow['Time'] || '';
-
-        // Parse H-tags (semicolon-separated)
-        const hTagsArray = hTags ? hTags.split(';').map(tag => tag.trim()).filter(Boolean) : [];
-
-        // Parse keywords (comma-separated)
-        const keywordsArray = keywords ? keywords.split(',').map(kw => kw.trim()).filter(Boolean) : [];
-
-        // Parse references (semicolon-separated)
-        const referencesArray = references ? references.split(';').map(ref => ref.trim()).filter(Boolean) : [];
-
-        // Parse E-E-A-T data (format: Author Name: X;Credentials: Y;Experience: Z)
-        const eeatInfo = {};
-        if (eeatRaw) {
-            const eeatParts = eeatRaw.split(';');
-            eeatParts.forEach(part => {
-                const [key, value] = part.split(':').map(s => s.trim());
-                if (key && value) {
-                    if (key.toLowerCase().includes('author') || key.toLowerCase().includes('name')) {
-                        eeatInfo.authorName = value;
-                    } else if (key.toLowerCase().includes('credential')) {
-                        eeatInfo.credentials = value;
-                    } else if (key.toLowerCase().includes('experience')) {
-                        eeatInfo.experienceYears = value;
-                    }
-                }
-            });
+        } catch (err) {
+            console.log('[Bulk Content] OpenRouter error:', err.message);
         }
+    }
+    
+    // Fallback to Google AI
+    if (!content && GOOGLE_AI_KEY) {
+        try {
+            console.log('[Bulk Content] Trying Google AI API...');
+            const googleResponse = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GOOGLE_AI_KEY}`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: {
+                            temperature: 0.7,
+                            maxOutputTokens: 8000
+                        }
+                    })
+                }
+            );
 
-        // Send config to Python for ULTRA-HUMAN content
-        const config = {
-            topic: title,
-            hTags: hTagsArray,
-            keywords: keywordsArray,
-            references: referencesArray,
-            eeat: eeatInfo,
-            scheduleDate: scheduleDate,
-            scheduleTime: scheduleTime
-        };
-
-        console.log('[Ultra Human] Config:', JSON.stringify(config, null, 2));
-
-        python.stdin.write(JSON.stringify(config));
-        python.stdin.end();
-    });
+            const googleData = await googleResponse.json();
+            
+            if (googleData.candidates?.[0]?.content?.parts?.[0]?.text) {
+                content = googleData.candidates[0].content.parts[0].text;
+                console.log('[Bulk Content] ✅ Google AI success');
+            }
+        } catch (err) {
+            console.log('[Bulk Content] Google AI error:', err.message);
+        }
+    }
+    
+    if (!content) {
+        throw new Error('All AI services failed. Check API keys in Railway environment variables.');
+    }
+    
+    // Fetch images using SerpAPI
+    let images = [];
+    if (SERPAPI_KEY) {
+        try {
+            console.log(`[Bulk Content] Fetching images for: "${title}"`);
+            const searchQuery = encodeURIComponent(title);
+            const serpUrl = `https://serpapi.com/search.json?engine=google_images&q=${searchQuery}&num=4&api_key=${SERPAPI_KEY}&safe=active`;
+            
+            const imgResponse = await fetch(serpUrl);
+            
+            if (imgResponse.ok) {
+                const imgData = await imgResponse.json();
+                
+                if (imgData.images_results && imgData.images_results.length > 0) {
+                    images = imgData.images_results.slice(0, 4).map(img => ({
+                        url: img.original || img.thumbnail,
+                        alt: img.title || title
+                    })).filter(img => img.url);
+                    
+                    console.log(`[Bulk Content] ✅ Found ${images.length} images`);
+                }
+            }
+        } catch (err) {
+            console.log('[Bulk Content] Image fetch error:', err.message);
+        }
+    }
+    
+    // Insert images into content
+    if (images.length > 0) {
+        const sections = content.split(/<\/h2>/gi);
+        if (sections.length > 1) {
+            let result = '';
+            let imageIndex = 0;
+            const step = Math.max(1, Math.floor(sections.length / images.length));
+            
+            for (let i = 0; i < sections.length; i++) {
+                result += sections[i] + (i < sections.length - 1 ? '</h2>' : '');
+                
+                if (imageIndex < images.length && (i + 1) % step === 0 && i < sections.length - 1) {
+                    const img = images[imageIndex];
+                    result += `\n<figure style="margin: 20px 0; text-align: center;">
+                        <img src="${img.url}" alt="${img.alt}" style="max-width: 100%; height: auto; border-radius: 8px;" />
+                        <figcaption style="font-size: 14px; color: #666; margin-top: 8px;">${img.alt}</figcaption>
+                    </figure>\n`;
+                    imageIndex++;
+                }
+            }
+            content = result;
+        }
+    }
+    
+    return {
+        content: content,
+        images: images,
+        title: title
+    };
 }
 
 export default router;
