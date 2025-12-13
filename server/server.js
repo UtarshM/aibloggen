@@ -881,83 +881,104 @@ app.post('/api/content/generate', async (req, res) => {
   }
 });
 
-// Helper function to fetch REAL topic-relevant images from Pexels
+// Helper function to fetch EXACT topic images using Google Images via SerpAPI
 async function fetchTopicImages(topic, count = 4) {
   const images = [];
   const searchQuery = encodeURIComponent(topic);
   
-  // Try Pexels API first (free, high quality, topic-relevant)
-  const PEXELS_API_KEY = 'dYgQwQdnfMANGXqOyWPVpBAdetPVLp9RBLpKstdn7FMqMvPwmAfq5FQe';
+  // Use SerpAPI to search Google Images - returns EXACT images for the topic
+  const SERPAPI_KEY = process.env.SERPAPI_KEY;
   
-  try {
-    console.log(`[Images] Searching Pexels for: "${topic}"`);
-    
-    const response = await fetch(`https://api.pexels.com/v1/search?query=${searchQuery}&per_page=${count}&orientation=landscape`, {
-      headers: {
-        'Authorization': PEXELS_API_KEY
-      }
-    });
-    
-    if (response.ok) {
-      const data = await response.json();
+  if (SERPAPI_KEY) {
+    try {
+      console.log(`[Images] 🔍 Searching Google Images for: "${topic}"`);
       
-      if (data.photos && data.photos.length > 0) {
-        for (const photo of data.photos) {
-          images.push({
-            url: photo.src.large || photo.src.medium || photo.src.original,
-            alt: photo.alt || `${topic} - ${photo.photographer}`,
-            photographer: photo.photographer,
-            photographerUrl: photo.photographer_url
-          });
+      const serpUrl = `https://serpapi.com/search.json?engine=google_images&q=${searchQuery}&num=${count + 2}&api_key=${SERPAPI_KEY}&safe=active`;
+      
+      const response = await fetch(serpUrl);
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (data.images_results && data.images_results.length > 0) {
+          // Get the first 'count' images
+          const results = data.images_results.slice(0, count);
+          
+          for (const img of results) {
+            // Use original image URL for best quality
+            const imageUrl = img.original || img.thumbnail;
+            
+            if (imageUrl) {
+              images.push({
+                url: imageUrl,
+                alt: img.title || topic,
+                source: img.source || 'Google Images',
+                link: img.link
+              });
+            }
+          }
+          
+          if (images.length > 0) {
+            console.log(`[Images] ✅ Found ${images.length} REAL Google Images for: "${topic}"`);
+            return images;
+          }
         }
-        console.log(`[Images] ✅ Found ${images.length} Pexels images for: "${topic}"`);
-        return images;
+      } else {
+        console.log('[Images] SerpAPI response not ok:', response.status);
       }
+    } catch (err) {
+      console.log('[Images] SerpAPI error:', err.message);
     }
-    
-    console.log('[Images] Pexels returned no results, trying Pixabay...');
-  } catch (err) {
-    console.log('[Images] Pexels error:', err.message);
+  } else {
+    console.log('[Images] SERPAPI_KEY not configured');
   }
   
-  // Fallback to Pixabay (also free, topic-relevant)
-  const PIXABAY_API_KEY = '47474592-a9c2a9e8e6e8e8e8e8e8e8e8e';
+  // Fallback: Use Google Custom Search API if configured
+  const GOOGLE_SEARCH_API_KEY = process.env.GOOGLE_SEARCH_API_KEY;
+  const GOOGLE_SEARCH_CX = process.env.GOOGLE_SEARCH_CX;
   
-  try {
-    const pixabayUrl = `https://pixabay.com/api/?key=${PIXABAY_API_KEY}&q=${searchQuery}&image_type=photo&orientation=horizontal&per_page=${count}&safesearch=true`;
-    
-    const response = await fetch(pixabayUrl);
-    
-    if (response.ok) {
-      const data = await response.json();
+  if (GOOGLE_SEARCH_API_KEY && GOOGLE_SEARCH_CX) {
+    try {
+      console.log(`[Images] 🔍 Trying Google Custom Search for: "${topic}"`);
       
-      if (data.hits && data.hits.length > 0) {
-        for (const hit of data.hits) {
-          images.push({
-            url: hit.largeImageURL || hit.webformatURL,
-            alt: hit.tags || topic
-          });
+      const googleUrl = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_SEARCH_API_KEY}&cx=${GOOGLE_SEARCH_CX}&q=${searchQuery}&searchType=image&num=${count}&imgSize=large&safe=active`;
+      
+      const response = await fetch(googleUrl);
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (data.items && data.items.length > 0) {
+          for (const item of data.items) {
+            images.push({
+              url: item.link,
+              alt: item.title || topic,
+              source: item.displayLink
+            });
+          }
+          
+          console.log(`[Images] ✅ Found ${images.length} Google Custom Search images for: "${topic}"`);
+          return images;
         }
-        console.log(`[Images] ✅ Found ${images.length} Pixabay images for: "${topic}"`);
-        return images;
       }
+    } catch (err) {
+      console.log('[Images] Google Custom Search error:', err.message);
     }
-  } catch (err) {
-    console.log('[Images] Pixabay error:', err.message);
   }
   
-  // Last fallback - use Lorem Picsum with specific seed based on topic
-  console.log('[Images] Using Lorem Picsum fallback...');
-  const topicHash = topic.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+  // Last fallback - generate placeholder with topic name
+  console.log('[Images] ⚠️ No API keys configured, using placeholder images');
+  console.log('[Images] To get real images, add SERPAPI_KEY to your environment variables');
   
+  // Use a placeholder service that shows the topic name
   for (let i = 0; i < count; i++) {
+    const seed = topic.split('').reduce((a, b) => a + b.charCodeAt(0), 0) + i;
     images.push({
-      url: `https://picsum.photos/seed/${topicHash + i}/800/500`,
+      url: `https://picsum.photos/seed/${seed}/800/500`,
       alt: `${topic} - Image ${i + 1}`
     });
   }
   
-  console.log(`[Images] Generated ${images.length} fallback images`);
   return images;
 }
 
@@ -1239,7 +1260,7 @@ app.post('/api/content/humanize', async (req, res) => {
   }
 });
 
-// REAL TOPIC IMAGES ENDPOINT - Uses Pexels API for relevant images
+// REAL TOPIC IMAGES ENDPOINT - Uses SerpAPI (Google Images) for EXACT topic images
 app.post('/api/images/search', async (req, res) => {
   try {
     const { topic, numImages = 4 } = req.body;
@@ -1248,66 +1269,79 @@ app.post('/api/images/search', async (req, res) => {
       return res.status(400).json({ error: 'Topic is required' });
     }
     
-    console.log(`[Images API] Searching for: "${topic}", count: ${numImages}`);
+    console.log(`[Images API] 🔍 Searching Google Images for: "${topic}", count: ${numImages}`);
     
-    // Use Pexels API for real, topic-relevant images
-    const PEXELS_API_KEY = 'dYgQwQdnfMANGXqOyWPVpBAdetPVLp9RBLpKstdn7FMqMvPwmAfq5FQe';
     const searchQuery = encodeURIComponent(topic);
+    const SERPAPI_KEY = process.env.SERPAPI_KEY;
     
-    const response = await fetch(`https://api.pexels.com/v1/search?query=${searchQuery}&per_page=${numImages}&orientation=landscape`, {
-      headers: {
-        'Authorization': PEXELS_API_KEY
+    // Use SerpAPI to search Google Images - returns EXACT images
+    if (SERPAPI_KEY) {
+      try {
+        const serpUrl = `https://serpapi.com/search.json?engine=google_images&q=${searchQuery}&num=${numImages + 2}&api_key=${SERPAPI_KEY}&safe=active`;
+        
+        const response = await fetch(serpUrl);
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          if (data.images_results && data.images_results.length > 0) {
+            const images = data.images_results.slice(0, numImages).map(img => ({
+              url: img.original || img.thumbnail,
+              title: img.title || topic,
+              alt: img.title || topic,
+              source: img.source || 'Google Images'
+            })).filter(img => img.url);
+            
+            if (images.length > 0) {
+              console.log(`[Images API] ✅ Found ${images.length} REAL Google Images for: "${topic}"`);
+              return res.json({ images });
+            }
+          }
+        }
+      } catch (err) {
+        console.log('[Images API] SerpAPI error:', err.message);
       }
+    }
+    
+    // Fallback: Google Custom Search API
+    const GOOGLE_SEARCH_API_KEY = process.env.GOOGLE_SEARCH_API_KEY;
+    const GOOGLE_SEARCH_CX = process.env.GOOGLE_SEARCH_CX;
+    
+    if (GOOGLE_SEARCH_API_KEY && GOOGLE_SEARCH_CX) {
+      try {
+        const googleUrl = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_SEARCH_API_KEY}&cx=${GOOGLE_SEARCH_CX}&q=${searchQuery}&searchType=image&num=${numImages}&imgSize=large&safe=active`;
+        
+        const response = await fetch(googleUrl);
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          if (data.items && data.items.length > 0) {
+            const images = data.items.map(item => ({
+              url: item.link,
+              title: item.title || topic,
+              alt: item.title || topic,
+              source: item.displayLink
+            }));
+            
+            console.log(`[Images API] ✅ Found ${images.length} Google Custom Search images for: "${topic}"`);
+            return res.json({ images });
+          }
+        }
+      } catch (err) {
+        console.log('[Images API] Google Custom Search error:', err.message);
+      }
+    }
+    
+    // No API keys - return error with instructions
+    console.log('[Images API] ⚠️ No image API keys configured');
+    return res.status(500).json({ 
+      error: 'Image search requires SERPAPI_KEY. Add it to your Railway environment variables.',
+      images: []
     });
-    
-    if (response.ok) {
-      const data = await response.json();
-      
-      if (data.photos && data.photos.length > 0) {
-        const images = data.photos.map(photo => ({
-          url: photo.src.large || photo.src.medium,
-          title: photo.alt || topic,
-          alt: photo.alt || `${topic} - Photo by ${photo.photographer}`,
-          photographer: photo.photographer
-        }));
-        
-        console.log(`[Images API] ✅ Found ${images.length} Pexels images for: "${topic}"`);
-        return res.json({ images });
-      }
-    }
-    
-    // Fallback to Pixabay if Pexels fails
-    console.log('[Images API] Pexels failed, trying Pixabay...');
-    const PIXABAY_API_KEY = '47474592-a9c2a9e8e6e8e8e8e8e8e8e8e';
-    const pixabayUrl = `https://pixabay.com/api/?key=${PIXABAY_API_KEY}&q=${searchQuery}&image_type=photo&orientation=horizontal&per_page=${numImages}`;
-    
-    const pixabayResponse = await fetch(pixabayUrl);
-    
-    if (pixabayResponse.ok) {
-      const pixabayData = await pixabayResponse.json();
-      
-      if (pixabayData.hits && pixabayData.hits.length > 0) {
-        const images = pixabayData.hits.map(hit => ({
-          url: hit.largeImageURL || hit.webformatURL,
-          title: hit.tags || topic,
-          alt: hit.tags || topic
-        }));
-        
-        console.log(`[Images API] ✅ Found ${images.length} Pixabay images for: "${topic}"`);
-        return res.json({ images });
-      }
-    }
-    
-    // Last fallback - Lorem Picsum with topic-based seed
-    console.log('[Images API] Using Lorem Picsum fallback...');
-    const topicHash = topic.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
-    const fallbackImages = Array.from({ length: numImages }, (_, i) => ({
-      url: `https://picsum.photos/seed/${topicHash + i}/800/500`,
-      title: topic,
-      alt: `${topic} - Image ${i + 1}`
-    }));
-    
-    res.json({ images: fallbackImages });
+  } catch (error) {
+    console.error('[Images API] Error:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
