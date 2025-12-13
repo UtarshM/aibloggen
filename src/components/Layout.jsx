@@ -85,9 +85,9 @@ export default function Layout({ children }) {
         } catch (error) {
             console.error('Load user data error:', error)
 
-            // If 403 (invalid token) or 401 (unauthorized), logout and redirect
-            if (error.response && (error.response.status === 403 || error.response.status === 401)) {
-                console.log('Invalid or expired token - logging out')
+            // If 403 (invalid token), 401 (unauthorized), or 404 (user not found), logout and redirect
+            if (error.response && (error.response.status === 403 || error.response.status === 401 || error.response.status === 404)) {
+                console.log('Invalid token or user not found - logging out')
                 localStorage.clear()
                 navigate('/login')
             }

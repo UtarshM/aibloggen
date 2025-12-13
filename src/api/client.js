@@ -83,9 +83,13 @@ export const api = {
     return data;
   },
   generateHumanContent: async (config) => {
+    const token = localStorage.getItem('token');
     const res = await fetch(`${API_BASE}/content/generate-human`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify(config),
     });
     const data = await res.json();
