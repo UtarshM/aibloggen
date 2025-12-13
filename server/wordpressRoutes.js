@@ -154,11 +154,41 @@ router.post('/publish', async (req, res) => {
     try {
         const { siteId, title, content, images } = req.body;
 
+        console.log('[WordPress Publish] Request received');
+        console.log('[WordPress Publish] Site ID:', siteId);
+        console.log('[WordPress Publish] Title:', title);
+        console.log('[WordPress Publish] Content length:', content?.length || 0);
+        console.log('[WordPress Publish] Images:', images?.length || 0);
+
+        if (!siteId) {
+            return res.status(400).json({ success: false, error: 'Site ID is required' });
+        }
+
+        if (!title || !content) {
+            return res.status(400).json({ success: false, error: 'Title and content are required' });
+        }
+
         // Get WordPress site
         const site = await WordPressSite.findById(siteId);
         if (!site) {
-            return res.status(404).json({ error: 'WordPress site not found' });
+            console.log('[WordPress Publish] Site not found:', siteId);
+            return res.status(404).json({ success: false, error: 'WordPress site not found' });
         }
+
+        console.log('[WordPress Publish] Site found:', site.siteName, site.siteUrl);
+
+        // Process images - extract URLs if they're objects
+        const processedImages = (images || []).map(img => {
+            if (typeof img === 'string') {
+                return { url: img, alt: title };
+            }
+            return {
+                url: img.url || img,
+                alt: img.alt || img.caption || title
+            };
+        }).filter(img => img.url);
+
+        console.log('[WordPress Publish] Processed images:', processedImages.length);
 
         // Post to WordPress
         const result = await postToWordPress(
@@ -167,28 +197,35 @@ router.post('/publish', async (req, res) => {
             site.applicationPassword,
             title,
             content,
-            images || []
+            processedImages
         );
+
+        console.log('[WordPress Publish] Result:', JSON.stringify(result));
 
         if (result.success) {
             // Save to queue as published
-            const queueItem = new WordPressPostQueue({
-                userId: req.user.userId,
-                wordpressSiteId: siteId,
-                title,
-                content,
-                images: images || [],
-                status: 'published',
-                wordpressPostId: result.postId,
-                wordpressPostUrl: result.postUrl,
-                publishedAt: new Date()
-            });
-            await queueItem.save();
+            try {
+                const queueItem = new WordPressPostQueue({
+                    userId: req.user.userId,
+                    wordpressSiteId: siteId,
+                    title,
+                    content,
+                    images: processedImages,
+                    status: 'published',
+                    wordpressPostId: result.postId,
+                    wordpressPostUrl: result.postUrl,
+                    publishedAt: new Date()
+                });
+                await queueItem.save();
+            } catch (queueError) {
+                console.log('[WordPress Publish] Queue save error (non-critical):', queueError.message);
+            }
         }
 
         res.json(result);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('[WordPress Publish] Error:', error);
+        res.status(500).json({ success: false, error: error.message || 'Unknown error occurred' });
     }
 });
 

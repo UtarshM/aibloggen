@@ -102,32 +102,48 @@ export async function checkWordPressAPI(siteUrl) {
 export async function uploadImageToWordPress(siteUrl, username, applicationPassword, imageUrl, altText = '', retries = 3) {
     for (let attempt = 1; attempt <= retries; attempt++) {
         try {
-            console.log(`[WordPress] Uploading image (attempt ${attempt}/${retries}):`, imageUrl.substring(0, 50) + '...');
+            console.log(`[WordPress] Uploading image (attempt ${attempt}/${retries}):`, imageUrl.substring(0, 80) + '...');
             
             const auth = Buffer.from(`${username}:${applicationPassword}`).toString('base64');
 
-            // Download image first with timeout
-            const imageResponse = await axios.get(imageUrl, {
+            // Handle Unsplash source URLs - they redirect, so follow redirects
+            let finalUrl = imageUrl;
+            
+            // Download image first with timeout and follow redirects
+            const imageResponse = await axios.get(finalUrl, {
                 responseType: 'arraybuffer',
-                timeout: 30000, // 30 second timeout
-                maxContentLength: 10 * 1024 * 1024, // 10MB max
+                timeout: 45000, // 45 second timeout
+                maxContentLength: 15 * 1024 * 1024, // 15MB max
+                maxRedirects: 5, // Follow up to 5 redirects
                 headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'Accept': 'image/webp,image/apng,image/*,*/*;q=0.8'
                 }
             });
 
             const imageBuffer = Buffer.from(imageResponse.data);
+            
+            // Check if we got a valid image
+            if (imageBuffer.length < 1000) {
+                console.log(`[WordPress] Image too small (${imageBuffer.length} bytes), might be an error page`);
+                throw new Error('Downloaded image is too small, might be an error page');
+            }
+            
             const contentType = imageResponse.headers['content-type'] || 'image/jpeg';
-            const extension = contentType.split('/')[1]?.split(';')[0] || 'jpg';
+            let extension = 'jpg';
+            if (contentType.includes('png')) extension = 'png';
+            else if (contentType.includes('webp')) extension = 'webp';
+            else if (contentType.includes('gif')) extension = 'gif';
+            
             const filename = `wp-image-${Date.now()}-${Math.random().toString(36).substring(7)}.${extension}`;
 
-            console.log(`[WordPress] Image downloaded, size: ${imageBuffer.length} bytes, uploading to WordPress...`);
+            console.log(`[WordPress] Image downloaded, size: ${imageBuffer.length} bytes, type: ${contentType}`);
 
             // Create form data
             const formData = new FormData();
             formData.append('file', imageBuffer, {
                 filename,
-                contentType
+                contentType: contentType.split(';')[0] // Remove charset if present
             });
             if (altText) {
                 formData.append('alt_text', altText);
@@ -142,8 +158,8 @@ export async function uploadImageToWordPress(siteUrl, username, applicationPassw
                         ...formData.getHeaders(),
                         'Authorization': `Basic ${auth}`
                     },
-                    timeout: 60000, // 60 second timeout for upload
-                    maxContentLength: 10 * 1024 * 1024
+                    timeout: 90000, // 90 second timeout for upload
+                    maxContentLength: 15 * 1024 * 1024
                 }
             );
 
@@ -158,10 +174,11 @@ export async function uploadImageToWordPress(siteUrl, username, applicationPassw
             console.error(`[WordPress] ❌ Image upload failed (attempt ${attempt}/${retries}):`, error.message);
             
             if (attempt < retries) {
-                console.log(`[WordPress] Retrying in 2 seconds...`);
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                console.log(`[WordPress] Retrying in 3 seconds...`);
+                await new Promise(resolve => setTimeout(resolve, 3000));
             } else {
-                console.error('[WordPress] All retry attempts failed');
+                console.error('[WordPress] All retry attempts failed for this image');
+                // Return success: false but don't throw - let the post continue without this image
                 return {
                     success: false,
                     error: error.response?.data?.message || error.message
@@ -335,25 +352,23 @@ export async function postToWordPress(siteUrl, username, applicationPassword, ti
             console.log('[WordPress] Featured image set:', featuredMedia);
         }
 
-        // Create post with SEO optimization
+        // Create post - simplified without meta fields that might cause errors
         const postData = {
             title,
             content: processedContent,
-            status: 'publish', // ALWAYS publish, not draft
+            status: 'publish',
             slug: seoOptions.slug || seoData.slug,
-            excerpt: seoOptions.metaDescription || seoData.metaDescription,
-            featured_media: featuredMedia,
-            // SEO meta fields (if Yoast SEO or similar plugin is installed)
-            meta: {
-                _yoast_wpseo_metadesc: seoOptions.metaDescription || seoData.metaDescription,
-                _yoast_wpseo_focuskw: seoOptions.keywords || seoData.keywords,
-                _yoast_wpseo_title: title
-            }
+            excerpt: (seoOptions.metaDescription || seoData.metaDescription || '').substring(0, 150)
         };
+        
+        // Only add featured_media if we have one
+        if (featuredMedia) {
+            postData.featured_media = featuredMedia;
+        }
 
         console.log('[WordPress] ===== POSTING TO WORDPRESS =====');
         console.log('[WordPress] Post status: publish');
-        console.log('[WordPress] Featured media:', featuredMedia);
+        console.log('[WordPress] Featured media:', featuredMedia || 'none');
         
         const response = await axios.post(
             `${siteUrl}/wp-json/wp/v2/posts`,
@@ -363,33 +378,32 @@ export async function postToWordPress(siteUrl, username, applicationPassword, ti
                     'Authorization': `Basic ${auth}`,
                     'Content-Type': 'application/json'
                 },
-                timeout: 60000 // 60 second timeout
+                timeout: 90000 // 90 second timeout
             }
         );
 
         console.log('[WordPress] ========== ✅ POST CREATED SUCCESSFULLY ==========');
         console.log('[WordPress] Post ID:', response.data.id);
         console.log('[WordPress] Post URL:', response.data.link);
-        console.log('[WordPress] Status:', response.data.status);
         
         return {
             success: true,
             postId: response.data.id,
             postUrl: response.data.link,
-            uploadedImages: uploadedImages.length,
-            seoData: {
-                slug: response.data.slug,
-                metaDescription: seoData.metaDescription,
-                keywords: seoData.keywords
-            }
+            uploadedImages: uploadedImages.length
         };
     } catch (error) {
         console.error('[WordPress] ========== ❌ POST CREATION FAILED ==========');
-        console.error('[WordPress] Error:', error.response?.data || error.message);
+        console.error('[WordPress] Error type:', error.code || error.name);
+        console.error('[WordPress] Error message:', error.message);
+        if (error.response) {
+            console.error('[WordPress] Response status:', error.response.status);
+            console.error('[WordPress] Response data:', JSON.stringify(error.response.data));
+        }
         
         return {
             success: false,
-            error: error.response?.data?.message || error.message
+            error: error.response?.data?.message || error.message || 'Unknown error'
         };
     }
 }
