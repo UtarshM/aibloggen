@@ -104,6 +104,21 @@ const authenticateToken = (req, res, next) => {
   }
 };
 
+// Root route
+app.get('/', (req, res) => {
+  res.json({ 
+    name: 'AI Marketing Platform API',
+    status: 'running',
+    version: '2.1.0',
+    endpoints: {
+      health: '/api/health',
+      auth: '/api/auth/*',
+      content: '/api/content/*',
+      wordpress: '/api/wordpress/*'
+    }
+  });
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ 
