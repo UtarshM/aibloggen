@@ -506,6 +506,8 @@ router.get('/bulk-import/:jobId/report', async (req, res) => {
 // Download bulk import report as Excel with live blog links
 router.get('/bulk-import/:jobId/export-excel', async (req, res) => {
     try {
+        console.log('[Excel Export] Starting export for job:', req.params.jobId);
+        
         const job = await BulkImportJob.findOne({
             _id: req.params.jobId,
             userId: req.user.userId
@@ -515,65 +517,68 @@ router.get('/bulk-import/:jobId/export-excel', async (req, res) => {
             return res.status(404).json({ error: 'Job not found' });
         }
 
+        console.log('[Excel Export] Job found, posts count:', job.posts?.length || 0);
+
         // Create Excel workbook
         const workbook = xlsx.utils.book_new();
 
-        // Prepare data for Excel with ALL original data + live links
-        const excelData = job.posts.map((post, index) => {
-            const row = {
-                'No.': index + 1,
-                'Title': post.title,
-                'H tags': post.hTags || '',
-                'keywords': post.keywords || '',
-                'refrance': post.references || '',
-                'EEAT': post.eeat || '',
-                'Date': post.scheduleDate || '',
-                'time': post.scheduleTime || '',
-                'Link': post.wordpressPostUrl || '',
-                'Status': post.status === 'published' ? '✅ Published' : post.status === 'failed' ? '❌ Failed' : '⏳ Pending',
-                'Word Count': post.contentLength || 0,
-                'Images Uploaded': post.uploadedImages || 0,
-                'Published Date': post.publishedAt ? new Date(post.publishedAt).toLocaleString() : 'N/A',
-                'Error': post.error || 'None'
-            };
-            return row;
-        });
-
-        // Add summary at the top
-        const summaryData = [
-            { 'Summary': 'Total Posts', 'Value': job.totalPosts },
-            { 'Summary': 'Successful', 'Value': job.successfulPosts },
-            { 'Summary': 'Failed', 'Value': job.failedPosts },
-            { 'Summary': 'Processing Time', 'Value': job.completedAt ? `${Math.round((job.completedAt - job.startedAt) / 1000)}s` : 'In Progress' },
-            { 'Summary': '', 'Value': '' } // Empty row
-        ];
-
-        // Create summary sheet
-        const summarySheet = xlsx.utils.json_to_sheet(summaryData);
-        xlsx.utils.book_append_sheet(workbook, summarySheet, 'Summary');
-
-        // Create posts sheet
-        const postsSheet = xlsx.utils.json_to_sheet(excelData);
+        // POSTS SHEET FIRST (Main data with all details)
+        const postsData = [];
         
-        // Set column widths for better readability
+        if (job.posts && job.posts.length > 0) {
+            for (let i = 0; i < job.posts.length; i++) {
+                const post = job.posts[i];
+                postsData.push({
+                    'Sr No': i + 1,
+                    'Title': post.title || 'Untitled',
+                    'Status': post.status === 'published' ? 'Published ✅' : post.status === 'failed' ? 'Failed ❌' : 'Pending ⏳',
+                    'Live Blog Link': post.wordpressPostUrl || 'Not Published',
+                    'Word Count': post.contentLength || 0,
+                    'Images': post.uploadedImages || 0,
+                    'Published Date': post.publishedAt ? new Date(post.publishedAt).toLocaleString() : '-',
+                    'Error': post.error || '-'
+                });
+            }
+        }
+        
+        console.log('[Excel Export] Posts data prepared:', postsData.length, 'rows');
+
+        // Create Posts sheet first (main sheet)
+        const postsSheet = xlsx.utils.json_to_sheet(postsData);
+        
+        // Set column widths
         postsSheet['!cols'] = [
-            { wch: 5 },  // No.
-            { wch: 45 }, // Title
-            { wch: 30 }, // H tags
-            { wch: 25 }, // keywords
-            { wch: 30 }, // refrance
-            { wch: 35 }, // EEAT
-            { wch: 12 }, // Date
-            { wch: 10 }, // time
-            { wch: 70 }, // Link (LIVE BLOG LINK)
-            { wch: 15 }, // Status
-            { wch: 12 }, // Word Count
-            { wch: 12 }, // Images Uploaded
-            { wch: 20 }, // Published Date
-            { wch: 30 }  // Error
+            { wch: 8 },   // Sr No
+            { wch: 50 },  // Title
+            { wch: 15 },  // Status
+            { wch: 80 },  // Live Blog Link
+            { wch: 12 },  // Word Count
+            { wch: 10 },  // Images
+            { wch: 22 },  // Published Date
+            { wch: 40 }   // Error
         ];
 
         xlsx.utils.book_append_sheet(workbook, postsSheet, 'Posts');
+
+        // SUMMARY SHEET (Overview)
+        const summaryData = [
+            { 'Metric': 'File Name', 'Value': job.fileName || 'Unknown' },
+            { 'Metric': 'Total Posts', 'Value': job.totalPosts || 0 },
+            { 'Metric': 'Successful', 'Value': job.successfulPosts || 0 },
+            { 'Metric': 'Failed', 'Value': job.failedPosts || 0 },
+            { 'Metric': 'Success Rate', 'Value': job.totalPosts > 0 ? `${Math.round((job.successfulPosts / job.totalPosts) * 100)}%` : '0%' },
+            { 'Metric': 'Processing Time', 'Value': job.completedAt && job.startedAt ? `${Math.round((new Date(job.completedAt) - new Date(job.startedAt)) / 1000)} seconds` : 'In Progress' },
+            { 'Metric': 'Started At', 'Value': job.startedAt ? new Date(job.startedAt).toLocaleString() : '-' },
+            { 'Metric': 'Completed At', 'Value': job.completedAt ? new Date(job.completedAt).toLocaleString() : '-' }
+        ];
+
+        const summarySheet = xlsx.utils.json_to_sheet(summaryData);
+        summarySheet['!cols'] = [
+            { wch: 20 },  // Metric
+            { wch: 50 }   // Value
+        ];
+        
+        xlsx.utils.book_append_sheet(workbook, summarySheet, 'Summary');
 
         // Generate Excel file
         const excelBuffer = xlsx.write(workbook, { type: 'buffer', bookType: 'xlsx' });
