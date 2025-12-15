@@ -143,7 +143,7 @@ app.get('/api/auth/google/url', (req, res) => {
   }
   
   const redirectUri = process.env.NODE_ENV === 'production'
-    ? 'https://ai-automation-production-c35e.up.railway.app/api/auth/google/callback'
+    ? 'https://ai-marketing-api.onrender.com/api/auth/google/callback'
     : 'http://localhost:3001/api/auth/google/callback';
   
   const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
@@ -169,7 +169,7 @@ app.get('/api/auth/google/callback', async (req, res) => {
     const clientId = process.env.GOOGLE_CLIENT_ID;
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
     const redirectUri = process.env.NODE_ENV === 'production'
-      ? 'https://ai-automation-production-c35e.up.railway.app/api/auth/google/callback'
+      ? 'https://ai-marketing-api.onrender.com/api/auth/google/callback'
       : 'http://localhost:3001/api/auth/google/callback';
     
     // Exchange code for tokens
@@ -261,7 +261,7 @@ app.get('/api/auth/github/url', (req, res) => {
   }
   
   const redirectUri = process.env.NODE_ENV === 'production'
-    ? 'https://ai-automation-production-c35e.up.railway.app/api/auth/github/callback'
+    ? 'https://ai-marketing-api.onrender.com/api/auth/github/callback'
     : 'http://localhost:3001/api/auth/github/callback';
   
   const authUrl = `https://github.com/login/oauth/authorize?` +
@@ -1242,7 +1242,7 @@ Write the complete ${minWords}+ word article now with TOPIC-SPECIFIC headings:`;
   }
 });
 
-// PYTHON HUMANIZATION ENDPOINT (backup)
+// HUMANIZATION ENDPOINT - JavaScript implementation (no Python needed)
 app.post('/api/content/humanize', async (req, res) => {
   try {
     const { content } = req.body;
@@ -1251,43 +1251,75 @@ app.post('/api/content/humanize', async (req, res) => {
       return res.status(400).json({ error: 'Content is required' });
     }
     
-    const { spawn } = await import('child_process');
-    const path = await import('path');
-    const { fileURLToPath } = await import('url');
-    const __dirname = path.dirname(fileURLToPath(import.meta.url));
+    console.log('[Humanize] Processing content, length:', content.length);
     
-    const pythonScript = path.join(__dirname, 'humanizer.py');
-    const python = spawn('python', [pythonScript], {
-      cwd: __dirname
-    });
-    
-    let result = '';
-    let error = '';
-    
-    python.stdout.on('data', (data) => {
-      result += data.toString();
-    });
-    
-    python.stderr.on('data', (data) => {
-      error += data.toString();
-    });
-    
-    python.on('close', (code) => {
-      if (code !== 0) {
-        console.error('Python humanizer error:', error);
-        res.status(500).json({ error: error || 'Humanization failed. Please try again.' });
-      } else {
-        res.json({ content: result.trim() || content });
+    const humanizePrompt = `You are an expert content humanizer. Your task is to rewrite the following content to make it sound more natural, engaging, and human-written while preserving all the information and meaning.
+
+Guidelines:
+- Use varied sentence structures
+- Add natural transitions
+- Include conversational elements where appropriate
+- Maintain the original meaning and facts
+- Keep the same general length
+- Make it flow naturally
+
+Content to humanize:
+${content}
+
+Rewrite the content to sound more human and natural:`;
+
+    let humanizedContent = null;
+
+    // Try OpenRouter first
+    const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+    if (OPENROUTER_API_KEY) {
+      try {
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': 'https://ai-marketing-platform.com',
+            'X-Title': 'AI Marketing Platform'
+          },
+          body: JSON.stringify({
+            model: 'anthropic/claude-3-haiku',
+            messages: [{ role: 'user', content: humanizePrompt }],
+            max_tokens: 4000
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          humanizedContent = data.choices?.[0]?.message?.content;
+        }
+      } catch (err) {
+        console.log('[Humanize] OpenRouter error:', err.message);
       }
-    });
-    
-    python.on('error', (err) => {
-      console.error('Python spawn error:', err);
-      res.status(500).json({ error: 'Python not found. Please install Python 3.' });
-    });
-    
-    python.stdin.write(content);
-    python.stdin.end();
+    }
+
+    // Fallback to Google AI
+    if (!humanizedContent) {
+      const GOOGLE_AI_KEY = process.env.GOOGLE_AI_KEY;
+      if (GOOGLE_AI_KEY) {
+        try {
+          const { GoogleGenerativeAI } = await import('@google/generative-ai');
+          const genAI = new GoogleGenerativeAI(GOOGLE_AI_KEY);
+          const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+          const result = await model.generateContent(humanizePrompt);
+          humanizedContent = result.response.text();
+        } catch (err) {
+          console.log('[Humanize] Google AI error:', err.message);
+        }
+      }
+    }
+
+    if (humanizedContent) {
+      res.json({ content: humanizedContent.trim() });
+    } else {
+      // Return original content if humanization fails
+      res.json({ content: content, note: 'Humanization unavailable, returning original' });
+    }
   } catch (error) {
     console.error('Humanize error:', error);
     res.status(500).json({ error: error.message || 'An unexpected error occurred' });
@@ -2001,7 +2033,7 @@ app.delete('/api/social/posts/:postId', authenticateToken, async (req, res) => {
   }
 });
 
-// AI SOCIAL CONTENT GENERATION
+// AI SOCIAL CONTENT GENERATION - JavaScript implementation (no Python needed)
 app.post('/api/social/generate-content', authenticateToken, async (req, res) => {
   try {
     const config = req.body;
@@ -2015,72 +2047,99 @@ app.post('/api/social/generate-content', authenticateToken, async (req, res) => 
       return res.status(400).json({ error: 'At least one platform is required' });
     }
     
-    const { spawn } = await import('child_process');
-    const path = await import('path');
-    const { fileURLToPath } = await import('url');
-    const __dirname = path.dirname(fileURLToPath(import.meta.url));
+    console.log('[Social Content] Generating for:', config.topic, 'Platforms:', config.platforms);
     
-    const pythonScript = path.join(__dirname, 'social_content_generator.py');
-    const python = spawn('python', [pythonScript], {
-      cwd: __dirname
-    });
+    const platformGuides = {
+      twitter: 'Twitter/X: Max 280 characters, use hashtags, be concise and engaging',
+      linkedin: 'LinkedIn: Professional tone, 1-3 paragraphs, industry insights, can use emojis sparingly',
+      facebook: 'Facebook: Conversational, can be longer, encourage engagement, use emojis',
+      instagram: 'Instagram: Visual-focused caption, use relevant hashtags (up to 30), engaging and trendy'
+    };
     
-    let result = '';
-    let error = '';
+    const selectedPlatforms = config.platforms.map(p => platformGuides[p] || p).join('\n');
     
-    python.stdout.on('data', (data) => {
-      const output = data.toString();
-      console.log('[PYTHON STDOUT]', output);
-      result += output;
-    });
-    
-    python.stderr.on('data', (data) => {
-      const output = data.toString();
-      console.log('[PYTHON STDERR]', output);
-      error += output;
-    });
-    
-    python.on('close', (code) => {
-      if (code !== 0) {
-        console.error('Python error:', error);
-        const errorMsg = error.includes('ModuleNotFoundError') 
-          ? 'Python dependencies missing. Please run: pip install requests python-dotenv'
-          : error.includes('No module named')
-          ? 'Python dependencies missing. Please install required packages.'
-          : error || 'Content generation failed. Please check your API keys.';
-        res.status(500).json({ error: errorMsg });
-      } else {
+    const prompt = `Generate social media content for the following topic. Create unique, engaging posts for each platform.
+
+Topic: ${config.topic}
+Tone: ${config.tone || 'professional'}
+${config.keywords ? `Keywords to include: ${config.keywords}` : ''}
+
+Platforms and guidelines:
+${selectedPlatforms}
+
+Generate content for each platform in this exact JSON format:
+{
+  "posts": {
+    ${config.platforms.map(p => `"${p}": { "content": "post content here", "hashtags": ["tag1", "tag2"] }`).join(',\n    ')}
+  },
+  "topic": "${config.topic}"
+}
+
+Return ONLY valid JSON, no other text.`;
+
+    let generatedContent = null;
+
+    // Try OpenRouter first
+    const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+    if (OPENROUTER_API_KEY) {
+      try {
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': 'https://ai-marketing-platform.com',
+            'X-Title': 'AI Marketing Platform'
+          },
+          body: JSON.stringify({
+            model: 'anthropic/claude-3-haiku',
+            messages: [{ role: 'user', content: prompt }],
+            max_tokens: 2000
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const text = data.choices?.[0]?.message?.content;
+          if (text) {
+            const jsonMatch = text.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+              generatedContent = JSON.parse(jsonMatch[0]);
+            }
+          }
+        }
+      } catch (err) {
+        console.log('[Social Content] OpenRouter error:', err.message);
+      }
+    }
+
+    // Fallback to Google AI
+    if (!generatedContent) {
+      const GOOGLE_AI_KEY = process.env.GOOGLE_AI_KEY;
+      if (GOOGLE_AI_KEY) {
         try {
-          // Find the JSON in the output (in case there are debug messages)
-          const jsonMatch = result.match(/\{[\s\S]*\}/);
-          if (!jsonMatch) {
-            console.error('No JSON found in result:', result);
-            res.status(500).json({ error: 'Failed to parse generated content. Please try again.' });
-            return;
+          const { GoogleGenerativeAI } = await import('@google/generative-ai');
+          const genAI = new GoogleGenerativeAI(GOOGLE_AI_KEY);
+          const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+          const result = await model.generateContent(prompt);
+          const text = result.response.text();
+          const jsonMatch = text.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            generatedContent = JSON.parse(jsonMatch[0]);
           }
-          
-          const data = JSON.parse(jsonMatch[0]);
-          if (data.error) {
-            res.status(500).json({ error: data.error });
-          } else {
-            res.json(data);
-          }
-        } catch (e) {
-          console.error('Parse error:', e, 'Result:', result.substring(0, 200));
-          res.status(500).json({ error: 'Failed to parse generated content. Please try again.' });
+        } catch (err) {
+          console.log('[Social Content] Google AI error:', err.message);
         }
       }
-    });
-    
-    python.on('error', (err) => {
-      console.error('Python spawn error:', err);
-      res.status(500).json({ error: 'Python not found. Please install Python 3 and add it to PATH.' });
-    });
-    
-    python.stdin.write(JSON.stringify(config));
-    python.stdin.end();
+    }
+
+    if (generatedContent) {
+      res.json(generatedContent);
+    } else {
+      res.status(500).json({ error: 'Failed to generate social content. Please try again.' });
+    }
   } catch (error) {
-    console.error('Server error:', error);
+    console.error('Social content error:', error);
     res.status(500).json({ error: error.message || 'An unexpected error occurred' });
   }
 });

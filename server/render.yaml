@@ -1,7 +1,7 @@
 services:
   - type: web
     name: ai-marketing-api
-    env: node
+    runtime: node
     region: oregon
     plan: free
     branch: main
