@@ -1,9 +1,0 @@
-# Node.js with Python support for AI content generation
-[phases.setup]
-nixPkgs = ["nodejs_22", "python311"]
-
-[phases.install]
-cmds = ["npm ci || npm install"]
-
-[start]
-cmd = "node server.js"
