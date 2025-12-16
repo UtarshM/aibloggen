@@ -11,9 +11,9 @@ import { User, Mail, Phone, MapPin, Building, Globe, Calendar, Award, TrendingUp
 import { usePlan } from '../context/PlanContext'
 import axios from 'axios'
 
-// Production API URL - Railway Backend
+// Production API URL - Render Backend
 const API_URL = import.meta.env.PROD
-    ? 'https://ai-automation-production-c35e.up.railway.app/api'
+    ? 'https://ai-marketing-backend-lbyl.onrender.com/api'
     : 'http://localhost:3001/api'
 
 export default function Profile() {
@@ -32,7 +32,7 @@ export default function Profile() {
         phone: '',
         dateOfBirth: '',
         gender: '',
-        profileImage: null,
+        profileImage: '',
 
         // Professional Info
         jobTitle: '',
@@ -422,15 +422,16 @@ export default function Profile() {
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-2">Gender</label>
                                 <select
-                                    value={profile.gender}
+                                    value={profile.gender || ''}
                                     onChange={(e) => setProfile({ ...profile, gender: e.target.value })}
                                     disabled={!isEditing}
                                     className="w-full px-4 py-3 border rounded-lg disabled:bg-gray-50"
                                 >
-                                    <option>Male</option>
-                                    <option>Female</option>
-                                    <option>Other</option>
-                                    <option>Prefer not to say</option>
+                                    <option value="">Select Gender</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                    <option value="Prefer not to say">Prefer not to say</option>
                                 </select>
                             </div>
                             <div className="md:col-span-2">

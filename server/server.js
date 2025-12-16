@@ -146,22 +146,17 @@ app.get('/api/auth/google/url', (req, res) => {
     ? 'https://ai-automation-9q0q.onrender.com/api/auth/google/callback'
     : 'http://localhost:3001/api/auth/google/callback';
   
-  // Extended scopes for more user data (DOB, Phone, Gender)
-  const scopes = [
-    'email',
-    'profile',
-    'https://www.googleapis.com/auth/user.birthday.read',
-    'https://www.googleapis.com/auth/user.gender.read',
-    'https://www.googleapis.com/auth/user.phonenumbers.read'
-  ].join(' ');
+  // Basic scopes (no verification needed)
+  // For extended data (DOB, Phone, Gender), add user as test user in Google Console
+  // or get app verified by Google
+  const scopes = 'email profile';
   
   const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
     `client_id=${clientId}` +
     `&redirect_uri=${encodeURIComponent(redirectUri)}` +
     `&response_type=code` +
     `&scope=${encodeURIComponent(scopes)}` +
-    `&access_type=offline` +
-    `&prompt=consent`;
+    `&access_type=offline`;
   
   res.json({ authUrl });
 });
