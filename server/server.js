@@ -144,7 +144,7 @@ app.get('/api/auth/google/url', (req, res) => {
   
   const redirectUri = process.env.GOOGLE_CALLBACK_URL || 
     (process.env.NODE_ENV === 'production'
-      ? 'http://52.204.136.243:3001/api/auth/google/callback'
+      ? 'http://52-204-136-243.nip.io:3001/api/auth/google/callback'
       : 'http://localhost:3001/api/auth/google/callback');
   
   // Basic scopes (no verification needed)
@@ -176,7 +176,7 @@ app.get('/api/auth/google/callback', async (req, res) => {
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
     const redirectUri = process.env.GOOGLE_CALLBACK_URL || 
       (process.env.NODE_ENV === 'production'
-        ? 'http://52.204.136.243:3001/api/auth/google/callback'
+        ? 'http://52-204-136-243.nip.io:3001/api/auth/google/callback'
         : 'http://localhost:3001/api/auth/google/callback');
     
     // Exchange code for tokens
