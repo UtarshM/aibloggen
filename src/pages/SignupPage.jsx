@@ -130,7 +130,7 @@ export default function SignupPage() {
                         {step === 'signup' ? 'Create Account' : 'Verify Email'}
                     </h1>
                     <p className="text-center text-gray-600 mb-8">
-                        {step === 'signup' ? 'Sign up to get started' : 'Enter the OTP sent to your email'}
+                        {step === 'signup' ? 'Harsh' : 'Enter the OTP sent to your email'}
                     </p>
 
                     {/* Error/Success Message */}
