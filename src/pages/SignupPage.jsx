@@ -40,10 +40,12 @@ export default function SignupPage() {
                 password: formData.password
             });
 
-            if (response.data.otp) {
-                setMessage(`OTP: ${response.data.otp} (Email not configured - using dev mode)`);
+            // In production, never show OTP on screen - only show message
+            if (import.meta.env.DEV && response.data.otp) {
+                // Only show OTP in development mode for testing
+                setMessage(`DEV MODE - OTP: ${response.data.otp}`);
             } else {
-                setMessage(response.data.message);
+                setMessage(response.data.message || 'OTP sent to your email. Please check your inbox.');
             }
             setStep('verify');
         } catch (err) {
@@ -166,6 +168,7 @@ export default function SignupPage() {
                                     value={formData.name}
                                     onChange={handleChange}
                                     required
+                                    autoComplete="name"
                                     className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 outline-none"
                                     placeholder="John Doe"
                                 />
@@ -181,6 +184,7 @@ export default function SignupPage() {
                                     value={formData.email}
                                     onChange={handleChange}
                                     required
+                                    autoComplete="email"
                                     className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 outline-none"
                                     placeholder="john@example.com"
                                 />
@@ -197,6 +201,7 @@ export default function SignupPage() {
                                     onChange={handleChange}
                                     required
                                     minLength={6}
+                                    autoComplete="new-password"
                                     className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 outline-none"
                                     placeholder="••••••••"
                                 />

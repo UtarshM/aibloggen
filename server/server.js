@@ -318,7 +318,7 @@ app.get('/api/auth/github/url', (req, res) => {
   }
   
   const redirectUri = process.env.NODE_ENV === 'production'
-    ? 'https://ai-automation-9q0q.onrender.com/api/auth/github/callback'
+    ? 'https://blogapi.scalezix.com/api/auth/github/callback'
     : 'http://localhost:3001/api/auth/github/callback';
   
   const authUrl = `https://github.com/login/oauth/authorize?` +
@@ -389,13 +389,16 @@ app.post('/api/auth/signup', async (req, res) => {
       console.log('Email service error:', emailError.message);
     }
 
-    // Always return OTP if email failed (so user can still verify)
+    // In production, NEVER send OTP in response (security risk)
+    // In development, send OTP only if email failed (for testing)
+    const isDev = process.env.NODE_ENV !== 'production';
+    
     res.json({ 
       success: true, 
       message: emailSent 
         ? 'OTP sent to your email. Please verify to complete registration.'
-        : 'Account created! Use the OTP below to verify (email service unavailable).',
-      otp: emailSent ? undefined : otp // Show OTP if email failed
+        : 'Account created! Please check your email for the OTP.',
+      otp: (isDev && !emailSent) ? otp : undefined // Only show OTP in dev mode if email failed
     });
 
   } catch (error) {

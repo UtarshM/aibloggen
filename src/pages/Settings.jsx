@@ -535,7 +535,7 @@ export default function Settings() {
                                                     try {
                                                         const token = localStorage.getItem('token');
                                                         const API_URL = import.meta.env.PROD
-                                                            ? 'https://ai-automation-production-c35e.up.railway.app'
+                                                            ? 'https://blogapi.scalezix.com'
                                                             : 'http://localhost:3001';
 
                                                         // First check if user is Google OAuth user

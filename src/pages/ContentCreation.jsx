@@ -1027,7 +1027,7 @@ Make each description specific, visual, and relevant to the content's main point
             console.log('[IMAGE LOADER] Loading image:', url)
             // Use backend proxy to avoid CORS issues
             const apiBase = import.meta.env.PROD
-                ? 'https://ai-automation-production-c35e.up.railway.app/api'
+                ? 'https://blogapi.scalezix.com/api'
                 : 'http://localhost:3001/api'
             const proxyUrl = `${apiBase}/proxy-image?url=${encodeURIComponent(url)}`
             console.log('[IMAGE LOADER] Using proxy:', proxyUrl)
@@ -1064,7 +1064,7 @@ Make each description specific, visual, and relevant to the content's main point
         try {
             // Use backend proxy to avoid CORS issues
             const apiBase = import.meta.env.PROD
-                ? 'https://ai-automation-production-c35e.up.railway.app/api'
+                ? 'https://blogapi.scalezix.com/api'
                 : 'http://localhost:3001/api'
             const proxyUrl = `${apiBase}/proxy-image?url=${encodeURIComponent(url)}`
 
