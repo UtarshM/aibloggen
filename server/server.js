@@ -1123,63 +1123,54 @@ app.post('/api/content/generate-human', async (req, res) => {
     const tone = config.tone || 'professional';
     const minWords = config.minWords || 3000;
     const numImages = config.numImages || 4;
+    const primaryKeyword = config.primaryKeyword || topic;
+    const secondaryKeywords = config.secondaryKeywords || '';
+    const targetAudience = config.targetAudience || 'general readers';
 
-    // Enhanced prompt with TOPIC-SPECIFIC headings
-    const prompt = `You are an expert content writer. Write a comprehensive, detailed article about "${topic}".
+    // ENHANCED PROFESSIONAL PROMPT - SEO + EEAT + Human-like Content
+    const currentDate = new Date().toISOString().split('T')[0];
+    const prompt = `You are a senior human content writer, SEO strategist, and WordPress editor with 15+ years of real-world experience.
 
-CRITICAL REQUIREMENTS:
-- Write at least ${minWords} words
-- Create 8-10 sections with TOPIC-SPECIFIC headings
-- Each section: 300-400 words with detailed information
-- Tone: ${tone}
+TOPIC: "${topic}"
+PRIMARY KEYWORD: "${primaryKeyword}"
+SECONDARY KEYWORDS: "${secondaryKeywords}"
+TARGET AUDIENCE: "${targetAudience}"
+TONE: ${tone}
+MINIMUM WORDS: ${minWords}
 
-IMPORTANT - HEADINGS MUST BE SPECIFIC TO "${topic}":
-DO NOT use generic headings like "Introduction", "Background", "Benefits", "How It Works", "Best Practices", "Common Mistakes", "Future Trends", "Conclusion".
+CRITICAL GOALS (NON-NEGOTIABLE):
+- Content must sound 100% human-written and pass AI detection tools
+- Use natural thinking patterns, subtle imperfections, varied sentence rhythm, and organic flow
+- Avoid robotic phrasing, generic AI patterns, filler phrases, or overused marketing words
+- Write like a knowledgeable human explaining things naturally to another human
+- Maintain factual accuracy and logical depth
 
-INSTEAD, create headings that are UNIQUE and SPECIFIC to "${topic}".
+CONTENT STRUCTURE (WORDPRESS READY):
+1. SEO-optimized Title (H1) - Include primary keyword naturally
+2. Short engaging introduction (human, conversational) - Use primary keyword in first paragraph
+3. Proper H2 and H3 hierarchy with TOPIC-SPECIFIC headings (NOT generic like "Introduction", "Benefits", "Conclusion")
+4. Well-balanced paragraphs (2-4 lines each)
+5. Bullet points or numbered lists ONLY where they add clarity
+6. Strong conclusion with a natural wrap-up (not salesy)
 
-EXAMPLES OF GOOD TOPIC-SPECIFIC HEADINGS:
+HEADINGS MUST BE SPECIFIC TO "${topic}":
+Create headings that are UNIQUE and SPECIFIC, not generic.
+Example for "iPhone 15": "A17 Pro Chip: Performance That Redefines Mobile" NOT "Key Features"
+Example for "Python": "Why Python Dominates Modern Development" NOT "Introduction to Python"
 
-If topic is "My Hero Academia":
-- The World of Quirks: Understanding Superpowers in MHA
-- Izuku Midoriya: From Quirkless to Symbol of Peace
-- Class 1-A: Meet the Future Heroes
-- The League of Villains: Threats to Hero Society
-- Best Story Arcs That Define My Hero Academia
-- Top 10 Most Powerful Quirks Ranked
-- UA High School: Training the Next Generation
-- All Might vs All For One: The Ultimate Showdown
+SEO OPTIMIZATION REQUIREMENTS:
+- Use primary keyword "${primaryKeyword}" in: Title, First paragraph, At least one H2
+- Distribute semantic keywords and related entities naturally
+- No keyword stuffing - write for humans first, search engines second
+- Optimize for search intent
 
-If topic is "iPhone 15":
-- What's New in iPhone 15: Complete Feature Breakdown
-- A17 Pro Chip: Performance That Redefines Mobile
-- Camera System: 48MP Main Sensor Deep Dive
-- Dynamic Island: How Apple Reinvented Notifications
-- USB-C Finally Arrives: What It Means for Users
-- Battery Life: Real-World Testing Results
-- iPhone 15 vs iPhone 14: Worth the Upgrade?
-- Best Accessories for Your New iPhone 15
+EEAT REQUIREMENTS:
+- Experience: Include practical insights and real-world explanations
+- Expertise: Use accurate terminology and demonstrate topic depth
+- Authority: Write with confident, structured reasoning
+- Trust: Maintain balanced tone and factual accuracy
 
-If topic is "Python Programming":
-- Why Python Dominates Modern Development
-- Setting Up Your Python Environment Right
-- Variables, Data Types, and Operators Explained
-- Control Flow: If Statements and Loops Mastered
-- Functions and Modules: Writing Reusable Code
-- Object-Oriented Programming in Python
-- Working with Files and Data Processing
-- Popular Python Libraries Every Developer Needs
-
-NOW CREATE SIMILAR TOPIC-SPECIFIC HEADINGS FOR "${topic}".
-
-CONTENT REQUIREMENTS:
-- Include real facts, statistics, and specific details about ${topic}
-- Add examples, comparisons, and expert insights
-- Use bullet points and numbered lists where appropriate
-- Make content informative, engaging, and valuable
-- Write like a human expert, not AI
-
-HTML FORMAT:
+HTML FORMAT (STRICT):
 - Use <h2> for main section headings (topic-specific!)
 - Use <h3> for subsections
 - Use <p> for paragraphs
@@ -1187,8 +1178,43 @@ HTML FORMAT:
 - Use <ol><li> for numbered lists
 - Use <strong> for emphasis
 
-START WITH A COMPELLING INTRODUCTION (without using "Introduction" as heading).
-Write the complete ${minWords}+ word article now with TOPIC-SPECIFIC headings:`;
+RULES:
+- DO NOT mention AI, prompts, or internal processing
+- DO NOT add disclaimers or meta-commentary
+- No emojis
+- Use active voice predominantly
+- Maintain natural human writing imperfections
+- Output must look like written by a real expert
+
+After the blog content, output this METADATA BLOCK:
+
+---METADATA_START---
+Title: [SEO title]
+Slug: [url-friendly-slug]
+Primary Keyword: ${primaryKeyword}
+Secondary Keywords: [comma separated]
+Meta Description: [150-160 chars, include primary keyword]
+Estimated Word Count: [number]
+Estimated Read Time: [X min read]
+Target Audience: ${targetAudience}
+Date: ${currentDate}
+---METADATA_END---
+
+Then output valid JSON-LD schema:
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "[title]",
+  "description": "[meta description]",
+  "keywords": "[keywords]",
+  "author": {"@type": "Person", "name": "Expert Writer"},
+  "datePublished": "${currentDate}",
+  "dateModified": "${currentDate}"
+}
+</script>
+
+NOW WRITE THE COMPLETE ${minWords}+ WORD ARTICLE about "${topic}":`;
 
     let content = null;
     let apiUsed = '';
