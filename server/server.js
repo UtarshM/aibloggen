@@ -1120,101 +1120,70 @@ app.post('/api/content/generate-human', async (req, res) => {
     }
 
     const topic = config.topic;
-    const tone = config.tone || 'professional';
+    const tone = config.tone || 'conversational';
     const minWords = config.minWords || 3000;
     const numImages = config.numImages || 4;
-    const primaryKeyword = config.primaryKeyword || topic;
-    const secondaryKeywords = config.secondaryKeywords || '';
-    const targetAudience = config.targetAudience || 'general readers';
 
-    // ENHANCED PROFESSIONAL PROMPT - SEO + EEAT + Human-like Content
-    const currentDate = new Date().toISOString().split('T')[0];
-    const prompt = `You are a senior human content writer, SEO strategist, and WordPress editor with 15+ years of real-world experience.
+    // ULTRA HUMAN-LIKE CONTENT PROMPT
+    const prompt = `You're writing a blog post about "${topic}" for a friend who asked you to explain it. Write like you're having a coffee chat - natural, real, and helpful.
 
-TOPIC: "${topic}"
-PRIMARY KEYWORD: "${primaryKeyword}"
-SECONDARY KEYWORDS: "${secondaryKeywords}"
-TARGET AUDIENCE: "${targetAudience}"
-TONE: ${tone}
-MINIMUM WORDS: ${minWords}
+WRITING STYLE - THIS IS CRITICAL:
+- Write like a real person talks, not like a textbook
+- Start sentences with "Look," "Here's the thing," "Honestly," "So," "Now," sometimes
+- Use contractions: "don't" not "do not", "it's" not "it is", "you'll" not "you will"
+- Include personal opinions: "I think," "In my experience," "What I've found is"
+- Add rhetorical questions: "But here's the real question..." "Ever wondered why...?"
+- Vary sentence length dramatically - some short. Some much longer with multiple clauses.
+- Include minor imperfections like starting sentences with "And" or "But"
+- Use casual transitions: "Anyway," "Moving on," "Here's where it gets interesting"
+- Add real-world examples and analogies people can relate to
+- Occasionally use parentheses for side thoughts (like this one)
+- Reference specific things: actual tool names, real companies, concrete numbers
 
-CRITICAL GOALS (NON-NEGOTIABLE):
-- Content must sound 100% human-written and pass AI detection tools
-- Use natural thinking patterns, subtle imperfections, varied sentence rhythm, and organic flow
-- Avoid robotic phrasing, generic AI patterns, filler phrases, or overused marketing words
-- Write like a knowledgeable human explaining things naturally to another human
-- Maintain factual accuracy and logical depth
+ABSOLUTELY AVOID THESE AI PATTERNS:
+- "In today's digital landscape" - NEVER use this
+- "In this comprehensive guide" - sounds robotic
+- "Let's dive in" or "dive deep" - overused
+- "Crucial" "Vital" "Essential" - too formal
+- "Leverage" "Utilize" "Implement" - corporate speak
+- "It's important to note that" - filler
+- "In conclusion" - too obvious
+- Perfect parallel structure in every list
+- Every paragraph being exactly the same length
+- Starting every section the same way
 
-CONTENT STRUCTURE (WORDPRESS READY):
-1. SEO-optimized Title (H1) - Include primary keyword naturally
-2. Short engaging introduction (human, conversational) - Use primary keyword in first paragraph
-3. Proper H2 and H3 hierarchy with TOPIC-SPECIFIC headings (NOT generic like "Introduction", "Benefits", "Conclusion")
-4. Well-balanced paragraphs (2-4 lines each)
-5. Bullet points or numbered lists ONLY where they add clarity
-6. Strong conclusion with a natural wrap-up (not salesy)
+STRUCTURE FOR "${topic}":
+1. Hook them immediately - no boring intros. Start with a story, question, or bold statement
+2. Use H2 headings that sound like something a person would actually say, not textbook chapters
+3. Keep paragraphs short - 2-4 sentences max. White space is your friend
+4. Use bullet points sparingly - only when listing actual items
+5. End with something memorable, not a generic summary
 
-HEADINGS MUST BE SPECIFIC TO "${topic}":
-Create headings that are UNIQUE and SPECIFIC, not generic.
-Example for "iPhone 15": "A17 Pro Chip: Performance That Redefines Mobile" NOT "Key Features"
-Example for "Python": "Why Python Dominates Modern Development" NOT "Introduction to Python"
+BAD HEADING EXAMPLES (don't use):
+- "Understanding the Basics of ${topic}"
+- "Key Benefits of ${topic}"
+- "Best Practices for ${topic}"
+- "Common Challenges and Solutions"
 
-SEO OPTIMIZATION REQUIREMENTS:
-- Use primary keyword "${primaryKeyword}" in: Title, First paragraph, At least one H2
-- Distribute semantic keywords and related entities naturally
-- No keyword stuffing - write for humans first, search engines second
-- Optimize for search intent
+GOOD HEADING EXAMPLES (use this style):
+- "Why Most People Get ${topic} Wrong"
+- "The Part Nobody Talks About"
+- "What Actually Works (And What Doesn't)"
+- "Here's What Changed Everything for Me"
+- "The Mistake That Costs You Money"
 
-EEAT REQUIREMENTS:
-- Experience: Include practical insights and real-world explanations
-- Expertise: Use accurate terminology and demonstrate topic depth
-- Authority: Write with confident, structured reasoning
-- Trust: Maintain balanced tone and factual accuracy
+WORD COUNT: Write at least ${minWords} words. Make every word count.
 
-HTML FORMAT (STRICT):
-- Use <h2> for main section headings (topic-specific!)
-- Use <h3> for subsections
-- Use <p> for paragraphs
-- Use <ul><li> for bullet lists
-- Use <ol><li> for numbered lists
-- Use <strong> for emphasis
+HTML FORMAT:
+<h2> for main sections
+<h3> for subsections  
+<p> for paragraphs
+<ul><li> for lists (use sparingly)
+<strong> for emphasis
 
-RULES:
-- DO NOT mention AI, prompts, or internal processing
-- DO NOT add disclaimers or meta-commentary
-- No emojis
-- Use active voice predominantly
-- Maintain natural human writing imperfections
-- Output must look like written by a real expert
+TONE: ${tone} - but always human and relatable
 
-After the blog content, output this METADATA BLOCK:
-
----METADATA_START---
-Title: [SEO title]
-Slug: [url-friendly-slug]
-Primary Keyword: ${primaryKeyword}
-Secondary Keywords: [comma separated]
-Meta Description: [150-160 chars, include primary keyword]
-Estimated Word Count: [number]
-Estimated Read Time: [X min read]
-Target Audience: ${targetAudience}
-Date: ${currentDate}
----METADATA_END---
-
-Then output valid JSON-LD schema:
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "BlogPosting",
-  "headline": "[title]",
-  "description": "[meta description]",
-  "keywords": "[keywords]",
-  "author": {"@type": "Person", "name": "Expert Writer"},
-  "datePublished": "${currentDate}",
-  "dateModified": "${currentDate}"
-}
-</script>
-
-NOW WRITE THE COMPLETE ${minWords}+ WORD ARTICLE about "${topic}":`;
+Write the complete article now. Start with a compelling opening that hooks the reader immediately - no "Welcome to this guide" nonsense:`;
 
     let content = null;
     let apiUsed = '';
