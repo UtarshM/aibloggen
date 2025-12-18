@@ -1026,9 +1026,8 @@ Make each description specific, visual, and relevant to the content's main point
         try {
             console.log('[IMAGE LOADER] Loading image:', url)
             // Use backend proxy to avoid CORS issues
-            const apiBase = import.meta.env.PROD
-                ? 'https://blogapi.scalezix.com/api'
-                : 'http://localhost:3001/api'
+            const apiBase = import.meta.env.VITE_API_URL ||
+                (import.meta.env.PROD ? 'https://blogapi.scalezix.com/api' : 'http://localhost:3001/api')
             const proxyUrl = `${apiBase}/proxy-image?url=${encodeURIComponent(url)}`
             console.log('[IMAGE LOADER] Using proxy:', proxyUrl)
 
@@ -1063,9 +1062,8 @@ Make each description specific, visual, and relevant to the content's main point
     const loadImageAsArrayBuffer = async (url) => {
         try {
             // Use backend proxy to avoid CORS issues
-            const apiBase = import.meta.env.PROD
-                ? 'https://blogapi.scalezix.com/api'
-                : 'http://localhost:3001/api'
+            const apiBase = import.meta.env.VITE_API_URL ||
+                (import.meta.env.PROD ? 'https://blogapi.scalezix.com/api' : 'http://localhost:3001/api')
             const proxyUrl = `${apiBase}/proxy-image?url=${encodeURIComponent(url)}`
 
             const response = await fetch(proxyUrl)

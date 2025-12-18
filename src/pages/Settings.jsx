@@ -534,9 +534,8 @@ export default function Settings() {
 
                                                     try {
                                                         const token = localStorage.getItem('token');
-                                                        const API_URL = import.meta.env.PROD
-                                                            ? 'https://blogapi.scalezix.com'
-                                                            : 'http://localhost:3001';
+                                                        const API_URL = (import.meta.env.VITE_API_URL ||
+                                                            (import.meta.env.PROD ? 'https://blogapi.scalezix.com/api' : 'http://localhost:3001/api')).replace('/api', '');
 
                                                         // First check if user is Google OAuth user
                                                         const typeResponse = await fetch(`${API_URL}/api/auth/account-type`, {

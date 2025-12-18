@@ -11,10 +11,9 @@ import { User, Mail, Phone, MapPin, Building, Globe, Calendar, Award, TrendingUp
 import { usePlan } from '../context/PlanContext'
 import axios from 'axios'
 
-// Production API URL - AWS EC2 Backend
-const API_URL = import.meta.env.PROD
-    ? 'https://blogapi.scalezix.com/api'
-    : 'http://localhost:3001/api'
+// API URL from environment
+const API_URL = import.meta.env.VITE_API_URL ||
+    (import.meta.env.PROD ? 'https://blogapi.scalezix.com/api' : 'http://localhost:3001/api')
 
 export default function Profile() {
     const navigate = useNavigate()

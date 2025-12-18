@@ -1,212 +1,157 @@
-📄 FILE NAME (IMPORTANT)
+# AWS Production Fix Guide
+**Project:** AI Blog Automation / Scalezix  
+**Purpose:** Final production fixes & handover for AWS deployment  
 
-Use one of these:
+---
 
-AWS_PRODUCTION_FIX_SCALEZIX.md
-AWS_PRODUCTION_FIX_SCALEZIX.txt
+## 1. Objective
+Migrate completely from Railway/Render to AWS EC2 and ensure:
+- Single backend (AWS)
+- Correct CORS
+- Stable MongoDB
+- Working AI content generation
+- Clean frontend-backend integration
 
-📘 DOCUMENT CONTENT (COPY FROM HERE ⬇️)
-PROJECT: Scalezix – AI Blog Automation Backend
-PURPOSE: AWS EC2 Production Deployment Fix
-STACK: Node.js (ES Modules), MongoDB Atlas, PM2, Nginx
-ENV: AWS EC2 Ubuntu
+---
 
-1️⃣ CORE RULES (MUST FOLLOW)
+## 2. Final Architecture
+Frontend (Vite): https://aiblog.scalezix.com  
+Backend (AWS EC2 + PM2): https://blogapi.scalezix.com/api  
+Database: MongoDB Atlas  
 
-Project uses ES Modules
+---
 
-.env must be loaded ONCE and FIRST
+## 3. Backend – server.js (MANDATORY)
 
-MongoDB must connect ONLY after env is loaded
-
-No dotenv usage outside server.js
-
-Backend runs on localhost:3001
-
-PM2 manages the process
-
-2️⃣ ENVIRONMENT VARIABLES (.env)
-
-Location:
-
-/var/www/scalezix-backend/server/.env
-
-
-Required keys:
-
-NODE_ENV=production
-PORT=3001
-
-MONGODB_URI=<mongodb-atlas-uri>
-MONGO_URI=<mongodb-atlas-uri>
-
-EMAIL_ENABLED=false
-JWT_SECRET=<long_random_secret>
-
-
-Rules:
-
-No quotes around values
-
-%40 is valid for @ in Mongo URI
-
-Do NOT hardcode secrets in code
-
-3️⃣ server.js (ENTRY POINT – SINGLE SOURCE OF TRUTH)
-REQUIRED TOP OF FILE
+```js
 import 'dotenv/config';
 
-REQUIRED STRUCTURE
 import express from 'express';
+import cors from 'cors';
 import connectDB from './database.js';
 
 const app = express();
 
+app.use(cors({
+  origin: [
+    'https://aiblog.scalezix.com',
+    'https://blogapi.scalezix.com'
+  ],
+  credentials: true,
+  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization']
+}));
+
+app.options('*', cors());
+app.use(express.json());
+
 connectDB();
 
-app.listen(process.env.PORT, () => {
-  console.log(`Server running on port ${process.env.PORT}`);
+app.listen(process.env.PORT || 3001, () => {
+  console.log('Server running');
 });
+```
 
-RULES
+---
 
-dotenv loaded at line 1
+## 4. Backend – database.js (FINAL)
 
-DB connection explicitly called
-
-No DB logic inside imports
-
-No dotenv import anywhere else
-
-4️⃣ database.js (CRITICAL FILE)
-❌ REMOVE COMPLETELY
-import dotenv from 'dotenv';
-dotenv.config();
-
-✅ CORRECT VERSION
+```js
 import mongoose from 'mongoose';
 
 const connectDB = async () => {
   const uri = process.env.MONGODB_URI || process.env.MONGO_URI;
-
-  if (!uri) {
-    console.error('MongoDB URI missing');
-    return;
-  }
+  if (!uri) return;
 
   try {
-    await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000,
-    });
-    console.log('MongoDB Atlas connected successfully');
-    global.mongoConnected = true;
-  } catch (error) {
-    console.error('MongoDB connection error:', error.message);
-    global.mongoConnected = false;
+    await mongoose.connect(uri);
+    console.log('MongoDB connected');
+  } catch (err) {
+    console.error('MongoDB error', err.message);
   }
 };
 
 export default connectDB;
+```
 
-RULES
+---
 
-No mongoose.connect at top level
+## 5. Backend Environment (.env)
 
-Connection happens only via connectDB()
-
-No dotenv usage here
-
-5️⃣ CRON JOBS (cronService.js)
-REQUIRED SAFETY
-if (!global.mongoConnected) return;
-
-
-Rules:
-
-Cron starts AFTER DB connect
-
-Cron must not crash app if DB is down
-
-No DB queries at import time
-
-6️⃣ EMAIL SERVICE
-
-Current mode:
-
+```
+NODE_ENV=production
+PORT=3001
+MONGODB_URI=...
+MONGO_URI=...
 EMAIL_ENABLED=false
+OPENROUTER_API_KEY=...
+JWT_SECRET=...
+```
 
+---
 
-Rules:
+## 6. Frontend – API Configuration
 
-App must boot even if email not configured
+- Remove ALL hardcoded URLs:
+  - railway.app
+  - onrender.com
 
-No crash on missing credentials
+Use only:
+```js
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+```
 
-Email can be enabled later safely
+---
 
-7️⃣ PM2 CONFIGURATION (AWS)
-START PROCESS
+## 7. Frontend Environment (.env.production)
+
+```
+VITE_API_URL=https://blogapi.scalezix.com/api
+```
+
+---
+
+## 8. Frontend Rebuild (REQUIRED)
+
+```bash
+npm run build
+```
+
+Deploy build output to:
+https://aiblog.scalezix.com
+
+---
+
+## 9. PM2 Commands
+
+```bash
 pm2 start server.js --name scalezix-backend
 pm2 save
+pm2 startup
+```
 
-FULL RESET (IF REQUIRED)
-pm2 stop scalezix-backend
-pm2 delete scalezix-backend
-pm2 start server.js --name scalezix-backend
-pm2 save
+---
 
+## 10. Common Errors & Fixes
 
-Rules:
+### CORS Error
+Cause: frontend using old backend or backend missing origin  
+Fix: rebuild frontend + correct CORS config
 
-No ecosystem files
+### 500 AI Error
+Cause: missing AI API keys  
+Fix: add OPENROUTER_API_KEY or GOOGLE_AI_KEY
 
-No duplicate processes
+---
 
-One instance only
+## 11. Developer Rules
 
-8️⃣ NGINX EXPECTATION (NEXT PHASE)
+- Never hardcode API URLs
+- dotenv only in server.js
+- Always rebuild frontend after env change
+- One backend only (AWS)
 
-Backend listens on localhost:3001
+---
 
-Nginx reverse proxies domain to port 3001
-
-Backend never binds public IP directly
-
-9️⃣ FINAL AWS SANITY CHECK
-
-All must pass:
-
-node server.js
-curl http://localhost:3001/api
-pm2 restart scalezix-backend
-reboot
-pm2 status
-
-
-Expected logs:
-
-MongoDB Atlas connected successfully
-[CRON] Found 0 posts to publish
-
-
-No errors:
-
-uri parameter must be a string
-buffering timed out
-
-✅ FINAL STATUS
-
-When above rules are applied:
-
-Backend is production-stable
-
-MongoDB fully reliable
-
-PM2 restart-safe
-
-AWS-ready
-
-
-
-#AWS_PRODUCTION_FIX_SCALEZIX.md Read this and give me the output
+## 12. Status
+This document represents the **final correct production state**.

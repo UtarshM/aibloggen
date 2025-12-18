@@ -20,10 +20,9 @@ import { useState, useRef, useEffect } from 'react'
 import { usePlan } from '../context/PlanContext'
 import axios from 'axios'
 
-// Production API URL - AWS EC2 Backend
-const API_URL = import.meta.env.PROD
-    ? 'https://blogapi.scalezix.com/api'
-    : 'http://localhost:3001/api'
+// API URL from environment
+const API_URL = import.meta.env.VITE_API_URL ||
+    (import.meta.env.PROD ? 'https://blogapi.scalezix.com/api' : 'http://localhost:3001/api')
 
 // Copyright: Scalezix Venture PVT LTD - All Rights Reserved
 const tools = [

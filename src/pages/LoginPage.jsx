@@ -3,10 +3,9 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 
-// Production API URL - AWS EC2 Backend (HTTPS)
-const API_URL = import.meta.env.PROD
-    ? 'https://blogapi.scalezix.com/api'
-    : 'http://localhost:3001/api';
+// API URL from environment
+const API_URL = import.meta.env.VITE_API_URL ||
+    (import.meta.env.PROD ? 'https://blogapi.scalezix.com/api' : 'http://localhost:3001/api');
 
 export default function LoginPage() {
     const [formData, setFormData] = useState({ email: '', password: '' });

@@ -1,27 +1,15 @@
 import axios from 'axios';
 
-// Production API URL - AWS EC2 Backend (HTTPS)
-const AWS_API_URL = 'https://blogapi.scalezix.com/api';
-
-// Auto-detect API URL based on environment
-const getApiBase = () => {
-  // If VITE_API_URL is set, use it (highest priority)
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
-  }
-  // In production, use AWS backend
-  if (import.meta.env.PROD) {
-    return AWS_API_URL;
-  }
-  // In development only, use localhost
-  return 'http://localhost:3001/api';
-};
-
-const API_BASE = getApiBase();
+// API URL Configuration - Uses VITE_API_URL env variable
+// Fallback to AWS production URL if env not set
+const API_BASE = import.meta.env.VITE_API_URL || 
+  (import.meta.env.PROD ? 'https://blogapi.scalezix.com/api' : 'http://localhost:3001/api');
 
 // Debug: Log API URL in console
-console.log('[API] Environment:', import.meta.env.MODE, 'PROD:', import.meta.env.PROD);
-console.log('[API] Using API URL:', API_BASE);
+console.log('[API] Environment:', import.meta.env.MODE, 'Using:', API_BASE);
+
+// Export for use in other components
+export const getApiUrl = () => API_BASE;
 
 // Create axios instance with default config
 const axiosInstance = axios.create({
