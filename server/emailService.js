@@ -17,7 +17,7 @@ let useBrevo = false;
 console.log('[EMAIL] Checking BREVO_API_KEY:', process.env.BREVO_API_KEY ? 'SET' : 'NOT SET');
 
 if (process.env.BREVO_API_KEY) {
-  // Brevo - Using HTTP API (SMTP is blocked on Railway)
+  // Brevo - Using HTTP API
   useBrevo = true;
   console.log('✅ Email Service: Brevo HTTP API configured');
 } else if (process.env.RESEND_API_KEY) {
@@ -103,7 +103,7 @@ async function sendViaResend(to, subject, html) {
   return response.json();
 }
 
-// Send email via Brevo HTTP API (bypasses SMTP port blocking on Railway)
+// Send email via Brevo HTTP API
 async function sendViaBrevo(to, subject, html, senderName = 'AI Marketing Platform') {
   const senderEmail = process.env.BREVO_EMAIL || 'scalezix@gmail.com';
   
@@ -192,7 +192,7 @@ export async function sendOTPEmail(email, otp, name) {
 
   try {
     if (useBrevo) {
-      // Use Brevo HTTP API (works on Railway - bypasses SMTP port blocking)
+      // Use Brevo HTTP API
       await sendViaBrevo(email, mailOptions.subject, mailOptions.html);
     } else if (useResend) {
       await sendViaResend(email, mailOptions.subject, mailOptions.html);

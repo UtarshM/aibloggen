@@ -1266,7 +1266,7 @@ Write the complete ${minWords}+ word article now with TOPIC-SPECIFIC headings:`;
     // If all APIs fail, return error
     if (!content) {
       return res.status(500).json({ 
-        error: 'AI services unavailable. Please check your API keys (OPENROUTER_API_KEY or GOOGLE_AI_KEY) in Railway.' 
+        error: 'AI services unavailable. Please check your API keys (OPENROUTER_API_KEY or GOOGLE_AI_KEY) in your server .env file.' 
       });
     }
 
@@ -1462,7 +1462,7 @@ app.post('/api/images/search', async (req, res) => {
     // No API keys - return error with instructions
     console.log('[Images API] ⚠️ No image API keys configured');
     return res.status(500).json({ 
-      error: 'Image search requires SERPAPI_KEY. Add it to your Railway environment variables.',
+      error: 'Image search requires SERPAPI_KEY. Add it to your server .env file.',
       images: []
     });
   } catch (error) {

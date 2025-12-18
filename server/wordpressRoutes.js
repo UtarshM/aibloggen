@@ -801,7 +801,7 @@ Write the complete article now with TOPIC-SPECIFIC headings:`;
     }
     
     if (!content) {
-        throw new Error('All AI services failed. Check API keys in Railway environment variables.');
+        throw new Error('All AI services failed. Check API keys in your server .env file.');
     }
     
     // Fetch images using SerpAPI
