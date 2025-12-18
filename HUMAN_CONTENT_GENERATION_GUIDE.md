@@ -68,73 +68,106 @@ This document explains the AI-powered content generation system that produces **
 - **Why:** Reliable backup, good quality
 - **Max Tokens:** 16,000
 
-### Image Service: SerpAPI
-- **Source:** Google Images
-- **Why:** Real, relevant, high-quality images
-- **Fallback:** Picsum placeholder images
+### Image Service: SerpAPI (Recommended)
+- **Source:** Google Images via SerpAPI
+- **Why:** Real, relevant, high-quality images that match your exact topic
+- **Get Key:** https://serpapi.com/manage-api-key
+- **Free Tier:** 100 searches/month
+- **Fallback 1:** Google Custom Search API (if configured)
+- **Fallback 2:** Picsum placeholder images (random, not topic-specific)
 
 ---
 
-## The Human-Like Content Prompt
+## The Human-Like Content Prompt (v2.0)
 
 This is the exact prompt used to generate content that sounds human-written:
 
 ```
-You're writing a blog post about "{topic}" for a friend who asked you to 
-explain it. Write like you're having a coffee chat - natural, real, and helpful.
+Write a blog post about "{topic}".
 
-WRITING STYLE - THIS IS CRITICAL:
-- Write like a real person talks, not like a textbook
-- Start sentences with "Look," "Here's the thing," "Honestly," "So," "Now," sometimes
-- Use contractions: "don't" not "do not", "it's" not "it is", "you'll" not "you will"
-- Include personal opinions: "I think," "In my experience," "What I've found is"
-- Add rhetorical questions: "But here's the real question..." "Ever wondered why...?"
-- Vary sentence length dramatically - some short. Some much longer with multiple clauses.
-- Include minor imperfections like starting sentences with "And" or "But"
-- Use casual transitions: "Anyway," "Moving on," "Here's where it gets interesting"
-- Add real-world examples and analogies people can relate to
-- Occasionally use parentheses for side thoughts (like this one)
-- Reference specific things: actual tool names, real companies, concrete numbers
+CRITICAL RULES - READ CAREFULLY:
 
-ABSOLUTELY AVOID THESE AI PATTERNS:
-- "In today's digital landscape" - NEVER use this
-- "In this comprehensive guide" - sounds robotic
-- "Let's dive in" or "dive deep" - overused
-- "Crucial" "Vital" "Essential" - too formal
-- "Leverage" "Utilize" "Implement" - corporate speak
-- "It's important to note that" - filler
-- "In conclusion" - too obvious
-- Perfect parallel structure in every list
-- Every paragraph being exactly the same length
-- Starting every section the same way
+1. START DIRECTLY WITH CONTENT
+   - Do NOT write "Here is..." or "Here's a comprehensive..." or any intro line
+   - Do NOT write any explanation of what you're about to write
+   - Just start with the actual blog content immediately
+   - First line should be the opening of the article itself
 
-STRUCTURE:
-1. Hook them immediately - no boring intros. Start with a story, question, or bold statement
-2. Use H2 headings that sound like something a person would actually say
-3. Keep paragraphs short - 2-4 sentences max. White space is your friend
-4. Use bullet points sparingly - only when listing actual items
-5. End with something memorable, not a generic summary
+2. NO METADATA OR EXTRA SECTIONS
+   - Do NOT include any "---METADATA---" blocks
+   - Do NOT include JSON-LD or schema markup
+   - Do NOT include word counts or read times
+   - Just write the blog post content, nothing else
 
-BAD HEADING EXAMPLES (don't use):
-- "Understanding the Basics of {topic}"
-- "Key Benefits of {topic}"
-- "Best Practices for {topic}"
-- "Common Challenges and Solutions"
+3. TABLE OF CONTENTS (Required)
+   - After the opening paragraph, add a Table of Contents
+   - Format: <div class="toc"><h3>Table of Contents</h3><ul><li><a href="#section1">Heading 1</a></li>...</ul></div>
+   - Link each item to its corresponding H2 section
 
-GOOD HEADING EXAMPLES (use this style):
-- "Why Most People Get {topic} Wrong"
-- "The Part Nobody Talks About"
-- "What Actually Works (And What Doesn't)"
-- "Here's What Changed Everything for Me"
-- "The Mistake That Costs You Money"
+4. WRITE LIKE A REAL PERSON
+   - Use simple, everyday English words
+   - Write like you're explaining to a friend
+   - Use "you" and "your" to talk directly to reader
+   - Use contractions: "don't", "won't", "it's", "you're", "they're"
+   - Keep sentences short and clear
+   - Mix short sentences with longer ones
+   - Start some sentences with "And", "But", "So", "Now"
+   - Add personal touches: "I've seen", "In my experience", "What works for me"
+   - Ask questions: "Sound familiar?", "Know what I mean?", "Ever noticed that?"
+
+5. WORDS TO NEVER USE (AI giveaways):
+   - "comprehensive" - say "complete" or "full"
+   - "crucial" - say "important" or "key"
+   - "leverage" - say "use"
+   - "utilize" - say "use"
+   - "implement" - say "set up" or "start"
+   - "facilitate" - say "help" or "make easier"
+   - "robust" - say "strong" or "solid"
+   - "seamless" - say "smooth" or "easy"
+   - "cutting-edge" - say "new" or "latest"
+   - "game-changer" - just describe what it does
+   - "dive deep" - say "look at" or "explore"
+   - "landscape" - say "world" or "area"
+   - "realm" - say "area" or "field"
+   - "plethora" - say "many" or "lots of"
+   - "myriad" - say "many"
+   - "delve" - say "look into"
+   - "embark" - say "start"
+   - "foster" - say "build" or "grow"
+   - "Moreover" - say "Also" or "Plus"
+   - "Furthermore" - say "And" or "Also"
+   - "However" - say "But"
+   - "Therefore" - say "So"
+   - "Nevertheless" - say "Still" or "But"
+
+6. STRUCTURE
+   - Opening: Hook the reader with something interesting (not "Welcome to this guide")
+   - Table of Contents: After opening paragraph
+   - Body: Use the provided headings or create natural ones
+   - Each section: 200-400 words with real information
+   - Closing: End naturally, no "In conclusion" or summary lists
 
 HTML FORMAT:
-<h2> for main sections
-<h3> for subsections  
-<p> for paragraphs
-<ul><li> for lists (use sparingly)
-<strong> for emphasis
+- <h2 id="section1"> for main headings (add id for TOC links)
+- <h3> for sub-headings
+- <p> for paragraphs
+- <ul><li> for bullet lists (use sparingly)
+- <strong> for bold text
+- <a href="url"> for links
 ```
+
+### Excel Data Support
+
+The system now supports custom data from Excel files:
+
+| Field | Description | Example |
+|-------|-------------|---------|
+| `headings` | Custom H2/H3 headings | "Why Coffee Matters\nBest Machines\nBuying Guide" |
+| `keywords` | SEO keywords to include | "coffee machine, espresso maker, best 2024" |
+| `references` | URLs to cite | "https://example.com/coffee-guide" |
+| `eeat` | Expertise/Authority info | "Written by certified barista with 10 years experience" |
+| `scheduleDate` | Publish date | "2024-12-25" |
+| `scheduleTime` | Publish time | "09:00" |
 
 ---
 
