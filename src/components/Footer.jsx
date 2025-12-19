@@ -15,7 +15,7 @@ export default function Footer() {
             { name: 'About Us', href: '#' },
             { name: 'Careers', href: '#' },
             { name: 'Blog', href: '#' },
-            { name: 'Press Kit', href: '#' },
+            { name: 'Affiliate Program', href: '/affiliate/apply' },
         ],
         resources: [
             { name: 'Documentation', href: '#' },
