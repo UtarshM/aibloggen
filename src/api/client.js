@@ -512,4 +512,238 @@ export const api = {
     }
     return result;
   },
+
+  // ═══════════════════════════════════════════════════════════════
+  // AFFILIATE SYSTEM API
+  // ═══════════════════════════════════════════════════════════════
+
+  // Affiliate Public Endpoints
+  affiliateApply: async (data) => {
+    const res = await fetch(`${API_BASE}/affiliate/apply`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Failed to submit application');
+    return result;
+  },
+
+  affiliateLogin: async (email, password) => {
+    const res = await fetch(`${API_BASE}/affiliate/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Login failed');
+    return result;
+  },
+
+  affiliateTrackClick: async (slug, page, referrer) => {
+    const res = await fetch(`${API_BASE}/affiliate/track-click`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slug, page, referrer }),
+    });
+    return res.json();
+  },
+
+  // Affiliate Authenticated Endpoints
+  getAffiliateDashboard: async () => {
+    const token = localStorage.getItem('affiliateToken');
+    const res = await fetch(`${API_BASE}/affiliate/dashboard`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Failed to load dashboard');
+    return result;
+  },
+
+  getAffiliateEarnings: async (page = 1, limit = 20) => {
+    const token = localStorage.getItem('affiliateToken');
+    const res = await fetch(`${API_BASE}/affiliate/earnings?page=${page}&limit=${limit}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Failed to load earnings');
+    return result;
+  },
+
+  getAffiliateWithdrawals: async () => {
+    const token = localStorage.getItem('affiliateToken');
+    const res = await fetch(`${API_BASE}/affiliate/withdrawals`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Failed to load withdrawals');
+    return result;
+  },
+
+  affiliateWithdraw: async (data) => {
+    const token = localStorage.getItem('affiliateToken');
+    const res = await fetch(`${API_BASE}/affiliate/withdraw`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(data),
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Failed to submit withdrawal');
+    return result;
+  },
+
+  updateAffiliateProfile: async (data) => {
+    const token = localStorage.getItem('affiliateToken');
+    const res = await fetch(`${API_BASE}/affiliate/profile`, {
+      method: 'PUT',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(data),
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Failed to update profile');
+    return result;
+  },
+
+  changeAffiliatePassword: async (currentPassword, newPassword) => {
+    const token = localStorage.getItem('affiliateToken');
+    const res = await fetch(`${API_BASE}/affiliate/change-password`, {
+      method: 'PUT',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Failed to change password');
+    return result;
+  },
+
+  // Admin Affiliate Endpoints
+  getAdminAffiliates: async (status, page = 1, limit = 20) => {
+    const token = localStorage.getItem('token');
+    const url = status 
+      ? `${API_BASE}/affiliate/admin/list?status=${status}&page=${page}&limit=${limit}`
+      : `${API_BASE}/affiliate/admin/list?page=${page}&limit=${limit}`;
+    const res = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Failed to load affiliates');
+    return result;
+  },
+
+  approveAffiliate: async (id, data) => {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${API_BASE}/affiliate/admin/${id}/approve`, {
+      method: 'PUT',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(data),
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Failed to approve affiliate');
+    return result;
+  },
+
+  rejectAffiliate: async (id, data) => {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${API_BASE}/affiliate/admin/${id}/reject`, {
+      method: 'PUT',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(data),
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Failed to reject affiliate');
+    return result;
+  },
+
+  getAdminWithdrawals: async (status, page = 1, limit = 20) => {
+    const token = localStorage.getItem('token');
+    const url = status 
+      ? `${API_BASE}/affiliate/admin/withdrawals?status=${status}&page=${page}&limit=${limit}`
+      : `${API_BASE}/affiliate/admin/withdrawals?page=${page}&limit=${limit}`;
+    const res = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Failed to load withdrawals');
+    return result;
+  },
+
+  completeWithdrawal: async (id, data) => {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${API_BASE}/affiliate/admin/withdrawal/${id}/complete`, {
+      method: 'PUT',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(data),
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Failed to complete withdrawal');
+    return result;
+  },
+
+  rejectWithdrawal: async (id, data) => {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${API_BASE}/affiliate/admin/withdrawal/${id}/reject`, {
+      method: 'PUT',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(data),
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Failed to reject withdrawal');
+    return result;
+  },
+
+  addAffiliateEarning: async (data) => {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${API_BASE}/affiliate/admin/add-earning`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(data),
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Failed to add earning');
+    return result;
+  },
+
+  getAffiliateStats: async () => {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${API_BASE}/affiliate/admin/stats`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Failed to load stats');
+    return result;
+  },
+
+  getAffiliateDetails: async (id) => {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${API_BASE}/affiliate/admin/${id}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Failed to load affiliate');
+    return result;
+  },
 };

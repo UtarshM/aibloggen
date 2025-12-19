@@ -27,6 +27,10 @@ import Profile from './pages/Profile'
 import Settings from './pages/Settings'
 import Policies from './pages/Policies'
 import OAuthCallback from './pages/OAuthCallback'
+import AffiliateLogin from './pages/AffiliateLogin'
+import AffiliateApply from './pages/AffiliateApply'
+import AffiliateDashboard from './pages/AffiliateDashboard'
+import AffiliateAdmin from './pages/AffiliateAdmin'
 
 // Protected Route Component
 function ProtectedRoute({ children }) {
@@ -51,6 +55,11 @@ function App() {
                         <Route path="/login" element={<LoginPage />} />
                         <Route path="/signup" element={<SignupPage />} />
                         <Route path="/oauth/callback" element={<OAuthCallback />} />
+
+                        {/* Affiliate Routes */}
+                        <Route path="/affiliate/login" element={<AffiliateLogin />} />
+                        <Route path="/affiliate/apply" element={<AffiliateApply />} />
+                        <Route path="/affiliate/dashboard" element={<AffiliateDashboard />} />
 
                         {/* Protected Dashboard Routes */}
                         <Route path="/dashboard" element={
@@ -114,6 +123,11 @@ function App() {
                         <Route path="/policies" element={
                             <ProtectedRoute>
                                 <Layout><Policies /></Layout>
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/tools/affiliate-admin" element={
+                            <ProtectedRoute>
+                                <Layout><AffiliateAdmin /></Layout>
                             </ProtectedRoute>
                         } />
                     </Routes>

@@ -22,6 +22,7 @@ import * as aiServices from './aiServices.js';
 import { analyzeWebsite } from './seoAnalyzer.js';
 import { User, OTP } from './authModels.js';
 import { generateOTP, sendOTPEmail, sendWelcomeEmail, sendReminderEmail } from './emailService.js';
+import affiliateRoutes from './affiliateRoutes.js';
 
 // Created by: Scalezix Venture PVT LTD
 
@@ -2329,11 +2330,15 @@ Return ONLY valid JSON, no other text.`;
   }
 });
 
+// Affiliate Routes
+app.use('/api/affiliate', affiliateRoutes);
+
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
   console.log(`✅ API available at http://localhost:${PORT}/api`);
   console.log(`✅ MongoDB Atlas connected`);
   console.log(`✅ AI Services: Google AI, Llama API, OpenRouter`);
+  console.log(`✅ Affiliate System: Active`);
   console.log(`\n© 2025 Scalezix Venture PVT LTD - All Rights Reserved\n`);
 });
 
