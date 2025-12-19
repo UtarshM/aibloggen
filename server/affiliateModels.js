@@ -34,8 +34,7 @@ const affiliateSchema = new mongoose.Schema({
   // Unique referral slug (used in URL: ?ref=slug)
   slug: {
     type: String,
-    unique: true,
-    required: true
+    unique: true
   },
   
   // Commission settings

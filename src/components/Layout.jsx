@@ -15,7 +15,7 @@
  */
 
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Menu, X, FileText, BarChart3, Search, TrendingUp, UserPlus, Share2, ChevronLeft, ChevronRight, DollarSign, User, Settings, LogOut, HelpCircle, History } from 'lucide-react'
+import { Menu, X, FileText, BarChart3, Search, TrendingUp, UserPlus, Share2, ChevronLeft, ChevronRight, DollarSign, User, Settings, LogOut, HelpCircle, History, Users } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import { usePlan } from '../context/PlanContext'
 import axios from 'axios'
@@ -33,6 +33,7 @@ const tools = [
     { name: 'Campaign Optimization', path: '/tools/campaign-optimization', icon: TrendingUp },
     { name: 'Client Onboarding', path: '/tools/client-onboarding', icon: UserPlus },
     { name: 'Social Media', path: '/tools/social-media', icon: Share2 },
+    { name: 'Affiliate Admin', path: '/tools/affiliate-admin', icon: Users },
     { name: 'Pricing', path: '/pricing', icon: DollarSign },
 ]
 

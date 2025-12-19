@@ -119,10 +119,16 @@ router.post('/apply', async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
     
+    // Generate unique slug from name
+    const baseSlug = name.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 10);
+    const randomSuffix = crypto.randomBytes(4).toString('hex');
+    const slug = `${baseSlug}${randomSuffix}`;
+    
     const affiliate = new Affiliate({
       name,
       email: email.toLowerCase(),
       passwordHash,
+      slug,
       website,
       promotionMethod,
       status: 'pending',
