@@ -22,6 +22,7 @@ export default function AffiliateAdmin() {
     const [selectedAffiliate, setSelectedAffiliate] = useState(null)
     const [showAddEarningModal, setShowAddEarningModal] = useState(false)
     const [earningForm, setEarningForm] = useState({ affiliateId: '', revenueAmount: '', description: '' })
+    const [error, setError] = useState('')
 
     useEffect(() => {
         loadData()
@@ -29,6 +30,7 @@ export default function AffiliateAdmin() {
 
     const loadData = async () => {
         setLoading(true)
+        setError('')
         try {
             if (activeTab === 'overview') {
                 const statsData = await api.getAffiliateStats()
@@ -42,6 +44,7 @@ export default function AffiliateAdmin() {
             }
         } catch (err) {
             console.error(err)
+            setError(err.message || 'Failed to load data. Please try logging out and back in.')
         } finally {
             setLoading(false)
         }
@@ -151,6 +154,18 @@ export default function AffiliateAdmin() {
                 <div className="text-center py-12">
                     <RefreshCw className="animate-spin mx-auto mb-2" size={32} />
                     <p className="text-gray-500">Loading...</p>
+                </div>
+            ) : error ? (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+                    <AlertCircle className="mx-auto mb-2 text-red-500" size={32} />
+                    <p className="text-red-600 font-medium mb-2">{error}</p>
+                    <p className="text-sm text-gray-500 mb-4">This usually means your session expired. Try logging out and back in.</p>
+                    <button
+                        onClick={() => { localStorage.removeItem('token'); window.location.href = '/login'; }}
+                        className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
+                    >
+                        Logout & Login Again
+                    </button>
                 </div>
             ) : (
                 <>

@@ -584,20 +584,24 @@ const authenticateAdmin = async (req, res, next) => {
     const token = authHeader && authHeader.split(' ')[1];
     
     if (!token) {
-      return res.status(401).json({ error: 'Access denied' });
+      console.log('[Affiliate Admin] No token provided');
+      return res.status(401).json({ error: 'Access denied. No token provided.' });
     }
     
     const decoded = jwt.verify(token, JWT_SECRET);
+    console.log('[Affiliate Admin] Token decoded:', decoded);
     
-    // Check if user is admin (you can customize this check)
+    // Check if user has userId (logged in user from main platform)
     if (!decoded.userId) {
+      console.log('[Affiliate Admin] No userId in token');
       return res.status(403).json({ error: 'Admin access required' });
     }
     
     req.adminId = decoded.userId;
     next();
   } catch (error) {
-    res.status(403).json({ error: 'Invalid token' });
+    console.error('[Affiliate Admin] Token error:', error.message);
+    res.status(403).json({ error: 'Invalid token. Please login again.' });
   }
 };
 
