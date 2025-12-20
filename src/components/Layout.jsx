@@ -33,8 +33,12 @@ const tools = [
     { name: 'Campaign Optimization', path: '/tools/campaign-optimization', icon: TrendingUp },
     { name: 'Client Onboarding', path: '/tools/client-onboarding', icon: UserPlus },
     { name: 'Social Media', path: '/tools/social-media', icon: Share2 },
-    { name: 'Affiliate Admin', path: '/tools/affiliate-admin', icon: Users },
     { name: 'Pricing', path: '/pricing', icon: DollarSign },
+]
+
+// Admin-only tools
+const adminTools = [
+    { name: 'Affiliate Admin', path: '/tools/affiliate-admin', icon: Users },
 ]
 
 // Developed by: Scalezix Venture PVT LTD
@@ -49,6 +53,7 @@ export default function Layout({ children }) {
     const [userName, setUserName] = useState('User')
     const [userInitials, setUserInitials] = useState('U')
     const [userProfileImage, setUserProfileImage] = useState(null)
+    const [isAdmin, setIsAdmin] = useState(false)
 
     // Load user data on mount and when profile is updated
     useEffect(() => {
@@ -81,6 +86,7 @@ export default function Layout({ children }) {
                 setUserName(fullName)
                 setUserInitials(`${firstName[0]}${lastName[0] || ''}`.toUpperCase())
                 setUserProfileImage(response.data.profile?.profileImage || null)
+                setIsAdmin(response.data.isAdmin || false)
             }
         } catch (error) {
             console.error('Load user data error:', error)
@@ -141,6 +147,27 @@ export default function Layout({ children }) {
                                     className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-colors ${isActive
                                         ? 'bg-blue-50 text-blue-700'
                                         : 'text-gray-700 hover:bg-gray-100'
+                                        }`}
+                                    title={!sidebarOpen ? tool.name : ''}
+                                >
+                                    <Icon size={20} className="flex-shrink-0" />
+                                    {sidebarOpen && (
+                                        <span className="text-sm font-medium">{tool.name}</span>
+                                    )}
+                                </Link>
+                            )
+                        })}
+                        {/* Admin-only tools */}
+                        {isAdmin && adminTools.map((tool) => {
+                            const Icon = tool.icon
+                            const isActive = location.pathname === tool.path
+                            return (
+                                <Link
+                                    key={tool.path}
+                                    to={tool.path}
+                                    className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-colors ${isActive
+                                        ? 'bg-purple-50 text-purple-700'
+                                        : 'text-purple-600 hover:bg-purple-50'
                                         }`}
                                     title={!sidebarOpen ? tool.name : ''}
                                 >
@@ -287,6 +314,25 @@ export default function Layout({ children }) {
                                     className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-colors ${isActive
                                         ? 'bg-blue-50 text-blue-700'
                                         : 'text-gray-700 hover:bg-gray-100'
+                                        }`}
+                                >
+                                    <Icon size={20} />
+                                    <span className="text-sm font-medium">{tool.name}</span>
+                                </Link>
+                            )
+                        })}
+                        {/* Admin-only tools */}
+                        {isAdmin && adminTools.map((tool) => {
+                            const Icon = tool.icon
+                            const isActive = location.pathname === tool.path
+                            return (
+                                <Link
+                                    key={tool.path}
+                                    to={tool.path}
+                                    onClick={() => setMobileMenuOpen(false)}
+                                    className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-colors ${isActive
+                                        ? 'bg-purple-50 text-purple-700'
+                                        : 'text-purple-600 hover:bg-purple-50'
                                         }`}
                                 >
                                     <Icon size={20} />

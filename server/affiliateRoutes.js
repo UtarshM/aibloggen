@@ -577,7 +577,7 @@ router.put('/change-password', authenticateAffiliate, async (req, res) => {
 // ADMIN ENDPOINTS (requires admin authentication)
 // ═══════════════════════════════════════════════════════════════
 
-// Admin middleware - checks for admin token
+// Admin middleware - checks for admin token AND admin role
 const authenticateAdmin = async (req, res, next) => {
   try {
     const authHeader = req.headers['authorization'];
@@ -597,7 +597,22 @@ const authenticateAdmin = async (req, res, next) => {
       return res.status(403).json({ error: 'Admin access required' });
     }
     
+    // Import User model and check if user is admin
+    const { User } = await import('./authModels.js');
+    const user = await User.findById(decoded.userId);
+    
+    if (!user) {
+      console.log('[Affiliate Admin] User not found');
+      return res.status(403).json({ error: 'User not found' });
+    }
+    
+    if (!user.isAdmin) {
+      console.log('[Affiliate Admin] User is not admin:', user.email);
+      return res.status(403).json({ error: 'Admin access required. You do not have permission to access this page.' });
+    }
+    
     req.adminId = decoded.userId;
+    req.adminUser = user;
     next();
   } catch (error) {
     console.error('[Affiliate Admin] Token error:', error.message);
