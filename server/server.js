@@ -333,7 +333,7 @@ app.get('/api/auth/github/url', (req, res) => {
 // Sign Up - Step 1: Create account and send OTP
 app.post('/api/auth/signup', async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, affiliateRef } = req.body;
 
     // Validation
     if (!name || !email || !password) {
@@ -354,17 +354,43 @@ app.post('/api/auth/signup', async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    // Track affiliate referral
+    let referredByAffiliate = null;
+    if (affiliateRef) {
+      try {
+        const { Affiliate, AffiliateClick } = await import('./affiliateModels.js');
+        const affiliate = await Affiliate.findOne({ slug: affiliateRef, status: 'approved' });
+        if (affiliate) {
+          referredByAffiliate = affiliate._id;
+          // Mark click as converted
+          await AffiliateClick.updateOne(
+            { affiliateId: affiliate._id, converted: false },
+            { $set: { converted: true, convertedAt: new Date() } },
+            { sort: { createdAt: -1 } }
+          );
+          // Increment conversion count
+          affiliate.totalConversions += 1;
+          await affiliate.save();
+          console.log(`[Affiliate] Signup tracked for affiliate: ${affiliate.slug}`);
+        }
+      } catch (affErr) {
+        console.log('[Affiliate] Tracking error:', affErr.message);
+      }
+    }
+
     // Create or update user
     if (existingUser) {
       existingUser.name = name;
       existingUser.password = hashedPassword;
+      if (referredByAffiliate) existingUser.referredBy = referredByAffiliate;
       await existingUser.save();
     } else {
       const newUser = new User({
         name,
         email: email.toLowerCase(),
         password: hashedPassword,
-        isVerified: false
+        isVerified: false,
+        referredBy: referredByAffiliate || undefined
       });
       await newUser.save();
     }

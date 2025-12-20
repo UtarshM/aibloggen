@@ -746,4 +746,29 @@ export const api = {
     if (!res.ok) throw new Error(result.error || 'Failed to load affiliate');
     return result;
   },
+
+  simulatePurchase: async (userEmail, planName, amount) => {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${API_BASE}/affiliate/admin/simulate-purchase`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ userEmail, planName, amount }),
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Failed to simulate purchase');
+    return result;
+  },
+
+  getReferredUsers: async (affiliateId) => {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${API_BASE}/affiliate/admin/referred-users/${affiliateId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Failed to load referred users');
+    return result;
+  },
 };

@@ -1012,4 +1012,118 @@ router.get('/admin/:id', authenticateAdmin, async (req, res) => {
   }
 });
 
+/**
+ * POST /api/affiliate/admin/simulate-purchase
+ * Simulate a purchase for testing (admin only)
+ * This adds commission to the affiliate who referred the user
+ */
+router.post('/admin/simulate-purchase', authenticateAdmin, async (req, res) => {
+  try {
+    const { userEmail, planName, amount } = req.body;
+    
+    if (!userEmail || !amount) {
+      return res.status(400).json({ error: 'userEmail and amount are required' });
+    }
+    
+    // Import User model
+    const { User } = await import('./authModels.js');
+    
+    // Find the user
+    const user = await User.findOne({ email: userEmail.toLowerCase() });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    if (!user.referredBy) {
+      return res.status(400).json({ error: 'This user was not referred by any affiliate' });
+    }
+    
+    // Find the affiliate
+    const affiliate = await Affiliate.findById(user.referredBy);
+    if (!affiliate) {
+      return res.status(404).json({ error: 'Referring affiliate not found' });
+    }
+    
+    if (affiliate.status !== 'approved') {
+      return res.status(400).json({ error: 'Referring affiliate is not approved' });
+    }
+    
+    // Calculate commission (amount is in rupees, convert to paise)
+    const revenueAmount = parseInt(amount) * 100; // Convert to paise
+    const commissionAmount = Math.floor(revenueAmount * (affiliate.commissionPercent / 100));
+    
+    // Create earning record
+    const earning = new InternalEarning({
+      affiliateId: affiliate._id,
+      revenueAmount,
+      commissionAmount,
+      commissionPercent: affiliate.commissionPercent,
+      source: 'subscription',
+      referenceId: user._id.toString(),
+      referenceType: 'user_upgrade',
+      description: `${planName || 'Plan'} subscription by ${user.email}`,
+      status: 'available'
+    });
+    
+    await earning.save();
+    
+    // Update affiliate balances
+    affiliate.totalEarnings += commissionAmount;
+    affiliate.availableBalance += commissionAmount;
+    await affiliate.save();
+    
+    // Log the action
+    await AffiliateAuditLog.create({
+      actorType: 'system',
+      actorId: req.adminId,
+      targetType: 'earning',
+      targetId: earning._id,
+      action: 'commission_earned',
+      details: {
+        userEmail,
+        planName,
+        revenueAmount,
+        commissionAmount,
+        commissionPercent: affiliate.commissionPercent
+      }
+    });
+    
+    console.log(`[Affiliate] Commission added: ₹${commissionAmount/100} to ${affiliate.name} (${affiliate.slug})`);
+    
+    res.json({
+      success: true,
+      message: `Commission of ₹${(commissionAmount/100).toLocaleString()} added to affiliate ${affiliate.name}`,
+      earning: {
+        id: earning._id,
+        revenueAmount: revenueAmount,
+        commissionAmount: commissionAmount,
+        affiliateName: affiliate.name,
+        affiliateSlug: affiliate.slug
+      }
+    });
+  } catch (error) {
+    console.error('Simulate purchase error:', error);
+    res.status(500).json({ error: 'Failed to simulate purchase' });
+  }
+});
+
+/**
+ * GET /api/affiliate/admin/referred-users/:affiliateId
+ * Get users referred by a specific affiliate
+ */
+router.get('/admin/referred-users/:affiliateId', authenticateAdmin, async (req, res) => {
+  try {
+    const { User } = await import('./authModels.js');
+    
+    const users = await User.find({ referredBy: req.params.affiliateId })
+      .select('name email createdAt plan isVerified')
+      .sort({ createdAt: -1 });
+    
+    res.json({ users, count: users.length });
+  } catch (error) {
+    console.error('Get referred users error:', error);
+    res.status(500).json({ error: 'Failed to load referred users' });
+  }
+});
+
 export default router;

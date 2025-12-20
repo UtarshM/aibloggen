@@ -1,12 +1,29 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Footer from '../components/Footer';
+import { api } from '../api/client';
 
 export default function LandingPage() {
     const [scrolled, setScrolled] = useState(false);
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+
+    // Track affiliate referral on page load
+    useEffect(() => {
+        const ref = searchParams.get('ref');
+        if (ref) {
+            // Save referral to localStorage (persists for 30 days worth of sessions)
+            localStorage.setItem('affiliate_ref', ref);
+            localStorage.setItem('affiliate_ref_time', Date.now().toString());
+
+            // Track the click on backend
+            api.affiliateTrackClick(ref, window.location.pathname, document.referrer)
+                .then(() => console.log('[Affiliate] Click tracked for:', ref))
+                .catch(err => console.log('[Affiliate] Track error:', err));
+        }
+    }, [searchParams]);
 
     useEffect(() => {
         const handleScroll = () => {

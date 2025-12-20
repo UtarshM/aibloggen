@@ -77,6 +77,11 @@ const userSchema = new mongoose.Schema({
     imagesGenerated: { type: Number, default: 0 },
     socialPosts: { type: Number, default: 0 },
     lastReset: { type: Date, default: Date.now }
+  },
+  // Affiliate referral tracking
+  referredBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Affiliate'
   }
 });
 

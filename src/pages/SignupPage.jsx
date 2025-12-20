@@ -33,10 +33,14 @@ export default function SignupPage() {
         setError('');
 
         try {
+            // Get affiliate referral from localStorage
+            const affiliateRef = localStorage.getItem('affiliate_ref');
+
             const response = await axios.post(`${API_URL}/auth/signup`, {
                 name: formData.name,
                 email: formData.email,
-                password: formData.password
+                password: formData.password,
+                affiliateRef: affiliateRef || undefined // Send referral if exists
             });
 
             // In production, never show OTP on screen - only show message

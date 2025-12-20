@@ -7,8 +7,7 @@
 import { useState, useEffect } from 'react'
 import {
     Users, DollarSign, TrendingUp, Clock, CheckCircle, XCircle,
-    Eye, RefreshCw, AlertCircle, Search, Filter, ChevronDown,
-    Wallet, ArrowUpRight, Plus
+    Eye, RefreshCw, AlertCircle, Wallet, ArrowUpRight, Plus
 } from 'lucide-react'
 import { api } from '../api/client'
 
@@ -23,6 +22,8 @@ export default function AffiliateAdmin() {
     const [showAddEarningModal, setShowAddEarningModal] = useState(false)
     const [earningForm, setEarningForm] = useState({ affiliateId: '', revenueAmount: '', description: '' })
     const [error, setError] = useState('')
+    const [showSimulatePurchaseModal, setShowSimulatePurchaseModal] = useState(false)
+    const [purchaseForm, setPurchaseForm] = useState({ userEmail: '', planName: 'Premium', amount: '99999' })
 
     useEffect(() => {
         loadData()
@@ -117,6 +118,23 @@ export default function AffiliateAdmin() {
         }
     }
 
+    const handleSimulatePurchase = async (e) => {
+        e.preventDefault()
+        try {
+            const result = await api.simulatePurchase(
+                purchaseForm.userEmail,
+                purchaseForm.planName,
+                purchaseForm.amount
+            )
+            setShowSimulatePurchaseModal(false)
+            setPurchaseForm({ userEmail: '', planName: 'Premium', amount: '99999' })
+            loadData()
+            alert(`✅ ${result.message}`)
+        } catch (err) {
+            alert('❌ ' + err.message)
+        }
+    }
+
 
     return (
         <div className="max-w-7xl mx-auto px-4 py-8">
@@ -126,12 +144,20 @@ export default function AffiliateAdmin() {
                     <h1 className="text-2xl font-bold">Affiliate Management</h1>
                     <p className="text-gray-500">Manage affiliates, earnings, and withdrawals</p>
                 </div>
-                <button
-                    onClick={() => setShowAddEarningModal(true)}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700"
-                >
-                    <Plus size={20} /> Add Earning
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => setShowSimulatePurchaseModal(true)}
+                        className="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-green-700"
+                    >
+                        <DollarSign size={20} /> Test Purchase
+                    </button>
+                    <button
+                        onClick={() => setShowAddEarningModal(true)}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700"
+                    >
+                        <Plus size={20} /> Add Earning
+                    </button>
+                </div>
             </div>
 
             {/* Tabs */}
@@ -401,6 +427,65 @@ export default function AffiliateAdmin() {
                             {selectedAffiliate.website && <div><span className="text-gray-500">Website:</span> <a href={selectedAffiliate.website} target="_blank" className="text-blue-600 hover:underline">{selectedAffiliate.website}</a></div>}
                             {selectedAffiliate.promotionMethod && <div><span className="text-gray-500">Promotion:</span> <span className="font-medium">{selectedAffiliate.promotionMethod}</span></div>}
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Simulate Purchase Modal */}
+            {showSimulatePurchaseModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl max-w-md w-full p-6">
+                        <h3 className="text-xl font-bold mb-4">Test Purchase (Simulate Commission)</h3>
+                        <p className="text-sm text-gray-500 mb-4">
+                            This simulates a user upgrading to a paid plan. The commission will be added to the affiliate who referred this user.
+                        </p>
+                        <form onSubmit={handleSimulatePurchase} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium mb-1">User Email</label>
+                                <input
+                                    type="email"
+                                    value={purchaseForm.userEmail}
+                                    onChange={(e) => setPurchaseForm({ ...purchaseForm, userEmail: e.target.value })}
+                                    required
+                                    className="w-full px-4 py-2 border rounded-lg"
+                                    placeholder="user@example.com"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">Must be a user who signed up via affiliate link</p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Plan Name</label>
+                                <select
+                                    value={purchaseForm.planName}
+                                    onChange={(e) => setPurchaseForm({ ...purchaseForm, planName: e.target.value })}
+                                    className="w-full px-4 py-2 border rounded-lg"
+                                >
+                                    <option value="Premium">Premium (₹999/month)</option>
+                                    <option value="Pro">Pro (₹1,999/month)</option>
+                                    <option value="Enterprise">Enterprise (₹4,999/month)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Amount (₹)</label>
+                                <input
+                                    type="number"
+                                    value={purchaseForm.amount}
+                                    onChange={(e) => setPurchaseForm({ ...purchaseForm, amount: e.target.value })}
+                                    required
+                                    min="1"
+                                    className="w-full px-4 py-2 border rounded-lg"
+                                    placeholder="e.g., 999"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">Commission (20%) = ₹{Math.floor(parseInt(purchaseForm.amount || 0) * 0.2).toLocaleString()}</p>
+                            </div>
+                            <div className="flex gap-3">
+                                <button type="button" onClick={() => setShowSimulatePurchaseModal(false)} className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50">
+                                    Cancel
+                                </button>
+                                <button type="submit" className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+                                    Simulate Purchase
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}
