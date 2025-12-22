@@ -1458,10 +1458,10 @@ Your first sentence should hook the reader immediately.`;
 
     // Try Google AI first (better for long content)
     if (GOOGLE_AI_KEY) {
-      console.log('[Content] Trying Google AI (Gemini 1.5 Flash)...');
+      console.log('[Content] Trying Google AI (Gemini 2.0 Flash)...');
       try {
         const googleResponse = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GOOGLE_AI_KEY}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GOOGLE_AI_KEY}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1469,7 +1469,7 @@ Your first sentence should hook the reader immediately.`;
               contents: [{ parts: [{ text: prompt }] }],
               generationConfig: {
                 temperature: 0.92, // Higher for more creative/human output
-                maxOutputTokens: 65536, // Maximum for long content
+                maxOutputTokens: 8192, // Safe limit for Gemini 2.0
                 topP: 0.95,
                 topK: 40
               }
@@ -1500,7 +1500,7 @@ Your first sentence should hook the reader immediately.`;
           headers: {
             'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
             'Content-Type': 'application/json',
-            'HTTP-Referer': process.env.FRONTEND_URL || 'http://localhost:5173',
+            'HTTP-Referer': process.env.FRONTEND_URL || 'https://aiblog.scalezix.com',
             'X-Title': 'AI Marketing Platform'
           },
           body: JSON.stringify({
@@ -1511,13 +1511,18 @@ Your first sentence should hook the reader immediately.`;
           })
         });
 
-        if (response.ok) {
-          const data = await response.json();
-          if (data.choices?.[0]?.message?.content) {
-            content = data.choices[0].message.content;
-            apiUsed = 'OpenRouter';
-            console.log('[Content] OpenRouter success');
-          }
+        const data = await response.json();
+        console.log('[Content] OpenRouter response status:', response.status);
+        
+        if (!response.ok) {
+          console.log('[Content] OpenRouter error:', JSON.stringify(data).substring(0, 500));
+        }
+        
+        if (data.choices?.[0]?.message?.content) {
+          content = data.choices[0].message.content;
+          apiUsed = 'OpenRouter';
+          console.log('[Content] OpenRouter success');
+        }
         }
       } catch (err) {
         console.log('[Content] OpenRouter error:', err.message);
