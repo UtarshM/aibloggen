@@ -1523,7 +1523,6 @@ Your first sentence should hook the reader immediately.`;
           apiUsed = 'OpenRouter';
           console.log('[Content] OpenRouter success');
         }
-        }
       } catch (err) {
         console.log('[Content] OpenRouter error:', err.message);
       }
