@@ -1,26 +1,28 @@
 /**
  * Content Generation Modal - Advanced Configuration
+ * Professional Journalist Style Content Generation
  * @author Scalezix Venture PVT LTD
  * @copyright 2025 Scalezix Venture PVT LTD. All Rights Reserved.
  */
 
 import { useState } from 'react'
-import { X, FileText, Image, Target, Zap, BookOpen } from 'lucide-react'
+import { X, FileText, Image, Target, Zap, BookOpen, Users, AlertTriangle } from 'lucide-react'
 
 export default function ContentGenerationModal({ isOpen, onClose, onGenerate }) {
     const [formData, setFormData] = useState({
         topic: '',
-        minWords: '5000', // Changed from wordCount to minWords, default 5000
+        minWords: '5000',
         numImages: '4',
-        tone: 'conversational',
-        targetAudience: 'general',
+        tone: 'journalistic',
+        targetAudience: 'professional',
         includeStats: true,
-        // Excel data fields (optional)
+        // Advanced fields
         headings: '',
         keywords: '',
         references: '',
         eeat: ''
     })
+    const [showAdvanced, setShowAdvanced] = useState(false)
 
     if (!isOpen) return null
 
@@ -48,8 +50,8 @@ export default function ContentGenerationModal({ isOpen, onClose, onGenerate }) 
                 <div className="sticky top-0 bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6 rounded-t-2xl">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h2 className="text-2xl font-bold">AI Content Generation</h2>
-                            <p className="text-purple-100 text-sm mt-1">Configure your perfect content</p>
+                            <h2 className="text-2xl font-bold">Human-Style Content Generator</h2>
+                            <p className="text-purple-100 text-sm mt-1">Professional journalist-quality content that bypasses AI detection</p>
                         </div>
                         <button
                             onClick={onClose}
@@ -57,6 +59,22 @@ export default function ContentGenerationModal({ isOpen, onClose, onGenerate }) 
                         >
                             <X size={24} />
                         </button>
+                    </div>
+                </div>
+
+                {/* Info Banner */}
+                <div className="mx-6 mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                    <div className="flex items-start gap-3">
+                        <AlertTriangle className="text-amber-600 flex-shrink-0 mt-0.5" size={20} />
+                        <div className="text-sm text-amber-800">
+                            <p className="font-semibold">What makes this different:</p>
+                            <ul className="mt-1 space-y-1 text-amber-700">
+                                <li>• Writes like a skeptical journalist, not a helpful AI</li>
+                                <li>• Uses burstiness (varied sentence lengths) to avoid detection</li>
+                                <li>• Automatically removes 50+ AI marker words</li>
+                                <li>• Never uses "rule of three" lists</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
 
@@ -72,11 +90,11 @@ export default function ContentGenerationModal({ isOpen, onClose, onGenerate }) 
                             type="text"
                             value={formData.topic}
                             onChange={(e) => handleChange('topic', e.target.value)}
-                            placeholder="e.g., Digital Marketing Strategies"
+                            placeholder="e.g., Best Project Management Tools for Remote Teams 2025"
                             className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-600 focus:outline-none transition-colors"
                             required
                         />
-                        <p className="text-xs text-gray-500 mt-1">What topic would you like to write about?</p>
+                        <p className="text-xs text-gray-500 mt-1">Be specific. "Best X for Y in 2025" works better than just "X"</p>
                     </div>
 
                     {/* Word Count */}
@@ -96,7 +114,7 @@ export default function ContentGenerationModal({ isOpen, onClose, onGenerate }) 
                                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                         }`}
                                 >
-                                    {parseInt(count).toLocaleString()}
+                                    {parseInt(count).toLocaleString()}+
                                 </button>
                             ))}
                         </div>
@@ -109,39 +127,7 @@ export default function ContentGenerationModal({ isOpen, onClose, onGenerate }) 
                             step="500"
                             className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-600 focus:outline-none"
                         />
-                        <p className="text-xs text-gray-500 mt-1">Deep dive articles: 5,000-10,000+ words recommended</p>
-                    </div>
-
-                    {/* Custom Headings (Optional) */}
-                    <div>
-                        <label className="flex items-center gap-2 text-gray-700 font-semibold mb-2">
-                            <FileText size={20} className="text-indigo-600" />
-                            Custom Headings (Optional)
-                        </label>
-                        <textarea
-                            value={formData.headings}
-                            onChange={(e) => handleChange('headings', e.target.value)}
-                            placeholder="Enter headings separated by | or new lines:&#10;Why This Matters | Getting Started | Advanced Tips | Parting Thoughts"
-                            rows={3}
-                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none transition-colors"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">Leave empty to auto-generate headings</p>
-                    </div>
-
-                    {/* Keywords (Optional) */}
-                    <div>
-                        <label className="flex items-center gap-2 text-gray-700 font-semibold mb-2">
-                            <Target size={20} className="text-orange-600" />
-                            SEO Keywords (Optional)
-                        </label>
-                        <input
-                            type="text"
-                            value={formData.keywords}
-                            onChange={(e) => handleChange('keywords', e.target.value)}
-                            placeholder="e.g., digital marketing, SEO tips, content strategy"
-                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-orange-600 focus:outline-none transition-colors"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">Comma-separated keywords to include naturally</p>
+                        <p className="text-xs text-gray-500 mt-1">Deep dive articles: 5,000-10,000+ words recommended for authority</p>
                     </div>
 
                     {/* Number of Images */}
@@ -151,7 +137,7 @@ export default function ContentGenerationModal({ isOpen, onClose, onGenerate }) 
                             Number of Images *
                         </label>
                         <div className="grid grid-cols-5 gap-2">
-                            {['2', '3', '4', '5', '6'].map(num => (
+                            {['2', '4', '5', '6', '8'].map(num => (
                                 <button
                                     key={num}
                                     type="button"
@@ -165,33 +151,33 @@ export default function ContentGenerationModal({ isOpen, onClose, onGenerate }) 
                                 </button>
                             ))}
                         </div>
-                        <p className="text-xs text-gray-500 mt-1">How many images to include in the content</p>
+                        <p className="text-xs text-gray-500 mt-1">Real images from Google, auto-inserted into content</p>
                     </div>
 
                     {/* Tone */}
                     <div>
                         <label className="flex items-center gap-2 text-gray-700 font-semibold mb-2">
                             <Zap size={20} className="text-yellow-600" />
-                            Writing Tone *
+                            Writing Style *
                         </label>
                         <select
                             value={formData.tone}
                             onChange={(e) => handleChange('tone', e.target.value)}
                             className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-yellow-600 focus:outline-none transition-colors"
                         >
-                            <option value="conversational">Conversational (Friendly & Casual)</option>
+                            <option value="journalistic">Journalistic (Skeptical & Direct)</option>
+                            <option value="conversational">Conversational (Friendly but Expert)</option>
                             <option value="professional">Professional (Business & Formal)</option>
-                            <option value="educational">Educational (Informative & Clear)</option>
-                            <option value="persuasive">Persuasive (Convincing & Engaging)</option>
-                            <option value="storytelling">Storytelling (Narrative & Emotional)</option>
+                            <option value="educational">Educational (Teacher-like)</option>
+                            <option value="storytelling">Storytelling (Narrative & Personal)</option>
                         </select>
-                        <p className="text-xs text-gray-500 mt-1">Choose the writing style and tone</p>
+                        <p className="text-xs text-gray-500 mt-1">Journalistic style scores best on AI detection tests</p>
                     </div>
 
                     {/* Target Audience */}
                     <div>
                         <label className="flex items-center gap-2 text-gray-700 font-semibold mb-2">
-                            <Target size={20} className="text-green-600" />
+                            <Users size={20} className="text-green-600" />
                             Target Audience *
                         </label>
                         <select
@@ -199,31 +185,89 @@ export default function ContentGenerationModal({ isOpen, onClose, onGenerate }) 
                             onChange={(e) => handleChange('targetAudience', e.target.value)}
                             className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-green-600 focus:outline-none transition-colors"
                         >
+                            <option value="professional">Professional Peers (Industry Experts)</option>
                             <option value="general">General Audience</option>
                             <option value="beginners">Beginners (No Prior Knowledge)</option>
                             <option value="intermediate">Intermediate (Some Experience)</option>
-                            <option value="experts">Experts (Advanced Knowledge)</option>
-                            <option value="business">Business Professionals</option>
-                            <option value="students">Students & Learners</option>
+                            <option value="business">Business Decision Makers</option>
+                            <option value="technical">Technical Audience (Developers/Engineers)</option>
                         </select>
-                        <p className="text-xs text-gray-500 mt-1">Who is this content for?</p>
+                        <p className="text-xs text-gray-500 mt-1">Professional peers = no basic explanations, more nuance</p>
                     </div>
 
-                    {/* Include Statistics */}
-                    <div>
-                        <label className="flex items-center gap-3">
-                            <input
-                                type="checkbox"
-                                checked={formData.includeStats}
-                                onChange={(e) => handleChange('includeStats', e.target.checked)}
-                                className="w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
-                            />
-                            <span className="text-gray-700 font-medium">
-                                Include Statistics & Data Points
-                            </span>
-                        </label>
-                        <p className="text-xs text-gray-500 mt-1 ml-8">Add relevant statistics and research data to support the content</p>
-                    </div>
+                    {/* Advanced Options Toggle */}
+                    <button
+                        type="button"
+                        onClick={() => setShowAdvanced(!showAdvanced)}
+                        className="w-full py-2 text-purple-600 font-medium hover:bg-purple-50 rounded-lg transition-colors"
+                    >
+                        {showAdvanced ? '▼ Hide Advanced Options' : '▶ Show Advanced Options (Custom Headings, Keywords, E-E-A-T)'}
+                    </button>
+
+                    {/* Advanced Options */}
+                    {showAdvanced && (
+                        <div className="space-y-4 p-4 bg-gray-50 rounded-lg border">
+                            {/* Custom Headings */}
+                            <div>
+                                <label className="block text-gray-700 font-semibold mb-2">
+                                    Custom Headings (Optional)
+                                </label>
+                                <textarea
+                                    value={formData.headings}
+                                    onChange={(e) => handleChange('headings', e.target.value)}
+                                    placeholder="Enter headings separated by | or new lines:&#10;Why This Matters | Getting Started | Advanced Tips | Common Mistakes | Parting Thoughts"
+                                    rows={3}
+                                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-600 focus:outline-none"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">Leave empty to auto-generate. Use 4-5 or 7-8 headings (never 3 or 6)</p>
+                            </div>
+
+                            {/* Keywords */}
+                            <div>
+                                <label className="block text-gray-700 font-semibold mb-2">
+                                    SEO Keywords (Optional)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.keywords}
+                                    onChange={(e) => handleChange('keywords', e.target.value)}
+                                    placeholder="e.g., project management, remote work tools, team collaboration"
+                                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-600 focus:outline-none"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">Comma-separated. Will be woven naturally into content</p>
+                            </div>
+
+                            {/* E-E-A-T */}
+                            <div>
+                                <label className="block text-gray-700 font-semibold mb-2">
+                                    E-E-A-T Authority (Optional)
+                                </label>
+                                <textarea
+                                    value={formData.eeat}
+                                    onChange={(e) => handleChange('eeat', e.target.value)}
+                                    placeholder="e.g., Written by a project manager with 12 years experience at Fortune 500 companies. Tested 47 tools over 6 months."
+                                    rows={2}
+                                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-600 focus:outline-none"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">Expertise signals to include. Specific numbers and dates work best</p>
+                            </div>
+
+                            {/* References */}
+                            <div>
+                                <label className="block text-gray-700 font-semibold mb-2">
+                                    Reference URLs (Optional)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.references}
+                                    onChange={(e) => handleChange('references', e.target.value)}
+                                    placeholder="e.g., https://example.com/study, https://research.com/report"
+                                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-600 focus:outline-none"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">Sources to cite or draw information from</p>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Summary Box */}
                     <div className="bg-gradient-to-br from-purple-50 to-blue-50 p-4 rounded-lg border-2 border-purple-200">
@@ -231,11 +275,12 @@ export default function ContentGenerationModal({ isOpen, onClose, onGenerate }) 
                         <div className="text-sm text-purple-800 space-y-1">
                             <p>• Topic: <span className="font-medium">{formData.topic || 'Not specified'}</span></p>
                             <p>• Length: <span className="font-medium">{parseInt(formData.minWords).toLocaleString()}+ words</span></p>
-                            <p>• Images: <span className="font-medium">{formData.numImages} images</span></p>
-                            <p>• Tone: <span className="font-medium capitalize">{formData.tone}</span></p>
+                            <p>• Images: <span className="font-medium">{formData.numImages} real images</span></p>
+                            <p>• Style: <span className="font-medium capitalize">{formData.tone}</span></p>
                             <p>• Audience: <span className="font-medium capitalize">{formData.targetAudience.replace('-', ' ')}</span></p>
-                            {formData.headings && <p>• Custom Headings: <span className="font-medium">Yes</span></p>}
-                            {formData.keywords && <p>• Keywords: <span className="font-medium">Yes</span></p>}
+                            {formData.headings && <p>• Custom Headings: <span className="font-medium text-green-700">✓ Yes</span></p>}
+                            {formData.keywords && <p>• Keywords: <span className="font-medium text-green-700">✓ Yes</span></p>}
+                            {formData.eeat && <p>• E-E-A-T: <span className="font-medium text-green-700">✓ Yes</span></p>}
                         </div>
                     </div>
 
@@ -253,7 +298,7 @@ export default function ContentGenerationModal({ isOpen, onClose, onGenerate }) 
                             disabled={!formData.topic.trim()}
                             className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-semibold hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
                         >
-                            Generate Content
+                            Generate Human Content
                         </button>
                     </div>
                 </form>

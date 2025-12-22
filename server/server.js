@@ -1135,7 +1135,7 @@ function insertImagesIntoContent(htmlContent, images) {
   return result;
 }
 
-// ULTIMATE HUMAN CONTENT GENERATION - 10,000+ WORDS
+// ULTIMATE HUMAN CONTENT GENERATION - PROFESSIONAL JOURNALIST STYLE
 app.post('/api/content/generate-human', async (req, res) => {
   try {
     console.log('[Content] generate-human endpoint called');
@@ -1147,6 +1147,7 @@ app.post('/api/content/generate-human', async (req, res) => {
     }
 
     const topic = config.topic;
+    const targetKeyword = config.keywords || topic;
     const tone = config.tone || 'conversational';
     // Support both minWords and wordCount for backward compatibility
     const minWords = parseInt(config.minWords) || parseInt(config.wordCount) || 5000;
@@ -1157,15 +1158,67 @@ app.post('/api/content/generate-human', async (req, res) => {
     const keywords = config.keywords || topic;
     const references = config.references || '';
     const eeat = config.eeat || '';
+    const targetAudience = config.targetAudience || 'professional peers';
 
     // Parse headings
     const headings = customHeadings ? customHeadings.split(/[|\n]/).map(h => h.trim()).filter(h => h) : [];
     const headingsList = headings.length > 0 
       ? headings.map((h, i) => `${i + 1}. ${h}`).join('\n')
-      : 'Create 8-10 detailed section headings appropriate for this topic.';
+      : 'Create 8-12 detailed section headings appropriate for this topic. Make them specific and actionable.';
 
-    // THE ULTIMATE HUMAN CONTENT PROMPT
-    const prompt = `You are a professional human ghostwriter with 20 years of experience. Write an extremely detailed, ${minWords}-word blog post about "${topic}".
+    // THE ULTIMATE HUMAN CONTENT PROMPT - PROFESSIONAL JOURNALIST STYLE
+    const prompt = `<system_instructions>
+Act as a high-level technical journalist and field researcher with 20 years of experience. Your voice is defined by skepticism, blunt honesty, and a profound distaste for corporate jargon and "clean" AI-style writing. You do not explain basic concepts; you write for professional peers who value nuance and evidence-based field experience. You never identify as an AI and you do not use the supportive, helpful, or balanced tone common in synthetic outputs.
+
+<mandatory_stylistic_constraints>
+1. ACTIVE VOICE ONLY: Never say "The meeting was canceled." Say "Management canceled the meeting".
+2. DIRECT ADDRESS: Speak directly to the reader using "you" and "your".
+3. NO FLUFF: Avoid marketing language like "cutting-edge" or "unparalleled results." Use plain and simple English.
+4. CONTRACTIONS: Use contractions (don't, it's, can't, won't, you're, they're, I've, I'd) consistently to mirror natural speech.
+5. PUNCTUATION FRICTION: Use em-dashes (—) and ellipses (...) sparingly to create conversational flow. Avoid semicolons entirely.
+6. SENTENCE VARIETY (BURSTINESS): You MUST manually vary sentence length without repeating patterns. Start a paragraph with a 3-word sentence. Follow it with a 45-word complex period with multiple dependent clauses. Then use a 12-word declarative sentence. Use fragments for emphasis.
+7. NO RULE OF THREE: AI lists exactly three items for rhythmic effect. You MUST list two or four items, but NEVER exactly three.
+</mandatory_stylistic_constraints>
+
+<forbidden_vocabulary>
+DO NOT use ANY of these high-frequency AI markers:
+- delve, tapestry, unlock, realm, pivotal, landscape, testament, vibrant, bustling
+- comprehensive, meticulous, foster, integrate, streamline
+- furthermore, moreover, additionally, in conclusion, it is important to note, crucial to understand
+- tapestry of, delve into the intricacies, underscores, embarking, vibrant metropolis
+- navigating the complexities, leverage, utilize, implement, facilitate
+- robust, seamless, cutting-edge, game-changer, optimal, subsequently
+- paramount, plethora, myriad, endeavor, ascertain, commence
+- prior to, in order to, due to the fact that, it goes without saying
+- at the end of the day, when all is said and done, needless to say
+- first and foremost, last but not least, in today's world
+- revolutionize, transform, empower, elevate, enhance
+- synergy, holistic, paradigm, ecosystem, scalable
+</forbidden_vocabulary>
+
+<content_requirements>
+1. EEAT INJECTION: Inject specific, niche "anecdotal data." Describe a specific, fictional but realistic scenario from the winter of 2024. Use sensory details (smell, touch, sight). Reference real companies, real tools, real numbers.
+
+2. ANSWER-FIRST STRUCTURE: Open EVERY section with a direct, concise answer (under 50 words). Then expand with context. Don't build up to the point—start with it.
+
+3. HIGH PERPLEXITY: Use unexpected synonyms and non-standard syntactic arrangements. Avoid the most predictable word choices. If the obvious word is "important," use "non-negotiable" or "make-or-break."
+
+4. OPINION INJECTION: State opinions boldly. "I think X is overrated." "Most experts get this wrong." "Here's what nobody tells you."
+
+5. IMPERFECTION MARKERS: Include natural speech patterns like "Look," "Here's the thing," "I mean," "Honestly," "Real talk."
+</content_requirements>
+</system_instructions>
+
+<context>
+Topic: ${topic}
+Target Keyword: ${targetKeyword}
+Word Count: ${minWords}+ words (this is a DEEP DIVE article)
+Target Audience: ${targetAudience}
+Tone: ${tone} but with journalistic skepticism
+Formatting: Use H1 for title, H2 for main sections, H3 for sub-questions.
+</context>
+
+You are a professional human ghostwriter with 20 years of experience. Write an extremely detailed, ${minWords}-word blog post about "${topic}".
 
 ═══════════════════════════════════════════════════════════════
 STRUCTURE & HEADINGS (USE EXACTLY THESE IN ORDER)
@@ -1178,76 +1231,114 @@ Format sub-headings as: <h3>Sub-heading Text</h3>
 
 After the opening paragraph, add a Table of Contents:
 <div class="toc">
-<h3>What You'll Learn</h3>
+<h3>What's Inside</h3>
 <ul>
 <li><a href="#section1">First Heading</a></li>
 <li><a href="#section2">Second Heading</a></li>
-...
+...continue for all sections...
 </ul>
 </div>
 
 ═══════════════════════════════════════════════════════════════
-KEYWORDS (MUST INCLUDE ALL NATURALLY)
+KEYWORDS TO WEAVE NATURALLY
 ═══════════════════════════════════════════════════════════════
 
 ${keywords}
 
-Weave every keyword into the content naturally. Don't force them.
+Don't force keywords. Let them appear where they make sense.
 
 ═══════════════════════════════════════════════════════════════
-E-E-A-T AUTHORITY
+E-E-A-T AUTHORITY SIGNALS
 ═══════════════════════════════════════════════════════════════
 
-${eeat || 'Write as an industry expert with years of hands-on experience.'}
+${eeat || 'Write as a field researcher who has spent years testing, failing, and learning. Reference specific dates, specific tools, specific outcomes. "In November 2024, I tested X and found Y."'}
 
-Show expertise through personal stories, specific examples, and insider knowledge.
+Include:
+- Specific dates and timeframes
+- Named tools, products, or companies
+- Quantified results ("37% improvement" not "significant improvement")
+- Personal failures and lessons learned
+- Contrarian takes that challenge conventional wisdom
 
 ═══════════════════════════════════════════════════════════════
 REFERENCE MATERIAL
 ═══════════════════════════════════════════════════════════════
 
-${references || 'Use your knowledge to provide accurate, well-researched information.'}
+${references || 'Draw from your expertise. Cite specific studies, tools, or industry reports where relevant.'}
 
 ═══════════════════════════════════════════════════════════════
-HUMAN-WRITING ENGINE (CRITICAL FOR AI DETECTION BYPASS)
+BURSTINESS ENGINE (CRITICAL FOR HUMAN DETECTION)
 ═══════════════════════════════════════════════════════════════
 
-1. BURSTINESS - Vary sentence length dramatically:
-   - Write a long sentence with 25-35 words that flows naturally and covers multiple points.
-   - Then short. Like this.
-   - Then medium length, maybe 15 words or so.
-   - Mix it up constantly. Never let two sentences be the same length.
+Your sentence rhythm MUST follow this pattern throughout:
 
-2. PERSONAL VOICE:
-   - Use "I" constantly: "I've seen this happen...", "In my experience...", "What I tell people is..."
-   - Use "You" to connect: "You've probably noticed...", "Here's what you need to know..."
-   - Share opinions: "Honestly, I think...", "My take on this is..."
-   - Add personality: "Look, here's the deal...", "Can I be real with you?"
+SHORT (3-7 words): "This changes everything."
+LONG (35-50 words): "When I first encountered this problem back in 2023, I spent three weeks testing every solution on the market, burning through my budget, losing sleep, and ultimately discovering that the answer was simpler than anyone in the industry wanted to admit."
+MEDIUM (12-20 words): "The solution wasn't complicated. It just required abandoning what everyone else was doing."
+FRAGMENT: "Counterintuitive? Absolutely."
 
-3. CONTRACTIONS (Always use these):
-   - don't, won't, can't, isn't, aren't, wasn't, weren't
-   - it's, that's, there's, here's, what's
-   - you're, they're, we're, I'm, I've, I'd
-   - couldn't, wouldn't, shouldn't, haven't, hasn't
+Repeat this rhythm variation throughout. Never let two consecutive sentences have similar length.
 
-4. SENTENCE STARTERS (Use these often):
-   - "But here's the thing..."
-   - "And that's exactly why..."
-   - "So what does this mean?"
-   - "Now, I know what you're thinking..."
-   - "Look, I get it."
-   - "Here's what most people miss..."
-   - "The truth is..."
-   - "Honestly?"
+═══════════════════════════════════════════════════════════════
+VOICE MARKERS (USE THROUGHOUT)
+═══════════════════════════════════════════════════════════════
 
-5. CASUAL PHRASES (Sprinkle throughout):
-   - "you know what I mean?"
-   - "here's the deal"
-   - "let me tell you"
-   - "trust me on this"
-   - "I've been there"
-   - "real talk"
-   - "no joke"
+Sentence starters to use:
+- "Look, here's what nobody tells you..."
+- "I've tested this. Multiple times."
+- "The industry gets this wrong."
+- "Real talk:"
+- "Here's the uncomfortable truth..."
+- "Most guides skip this part."
+- "You've probably heard X. It's wrong."
+- "I made this mistake. Cost me Y."
+- "Forget what you've read elsewhere."
+
+Opinion markers:
+- "In my experience..."
+- "I think..."
+- "What I've found is..."
+- "My take:"
+- "Unpopular opinion:"
+
+Hedging (shows human uncertainty):
+- "probably"
+- "might"
+- "seems like"
+- "from what I've seen"
+- "could be"
+
+═══════════════════════════════════════════════════════════════
+SECTION STRUCTURE (EACH H2)
+═══════════════════════════════════════════════════════════════
+
+Each section MUST follow this pattern:
+
+1. ANSWER FIRST (50 words max): State the key point immediately. No buildup.
+
+2. CONTEXT & EVIDENCE (300-500 words): Expand with specifics, data, examples.
+
+3. ANECDOTE (150-250 words): A specific story—yours or observed. Include sensory details. "The office smelled like burnt coffee. My screen showed..."
+
+4. CONTRARIAN TAKE (100-150 words): Challenge conventional wisdom. "Most experts say X. They're missing Y."
+
+5. PRACTICAL APPLICATION (200-300 words): Concrete steps. Not generic advice.
+
+6. COMMON MISTAKES (100-200 words): What people get wrong. Be specific.
+
+Total per section: 900-1,400 words minimum.
+
+═══════════════════════════════════════════════════════════════
+LISTS RULE (CRITICAL - NO RULE OF THREE)
+═══════════════════════════════════════════════════════════════
+
+NEVER list exactly 3 items. AI loves the rule of three.
+
+Always list 2 items, 4 items, 5 items, or 7 items.
+
+Bad: "Three key factors: A, B, and C."
+Good: "Four factors matter here: A, B, C, and D."
+Good: "Two things drive this: A and B."
 
 ═══════════════════════════════════════════════════════════════
 BANNED WORDS - NEVER USE THESE (AI GIVEAWAYS)
@@ -1272,7 +1363,7 @@ BANNED WORDS - NEVER USE THESE (AI GIVEAWAYS)
 ❌ therefore → so, that's why
 ❌ nevertheless → but, still
 ❌ consequently → so, as a result
-❌ paramount → important, key
+❌ paramount → important, key, critical
 ❌ plethora → many, lots of
 ❌ myriad → many, countless
 ❌ embark → start, begin
@@ -1283,6 +1374,16 @@ BANNED WORDS - NEVER USE THESE (AI GIVEAWAYS)
 ❌ prior to → before
 ❌ in order to → to
 ❌ due to the fact that → because
+❌ tapestry → mix, blend
+❌ vibrant → lively, active
+❌ bustling → busy, active
+❌ meticulous → careful, detailed
+❌ streamline → simplify
+❌ synergy → teamwork, combined effort
+❌ holistic → complete, whole
+❌ paradigm → model, approach
+❌ ecosystem → system, environment
+❌ scalable → growable
 
 ═══════════════════════════════════════════════════════════════
 LENGTH REQUIREMENTS (NON-NEGOTIABLE)
@@ -1290,14 +1391,13 @@ LENGTH REQUIREMENTS (NON-NEGOTIABLE)
 
 TOTAL: At least ${minWords} words (this is a DEEP DIVE article)
 
-Each H2 section: 1,000-1,500 words minimum
+Each H2 section: 800-1,200 words minimum
 
 Include in each section:
 - A personal story or example (150-200 words)
 - Detailed explanation with specifics (400-500 words)
 - Practical tips or steps (200-300 words)
-- Common mistakes to avoid (150-200 words)
-- Real-world application (150-200 words)
+- Common mistakes to avoid (100-150 words)
 
 DO NOT SUMMARIZE. Go deep. Explain everything thoroughly.
 
@@ -1305,11 +1405,12 @@ DO NOT SUMMARIZE. Go deep. Explain everything thoroughly.
 ENDING (NO "IN CONCLUSION")
 ═══════════════════════════════════════════════════════════════
 
-End with "Parting Thoughts" or "Final Words"
+End with "Parting Thoughts" or "Final Words" or "Where This Leaves You"
 - Make it personal and memorable
-- Share one last piece of advice
+- Share one last piece of hard-won advice
 - NO bullet point summaries
-- NO "In conclusion" or "To summarize"
+- NO "In conclusion" or "To summarize" or "In summary"
+- NO "I hope this helps" or similar AI pleasantries
 
 ═══════════════════════════════════════════════════════════════
 HTML FORMAT
@@ -1324,11 +1425,31 @@ HTML FORMAT
 <blockquote>Important quote or callout</blockquote>
 
 ═══════════════════════════════════════════════════════════════
+SELF-AUDIT BEFORE SUBMITTING
+═══════════════════════════════════════════════════════════════
+
+Before finalizing, evaluate your draft:
+1. Find sections that feel too "smooth" or predictable
+2. Add friction: a qualifying remark, changed word order, or short staccato sentence
+3. Check for forbidden vocabulary—replace any that slipped through
+4. Verify no section has three-item lists
+5. Confirm sentence length varies dramatically
+
+═══════════════════════════════════════════════════════════════
+FLESCH READING EASE TARGET: ~70
+═══════════════════════════════════════════════════════════════
+
+Use short words. Short sentences mixed with longer ones.
+Avoid jargon unless your audience expects it.
+Write like you're explaining to a smart friend, not a textbook.
+
+═══════════════════════════════════════════════════════════════
 START WRITING NOW
 ═══════════════════════════════════════════════════════════════
 
 Begin directly with an engaging opening paragraph. No "Here is..." or any meta-commentary.
-Just start the article as if you're a human expert sharing your knowledge.`;
+Just start the article as if you're a seasoned journalist sharing hard-won knowledge.
+Your first sentence should hook the reader immediately.`;
 
     let content = null;
     let apiUsed = '';
@@ -1347,7 +1468,7 @@ Just start the article as if you're a human expert sharing your knowledge.`;
             body: JSON.stringify({
               contents: [{ parts: [{ text: prompt }] }],
               generationConfig: {
-                temperature: 0.85,
+                temperature: 0.92, // Higher for more creative/human output
                 maxOutputTokens: 65536, // Maximum for long content
                 topP: 0.95,
                 topK: 40
@@ -1386,7 +1507,7 @@ Just start the article as if you're a human expert sharing your knowledge.`;
             model: 'anthropic/claude-3-haiku',
             messages: [{ role: 'user', content: prompt }],
             max_tokens: 16000,
-            temperature: 0.85
+            temperature: 0.92 // Higher for more human-like output
           })
         });
 
@@ -1410,7 +1531,7 @@ Just start the article as if you're a human expert sharing your knowledge.`;
       });
     }
 
-    // Clean content
+    // Clean content - remove code blocks and meta text
     let cleanContent = content;
     cleanContent = cleanContent.replace(/```html\n?/gi, '');
     cleanContent = cleanContent.replace(/```\n?/gi, '');
@@ -1420,6 +1541,122 @@ Just start the article as if you're a human expert sharing your knowledge.`;
     cleanContent = cleanContent.replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/gi, '');
     cleanContent = cleanContent.replace(/\(?\d+,?\d*\s*words?\)?/gi, '');
     cleanContent = cleanContent.trim();
+
+    // POST-PROCESSING: Remove any remaining forbidden AI words
+    const forbiddenReplacements = {
+      'delve': 'dig into',
+      'delving': 'digging into',
+      'delved': 'dug into',
+      'tapestry': 'mix',
+      'realm': 'area',
+      'realms': 'areas',
+      'landscape': 'scene',
+      'landscapes': 'scenes',
+      'robust': 'solid',
+      'leverage': 'use',
+      'leveraging': 'using',
+      'leveraged': 'used',
+      'comprehensive': 'complete',
+      'seamless': 'smooth',
+      'seamlessly': 'smoothly',
+      'cutting-edge': 'latest',
+      'game-changer': 'big shift',
+      'game-changing': 'significant',
+      'utilize': 'use',
+      'utilizing': 'using',
+      'utilized': 'used',
+      'utilization': 'use',
+      'implement': 'set up',
+      'implementing': 'setting up',
+      'implemented': 'set up',
+      'implementation': 'setup',
+      'facilitate': 'help',
+      'facilitating': 'helping',
+      'facilitated': 'helped',
+      'optimal': 'best',
+      'optimally': 'ideally',
+      'paramount': 'critical',
+      'plethora': 'many',
+      'myriad': 'countless',
+      'furthermore': 'plus',
+      'moreover': 'also',
+      'subsequently': 'then',
+      'nevertheless': 'still',
+      'consequently': 'so',
+      'endeavor': 'effort',
+      'endeavors': 'efforts',
+      'ascertain': 'find out',
+      'commence': 'start',
+      'commencing': 'starting',
+      'commenced': 'started',
+      'prior to': 'before',
+      'in order to': 'to',
+      'due to the fact that': 'because',
+      'at the end of the day': 'ultimately',
+      'it is important to note': 'note that',
+      'it goes without saying': '',
+      'needless to say': '',
+      'first and foremost': 'first',
+      'last but not least': 'finally',
+      'in today\'s world': 'now',
+      'in today\'s digital age': 'today',
+      'vibrant': 'lively',
+      'bustling': 'busy',
+      'meticulous': 'careful',
+      'meticulously': 'carefully',
+      'streamline': 'simplify',
+      'streamlined': 'simplified',
+      'streamlining': 'simplifying',
+      'synergy': 'teamwork',
+      'synergies': 'combined efforts',
+      'holistic': 'complete',
+      'holistically': 'completely',
+      'paradigm': 'model',
+      'paradigms': 'models',
+      'ecosystem': 'system',
+      'ecosystems': 'systems',
+      'scalable': 'growable',
+      'pivotal': 'key',
+      'testament': 'proof',
+      'foster': 'build',
+      'fostering': 'building',
+      'fostered': 'built',
+      'integrate': 'combine',
+      'integrating': 'combining',
+      'integrated': 'combined',
+      'embark': 'start',
+      'embarking': 'starting',
+      'embarked': 'started',
+      'revolutionize': 'change',
+      'revolutionizing': 'changing',
+      'revolutionized': 'changed',
+      'transform': 'change',
+      'transforming': 'changing',
+      'transformed': 'changed',
+      'empower': 'enable',
+      'empowering': 'enabling',
+      'empowered': 'enabled',
+      'elevate': 'raise',
+      'elevating': 'raising',
+      'elevated': 'raised',
+      'enhance': 'improve',
+      'enhancing': 'improving',
+      'enhanced': 'improved'
+    };
+
+    for (const [forbidden, replacement] of Object.entries(forbiddenReplacements)) {
+      const regex = new RegExp(`\\b${forbidden}\\b`, 'gi');
+      cleanContent = cleanContent.replace(regex, replacement);
+    }
+
+    // Remove "In conclusion" type endings
+    cleanContent = cleanContent.replace(/<h2[^>]*>In Conclusion<\/h2>/gi, '<h2 id="final-words">Parting Thoughts</h2>');
+    cleanContent = cleanContent.replace(/<h2[^>]*>Conclusion<\/h2>/gi, '<h2 id="final-words">Parting Thoughts</h2>');
+    cleanContent = cleanContent.replace(/<h2[^>]*>To Summarize<\/h2>/gi, '<h2 id="final-words">Final Words</h2>');
+    cleanContent = cleanContent.replace(/<h2[^>]*>Summary<\/h2>/gi, '<h2 id="final-words">Where This Leaves You</h2>');
+    cleanContent = cleanContent.replace(/In conclusion,?\s*/gi, '');
+    cleanContent = cleanContent.replace(/To summarize,?\s*/gi, '');
+    cleanContent = cleanContent.replace(/In summary,?\s*/gi, '');
 
     // Fetch topic-relevant images
     console.log('[Content] Fetching images for topic:', topic);
