@@ -771,4 +771,19 @@ export const api = {
     if (!res.ok) throw new Error(result.error || 'Failed to load referred users');
     return result;
   },
+
+  // ═══════════════════════════════════════════════════════════════
+  // NEWSLETTER API
+  // ═══════════════════════════════════════════════════════════════
+
+  subscribeNewsletter: async (email) => {
+    const res = await fetch(`${API_BASE}/newsletter/subscribe`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Failed to subscribe');
+    return result;
+  },
 };

@@ -126,8 +126,125 @@ app.get('/api/health', (req, res) => {
     status: 'ok', 
     message: 'Server is running with MongoDB Atlas & AI APIs',
     version: '2.1.0',
-    features: ['delete-account', 'brevo-email', 'social-oauth']
+    features: ['delete-account', 'brevo-email', 'social-oauth', 'newsletter']
   });
+});
+
+// ═══════════════════════════════════════════════════════════════
+// NEWSLETTER ENDPOINTS
+// ═══════════════════════════════════════════════════════════════
+
+// Subscribe to newsletter
+app.post('/api/newsletter/subscribe', async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email || !email.includes('@')) {
+      return res.status(400).json({ error: 'Valid email is required' });
+    }
+    
+    const { NewsletterSubscriber } = await import('./database.js');
+    const { sendNewsletterWelcomeEmail } = await import('./emailService.js');
+    
+    // Check if already subscribed
+    const existing = await NewsletterSubscriber.findOne({ email: email.toLowerCase() });
+    
+    if (existing) {
+      if (existing.status === 'unsubscribed') {
+        // Resubscribe
+        existing.status = 'active';
+        existing.subscribedAt = new Date();
+        existing.unsubscribedAt = null;
+        await existing.save();
+        await sendNewsletterWelcomeEmail(email);
+        return res.json({ success: true, message: 'Welcome back! You\'ve been resubscribed.' });
+      }
+      return res.json({ success: true, message: 'You\'re already subscribed!' });
+    }
+    
+    // Create new subscriber
+    const subscriber = new NewsletterSubscriber({
+      email: email.toLowerCase(),
+      source: 'website'
+    });
+    await subscriber.save();
+    
+    // Send welcome email
+    await sendNewsletterWelcomeEmail(email);
+    
+    console.log(`[Newsletter] New subscriber: ${email}`);
+    res.json({ success: true, message: 'Thanks for subscribing! Check your email for confirmation.' });
+  } catch (error) {
+    console.error('Newsletter subscribe error:', error);
+    res.status(500).json({ error: 'Failed to subscribe. Please try again.' });
+  }
+});
+
+// Unsubscribe from newsletter
+app.get('/api/newsletter/unsubscribe', async (req, res) => {
+  try {
+    const { email } = req.query;
+    
+    if (!email) {
+      return res.status(400).send('Email is required');
+    }
+    
+    const { NewsletterSubscriber } = await import('./database.js');
+    
+    await NewsletterSubscriber.updateOne(
+      { email: email.toLowerCase() },
+      { status: 'unsubscribed', unsubscribedAt: new Date() }
+    );
+    
+    // Return a simple HTML page
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Unsubscribed - Scalezix AI Tool</title>
+        <style>
+          body { font-family: -apple-system, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #f5f5f7; }
+          .container { text-align: center; padding: 40px; background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); max-width: 400px; }
+          h1 { color: #1d1d1f; }
+          p { color: #86868b; }
+          a { color: #667eea; text-decoration: none; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>Unsubscribed ✓</h1>
+          <p>You've been unsubscribed from our newsletter.</p>
+          <p>Changed your mind? <a href="${process.env.FRONTEND_URL || 'https://aiblog.scalezix.com'}">Visit our website</a> to resubscribe.</p>
+        </div>
+      </body>
+      </html>
+    `);
+  } catch (error) {
+    console.error('Newsletter unsubscribe error:', error);
+    res.status(500).send('Failed to unsubscribe');
+  }
+});
+
+// Get all subscribers (admin only)
+app.get('/api/newsletter/subscribers', authenticateToken, async (req, res) => {
+  try {
+    // Check if admin
+    const user = await User.findById(req.user.userId);
+    if (!user?.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    
+    const { NewsletterSubscriber } = await import('./database.js');
+    const subscribers = await NewsletterSubscriber.find({ status: 'active' }).sort({ subscribedAt: -1 });
+    
+    res.json({ 
+      subscribers,
+      count: subscribers.length
+    });
+  } catch (error) {
+    console.error('Get subscribers error:', error);
+    res.status(500).json({ error: 'Failed to get subscribers' });
+  }
 });
 
 // AUTH ENDPOINTS

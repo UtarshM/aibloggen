@@ -1,8 +1,32 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { api } from '../api/client';
 
 export default function Footer() {
     const currentYear = new Date().getFullYear();
+    const [email, setEmail] = useState('');
+    const [subscribeStatus, setSubscribeStatus] = useState({ loading: false, message: '', error: false });
+
+    const handleSubscribe = async (e) => {
+        e.preventDefault();
+        if (!email || !email.includes('@')) {
+            setSubscribeStatus({ loading: false, message: 'Please enter a valid email', error: true });
+            return;
+        }
+
+        setSubscribeStatus({ loading: true, message: '', error: false });
+
+        try {
+            const result = await api.subscribeNewsletter(email);
+            setSubscribeStatus({ loading: false, message: result.message || 'Subscribed successfully!', error: false });
+            setEmail('');
+            // Clear success message after 5 seconds
+            setTimeout(() => setSubscribeStatus({ loading: false, message: '', error: false }), 5000);
+        } catch (error) {
+            setSubscribeStatus({ loading: false, message: error.message || 'Failed to subscribe', error: true });
+        }
+    };
 
     const footerLinks = {
         product: [
@@ -156,20 +180,30 @@ export default function Footer() {
                             <p className="text-gray-400 mb-6">
                                 Get the latest AI marketing tips and updates delivered to your inbox.
                             </p>
-                            <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+                            <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
                                 <input
                                     type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
                                     placeholder="Enter your email"
                                     className="flex-1 px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all duration-300 text-white placeholder-gray-500"
+                                    disabled={subscribeStatus.loading}
                                 />
                                 <motion.button
+                                    type="submit"
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
-                                    className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                                    disabled={subscribeStatus.loading}
+                                    className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
                                 >
-                                    Subscribe
+                                    {subscribeStatus.loading ? 'Subscribing...' : 'Subscribe'}
                                 </motion.button>
-                            </div>
+                            </form>
+                            {subscribeStatus.message && (
+                                <p className={`mt-3 text-sm ${subscribeStatus.error ? 'text-red-400' : 'text-green-400'}`}>
+                                    {subscribeStatus.message}
+                                </p>
+                            )}
                         </div>
                     </motion.div>
 

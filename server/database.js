@@ -106,6 +106,28 @@ const seoAnalysisSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
+// Newsletter Subscriber Schema
+const newsletterSubscriberSchema = new mongoose.Schema({
+  email: { 
+    type: String, 
+    required: true, 
+    unique: true,
+    lowercase: true,
+    trim: true
+  },
+  status: {
+    type: String,
+    enum: ['active', 'unsubscribed'],
+    default: 'active'
+  },
+  source: {
+    type: String,
+    default: 'website' // website, signup, manual
+  },
+  subscribedAt: { type: Date, default: Date.now },
+  unsubscribedAt: Date
+});
+
 export const Lead = mongoose.model('Lead', leadSchema);
 export const Content = mongoose.model('Content', contentSchema);
 export const SocialPost = mongoose.model('SocialPost', socialPostSchema);
@@ -114,5 +136,6 @@ export const Campaign = mongoose.model('Campaign', campaignSchema);
 export const ChatMessage = mongoose.model('ChatMessage', chatMessageSchema);
 export const WhiteLabelConfig = mongoose.model('WhiteLabelConfig', whiteLabelConfigSchema);
 export const SEOAnalysis = mongoose.model('SEOAnalysis', seoAnalysisSchema);
+export const NewsletterSubscriber = mongoose.model('NewsletterSubscriber', newsletterSubscriberSchema);
 
 export default connectDB;

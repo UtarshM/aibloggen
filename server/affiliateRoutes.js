@@ -175,28 +175,20 @@ router.post('/apply', async (req, res) => {
       details: { name, email, website, audienceSize, promotionChannels }
     });
     
-    // Simulate admin notification email
-    console.log(`
-═══════════════════════════════════════════════════════════════
-📧 NEW AFFILIATE APPLICATION - ADMIN NOTIFICATION
-═══════════════════════════════════════════════════════════════
-To: admin@scalezix.com
-Subject: New Affiliate Application - ${name}
-
-A new affiliate application has been submitted:
-
-Name: ${name}
-Email: ${email}
-Website: ${website || 'Not provided'}
-Audience Size: ${audienceSize || 'Not specified'}
-Promotion Channels: ${promotionChannels?.join(', ') || 'Not specified'}
-
-Why they want to join:
-${whyJoin || 'Not provided'}
-
-Review at: https://aiblog.scalezix.com/affiliate-admin
-═══════════════════════════════════════════════════════════════
-    `);
+    // Send emails
+    try {
+      const { sendAffiliateApplicationReceivedEmail, notifyAdminNewAffiliateApplication } = await import('./emailService.js');
+      
+      // Send confirmation to applicant
+      await sendAffiliateApplicationReceivedEmail(email, name);
+      console.log(`[Affiliate] Application received email sent to ${email}`);
+      
+      // Notify admin
+      await notifyAdminNewAffiliateApplication(affiliate);
+      console.log(`[Affiliate] Admin notified of new application`);
+    } catch (emailErr) {
+      console.error('[Affiliate] Email error:', emailErr.message);
+    }
     
     res.json({
       success: true,
@@ -554,6 +546,21 @@ router.post('/withdraw', authenticateAffiliate, async (req, res) => {
       }
     });
     
+    // Send withdrawal request emails
+    try {
+      const { sendAffiliateWithdrawalRequestedEmail, notifyAdminWithdrawalRequest } = await import('./emailService.js');
+      
+      // Send confirmation to affiliate
+      await sendAffiliateWithdrawalRequestedEmail(affiliate.email, affiliate.name, withdrawAmount, paymentMethod);
+      console.log(`[Affiliate] Withdrawal request email sent to ${affiliate.email}`);
+      
+      // Notify admin
+      await notifyAdminWithdrawalRequest(affiliate, withdrawal);
+      console.log(`[Affiliate] Admin notified of withdrawal request`);
+    } catch (emailErr) {
+      console.error('[Affiliate] Email error:', emailErr.message);
+    }
+    
     res.json({
       success: true,
       message: 'Withdrawal request submitted successfully! We will process it within 3-5 business days.',
@@ -749,6 +756,15 @@ router.put('/admin/:id/approve', authenticateAdmin, async (req, res) => {
       details: { commissionPercent: affiliate.commissionPercent, adminNotes }
     });
     
+    // Send approval email
+    try {
+      const { sendAffiliateApprovedEmail } = await import('./emailService.js');
+      await sendAffiliateApprovedEmail(affiliate.email, affiliate.name, affiliate.slug, affiliate.commissionPercent);
+      console.log(`[Affiliate] Approval email sent to ${affiliate.email}`);
+    } catch (emailErr) {
+      console.error('[Affiliate] Failed to send approval email:', emailErr.message);
+    }
+    
     res.json({ success: true, message: 'Affiliate approved successfully', affiliate });
   } catch (error) {
     console.error('Approve error:', error);
@@ -771,6 +787,7 @@ router.put('/admin/:id/reject', authenticateAdmin, async (req, res) => {
     
     affiliate.status = 'rejected';
     affiliate.rejectedAt = new Date();
+    affiliate.rejectionReason = reason;
     if (adminNotes) affiliate.adminNotes = adminNotes;
     
     await affiliate.save();
@@ -783,6 +800,15 @@ router.put('/admin/:id/reject', authenticateAdmin, async (req, res) => {
       action: 'affiliate_rejected',
       details: { reason, adminNotes }
     });
+    
+    // Send rejection email
+    try {
+      const { sendAffiliateRejectedEmail } = await import('./emailService.js');
+      await sendAffiliateRejectedEmail(affiliate.email, affiliate.name, reason);
+      console.log(`[Affiliate] Rejection email sent to ${affiliate.email}`);
+    } catch (emailErr) {
+      console.error('[Affiliate] Failed to send rejection email:', emailErr.message);
+    }
     
     res.json({ success: true, message: 'Affiliate rejected', affiliate });
   } catch (error) {
@@ -819,27 +845,14 @@ router.put('/admin/:id/ban', authenticateAdmin, async (req, res) => {
       details: { reason, adminNotes }
     });
     
-    // Simulate ban notification email
-    console.log(`
-═══════════════════════════════════════════════════════════════
-📧 AFFILIATE BANNED - EMAIL NOTIFICATION
-═══════════════════════════════════════════════════════════════
-To: ${affiliate.email}
-Subject: Your Affiliate Account Has Been Banned
-
-Dear ${affiliate.name},
-
-Your affiliate account has been permanently banned from the Scalezix Affiliate Program.
-
-${reason ? `Reason: ${reason}` : ''}
-
-This decision is final. Any pending commissions have been forfeited.
-
-If you believe this was done in error, contact support@scalezix.com.
-
-Scalezix Team
-═══════════════════════════════════════════════════════════════
-    `);
+    // Send ban notification email
+    try {
+      const { sendAffiliateBannedEmail } = await import('./emailService.js');
+      await sendAffiliateBannedEmail(affiliate.email, affiliate.name, reason);
+      console.log(`[Affiliate] Ban email sent to ${affiliate.email}`);
+    } catch (emailErr) {
+      console.error('[Affiliate] Failed to send ban email:', emailErr.message);
+    }
     
     res.json({ success: true, message: 'Affiliate banned', affiliate });
   } catch (error) {
@@ -874,6 +887,15 @@ router.put('/admin/:id/suspend', authenticateAdmin, async (req, res) => {
       action: 'affiliate_suspended',
       details: { reason, adminNotes }
     });
+    
+    // Send suspension notification email
+    try {
+      const { sendAffiliateSuspendedEmail } = await import('./emailService.js');
+      await sendAffiliateSuspendedEmail(affiliate.email, affiliate.name, reason);
+      console.log(`[Affiliate] Suspension email sent to ${affiliate.email}`);
+    } catch (emailErr) {
+      console.error('[Affiliate] Failed to send suspension email:', emailErr.message);
+    }
     
     res.json({ success: true, message: 'Affiliate suspended', affiliate });
   } catch (error) {
@@ -1010,6 +1032,15 @@ router.put('/admin/withdrawal/:id/complete', authenticateAdmin, async (req, res)
       newState: { pendingBalance: affiliate.pendingBalance, withdrawnBalance: affiliate.withdrawnBalance }
     });
     
+    // Send withdrawal completed email
+    try {
+      const { sendAffiliateWithdrawalCompletedEmail } = await import('./emailService.js');
+      await sendAffiliateWithdrawalCompletedEmail(affiliate.email, affiliate.name, withdrawal.amount, transactionId);
+      console.log(`[Affiliate] Withdrawal completed email sent to ${affiliate.email}`);
+    } catch (emailErr) {
+      console.error('[Affiliate] Failed to send withdrawal completed email:', emailErr.message);
+    }
+    
     res.json({ success: true, message: 'Withdrawal completed successfully', withdrawal });
   } catch (error) {
     console.error('Complete withdrawal error:', error);
@@ -1068,6 +1099,15 @@ router.put('/admin/withdrawal/:id/reject', authenticateAdmin, async (req, res) =
       previousState,
       newState: { availableBalance: affiliate.availableBalance, pendingBalance: affiliate.pendingBalance }
     });
+    
+    // Send withdrawal rejected email
+    try {
+      const { sendAffiliateWithdrawalRejectedEmail } = await import('./emailService.js');
+      await sendAffiliateWithdrawalRejectedEmail(affiliate.email, affiliate.name, withdrawal.amount, reason);
+      console.log(`[Affiliate] Withdrawal rejected email sent to ${affiliate.email}`);
+    } catch (emailErr) {
+      console.error('[Affiliate] Failed to send withdrawal rejected email:', emailErr.message);
+    }
     
     res.json({ success: true, message: 'Withdrawal rejected and funds returned', withdrawal });
   } catch (error) {
