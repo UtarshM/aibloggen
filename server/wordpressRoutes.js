@@ -700,90 +700,220 @@ async function processBulkImport(jobId, site, posts) {
     }
 }
 
-// Generate content using JavaScript (no Python dependency)
+// FORBIDDEN AI WORD REPLACEMENTS - Critical for human detection
+const FORBIDDEN_REPLACEMENTS = {
+    'delve': 'dig into', 'delving': 'digging into', 'delved': 'dug into',
+    'tapestry': 'mix', 'realm': 'area', 'realms': 'areas',
+    'landscape': 'scene', 'landscapes': 'scenes', 'robust': 'solid',
+    'leverage': 'use', 'leveraging': 'using', 'leveraged': 'used',
+    'comprehensive': 'complete', 'seamless': 'smooth', 'seamlessly': 'smoothly',
+    'cutting-edge': 'latest', 'game-changer': 'big shift', 'game-changing': 'significant',
+    'utilize': 'use', 'utilizing': 'using', 'utilized': 'used', 'utilization': 'use',
+    'implement': 'set up', 'implementing': 'setting up', 'implemented': 'set up',
+    'facilitate': 'help', 'facilitating': 'helping', 'facilitated': 'helped',
+    'optimal': 'best', 'optimally': 'ideally', 'paramount': 'critical',
+    'plethora': 'many', 'myriad': 'countless', 'furthermore': 'plus',
+    'moreover': 'also', 'subsequently': 'then', 'nevertheless': 'still',
+    'consequently': 'so', 'endeavor': 'effort', 'endeavors': 'efforts',
+    'ascertain': 'find out', 'commence': 'start', 'commencing': 'starting',
+    'prior to': 'before', 'in order to': 'to', 'due to the fact that': 'because',
+    'at the end of the day': 'ultimately', 'it is important to note': 'note that',
+    'it goes without saying': '', 'needless to say': '', 'first and foremost': 'first',
+    'last but not least': 'finally', "in today's world": 'now', "in today's digital age": 'today',
+    'vibrant': 'lively', 'bustling': 'busy', 'meticulous': 'careful',
+    'meticulously': 'carefully', 'streamline': 'simplify', 'streamlined': 'simplified',
+    'synergy': 'teamwork', 'synergies': 'combined efforts', 'holistic': 'complete',
+    'paradigm': 'model', 'paradigms': 'models', 'ecosystem': 'system',
+    'ecosystems': 'systems', 'scalable': 'growable', 'pivotal': 'key',
+    'testament': 'proof', 'foster': 'build', 'fostering': 'building',
+    'integrate': 'combine', 'integrating': 'combining', 'integrated': 'combined',
+    'embark': 'start', 'embarking': 'starting', 'embarked': 'started',
+    'revolutionize': 'change', 'revolutionizing': 'changing', 'revolutionized': 'changed',
+    'transform': 'change', 'transforming': 'changing', 'transformed': 'changed',
+    'empower': 'enable', 'empowering': 'enabling', 'empowered': 'enabled',
+    'elevate': 'raise', 'elevating': 'raising', 'elevated': 'raised',
+    'enhance': 'improve', 'enhancing': 'improving', 'enhanced': 'improved'
+};
+
+// Clean forbidden AI words from content
+function cleanForbiddenWords(content) {
+    let cleaned = content;
+    for (const [forbidden, replacement] of Object.entries(FORBIDDEN_REPLACEMENTS)) {
+        const regex = new RegExp(`\\b${forbidden}\\b`, 'gi');
+        cleaned = cleaned.replace(regex, replacement);
+    }
+    // Remove "In conclusion" type endings
+    cleaned = cleaned.replace(/<h2[^>]*>In Conclusion<\/h2>/gi, '<h2 id="final-words">Parting Thoughts</h2>');
+    cleaned = cleaned.replace(/<h2[^>]*>Conclusion<\/h2>/gi, '<h2 id="final-words">Parting Thoughts</h2>');
+    cleaned = cleaned.replace(/In conclusion,?\s*/gi, '');
+    cleaned = cleaned.replace(/To summarize,?\s*/gi, '');
+    cleaned = cleaned.replace(/In summary,?\s*/gi, '');
+    return cleaned;
+}
+
+// Generate HUMAN content using JOURNALIST-STYLE prompt
 async function generateContentForTitle(title, excelRow = {}) {
-    console.log(`[Bulk Content] Generating content for: "${title}"`);
+    console.log(`[Bulk Content] Generating HUMAN content for: "${title}"`);
     
     const GOOGLE_AI_KEY = process.env.GOOGLE_AI_KEY;
     const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
     const SERPAPI_KEY = process.env.SERPAPI_KEY;
     
-    // Build the prompt with topic-specific headings
-    const prompt = `You are an expert content writer. Write a comprehensive, detailed article about "${title}".
+    // Extract Excel data
+    const hTags = excelRow.hTags || excelRow['H-Tags'] || excelRow['Headings'] || '';
+    const keywords = excelRow.keywords || excelRow['Keywords'] || title;
+    const references = excelRow.references || excelRow['References'] || '';
+    const eeat = excelRow.eeat || excelRow['EEAT'] || '';
+    
+    // Parse headings
+    const headings = hTags ? hTags.split(/[|\n]/).map(h => h.trim()).filter(h => h) : [];
+    const headingsList = headings.length > 0 
+        ? headings.map((h, i) => `${i + 1}. ${h}`).join('\n')
+        : 'Create 8-12 detailed section headings appropriate for this topic. Make them specific and actionable.';
 
-CRITICAL REQUIREMENTS:
-- Write at least 1500 words
-- Create 6-8 sections with TOPIC-SPECIFIC headings
-- Each section: 200-300 words with detailed information
+    // THE ULTIMATE HUMAN CONTENT PROMPT - PROFESSIONAL JOURNALIST STYLE
+    const prompt = `<system_instructions>
+Act as a high-level technical journalist and field researcher with 20 years of experience. Your voice is defined by skepticism, blunt honesty, and a profound distaste for corporate jargon and "clean" AI-style writing. You do not explain basic concepts; you write for professional peers who value nuance and evidence-based field experience. You never identify as an AI and you do not use the supportive, helpful, or balanced tone common in synthetic outputs.
 
-IMPORTANT - HEADINGS MUST BE SPECIFIC TO "${title}":
-DO NOT use generic headings like "Introduction", "Background", "Benefits", "How It Works".
-INSTEAD, create headings that are UNIQUE and SPECIFIC to "${title}".
+<mandatory_stylistic_constraints>
+1. ACTIVE VOICE ONLY: Never say "The meeting was canceled." Say "Management canceled the meeting".
+2. DIRECT ADDRESS: Speak directly to the reader using "you" and "your".
+3. NO FLUFF: Avoid marketing language like "cutting-edge" or "unparalleled results." Use plain and simple English.
+4. CONTRACTIONS: Use contractions (don't, it's, can't, won't, you're, they're, I've, I'd) consistently to mirror natural speech.
+5. PUNCTUATION FRICTION: Use em-dashes (—) and ellipses (...) sparingly to create conversational flow. Avoid semicolons entirely.
+6. SENTENCE VARIETY (BURSTINESS): You MUST manually vary sentence length without repeating patterns. Start a paragraph with a 3-word sentence. Follow it with a 45-word complex period with multiple dependent clauses. Then use a 12-word declarative sentence. Use fragments for emphasis.
+7. NO RULE OF THREE: AI lists exactly three items for rhythmic effect. You MUST list two or four items, but NEVER exactly three.
+</mandatory_stylistic_constraints>
 
-CONTENT REQUIREMENTS:
-- Include real facts, statistics, and specific details about ${title}
-- Add examples, comparisons, and expert insights
-- Use bullet points and numbered lists where appropriate
-- Make content informative, engaging, and valuable
-- Write like a human expert, not AI
+<forbidden_vocabulary>
+DO NOT use ANY of these high-frequency AI markers:
+delve, tapestry, unlock, realm, pivotal, landscape, testament, vibrant, bustling, comprehensive, meticulous, foster, integrate, streamline, furthermore, moreover, additionally, in conclusion, it is important to note, crucial to understand, navigating the complexities, leverage, utilize, implement, facilitate, robust, seamless, cutting-edge, game-changer, optimal, subsequently, paramount, plethora, myriad, endeavor, ascertain, commence, prior to, in order to, due to the fact that, it goes without saying, at the end of the day, when all is said and done, needless to say, first and foremost, last but not least, in today's world, revolutionize, transform, empower, elevate, enhance, synergy, holistic, paradigm, ecosystem, scalable
+</forbidden_vocabulary>
 
-HTML FORMAT:
-- Use <h2> for main section headings (topic-specific!)
-- Use <h3> for subsections
-- Use <p> for paragraphs
-- Use <ul><li> for bullet lists
-- Use <strong> for emphasis
+<content_requirements>
+1. EEAT INJECTION: Inject specific, niche "anecdotal data." Describe a specific, fictional but realistic scenario from the winter of 2024. Use sensory details (smell, touch, sight). Reference real companies, real tools, real numbers.
+2. ANSWER-FIRST STRUCTURE: Open EVERY section with a direct, concise answer (under 50 words). Then expand with context.
+3. HIGH PERPLEXITY: Use unexpected synonyms and non-standard syntactic arrangements. Avoid the most predictable word choices.
+4. OPINION INJECTION: State opinions boldly. "I think X is overrated." "Most experts get this wrong." "Here's what nobody tells you."
+5. IMPERFECTION MARKERS: Include natural speech patterns like "Look," "Here's the thing," "I mean," "Honestly," "Real talk."
+</content_requirements>
+</system_instructions>
 
-Write the complete article now with TOPIC-SPECIFIC headings:`;
+<context>
+Topic: ${title}
+Target Keyword: ${keywords}
+Word Count: 2000+ words (DEEP DIVE article)
+Formatting: Use H1 for title, H2 for main sections, H3 for sub-questions.
+</context>
+
+You are a professional human ghostwriter with 20 years of experience. Write an extremely detailed blog post about "${title}".
+
+═══════════════════════════════════════════════════════════════
+STRUCTURE & HEADINGS
+═══════════════════════════════════════════════════════════════
+
+${headingsList}
+
+Format each main heading as: <h2 id="section1">Heading Text</h2>
+Format sub-headings as: <h3>Sub-heading Text</h3>
+
+═══════════════════════════════════════════════════════════════
+KEYWORDS TO WEAVE NATURALLY
+═══════════════════════════════════════════════════════════════
+
+${keywords}
+
+═══════════════════════════════════════════════════════════════
+E-E-A-T AUTHORITY SIGNALS
+═══════════════════════════════════════════════════════════════
+
+${eeat || 'Write as a field researcher who has spent years testing, failing, and learning. Reference specific dates, specific tools, specific outcomes.'}
+
+═══════════════════════════════════════════════════════════════
+REFERENCE MATERIAL
+═══════════════════════════════════════════════════════════════
+
+${references || 'Draw from your expertise. Cite specific studies, tools, or industry reports where relevant.'}
+
+═══════════════════════════════════════════════════════════════
+BURSTINESS ENGINE (CRITICAL FOR HUMAN DETECTION)
+═══════════════════════════════════════════════════════════════
+
+Your sentence rhythm MUST follow this pattern throughout:
+SHORT (3-7 words): "This changes everything."
+LONG (35-50 words): "When I first encountered this problem back in 2023, I spent three weeks testing every solution on the market, burning through my budget, losing sleep, and ultimately discovering that the answer was simpler than anyone in the industry wanted to admit."
+MEDIUM (12-20 words): "The solution wasn't complicated. It just required abandoning what everyone else was doing."
+FRAGMENT: "Counterintuitive? Absolutely."
+
+═══════════════════════════════════════════════════════════════
+VOICE MARKERS (USE THROUGHOUT)
+═══════════════════════════════════════════════════════════════
+
+Sentence starters to use:
+- "Look, here's what nobody tells you..."
+- "I've tested this. Multiple times."
+- "The industry gets this wrong."
+- "Real talk:"
+- "Here's the uncomfortable truth..."
+- "Most guides skip this part."
+- "You've probably heard X. It's wrong."
+- "I made this mistake. Cost me Y."
+
+Opinion markers: "In my experience...", "I think...", "What I've found is...", "My take:", "Unpopular opinion:"
+Hedging: "probably", "might", "seems like", "from what I've seen", "could be"
+
+═══════════════════════════════════════════════════════════════
+LISTS RULE (CRITICAL - NO RULE OF THREE)
+═══════════════════════════════════════════════════════════════
+
+NEVER list exactly 3 items. AI loves the rule of three.
+Always list 2 items, 4 items, 5 items, or 7 items.
+
+═══════════════════════════════════════════════════════════════
+ENDING (NO "IN CONCLUSION")
+═══════════════════════════════════════════════════════════════
+
+End with "Parting Thoughts" or "Final Words" or "Where This Leaves You"
+- NO "In conclusion" or "To summarize" or "In summary"
+- NO "I hope this helps"
+
+═══════════════════════════════════════════════════════════════
+HTML FORMAT
+═══════════════════════════════════════════════════════════════
+
+<h2 id="section1">Heading</h2>
+<h3>Sub-heading</h3>
+<p>Paragraph text</p>
+<ul><li>List item</li></ul>
+<strong>Bold text</strong>
+<em>Italic text</em>
+
+═══════════════════════════════════════════════════════════════
+START WRITING NOW
+═══════════════════════════════════════════════════════════════
+
+Begin directly with an engaging opening paragraph. No "Here is..." or any meta-commentary.
+Just start the article as if you're a seasoned journalist sharing hard-won knowledge.`;
 
     let content = null;
+    let apiUsed = '';
     
-    // Try OpenRouter first
-    if (OPENROUTER_API_KEY) {
+    // Try Google AI first (Gemini 2.0 Flash)
+    if (GOOGLE_AI_KEY) {
         try {
-            console.log('[Bulk Content] Trying OpenRouter API...');
-            const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-                    'Content-Type': 'application/json',
-                    'HTTP-Referer': process.env.FRONTEND_URL || 'http://localhost:5173',
-                    'X-Title': 'AI Marketing Platform'
-                },
-                body: JSON.stringify({
-                    model: 'anthropic/claude-3-haiku',
-                    messages: [{ role: 'user', content: prompt }],
-                    max_tokens: 8000,
-                    temperature: 0.7
-                })
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                if (data.choices?.[0]?.message?.content) {
-                    content = data.choices[0].message.content;
-                    console.log('[Bulk Content] ✅ OpenRouter success');
-                }
-            }
-        } catch (err) {
-            console.log('[Bulk Content] OpenRouter error:', err.message);
-        }
-    }
-    
-    // Fallback to Google AI
-    if (!content && GOOGLE_AI_KEY) {
-        try {
-            console.log('[Bulk Content] Trying Google AI API...');
+            console.log('[Bulk Content] Trying Google AI (Gemini 2.0 Flash)...');
             const googleResponse = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GOOGLE_AI_KEY}`,
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GOOGLE_AI_KEY}`,
                 {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: [{ parts: [{ text: prompt }] }],
                         generationConfig: {
-                            temperature: 0.7,
-                            maxOutputTokens: 8000
+                            temperature: 0.92, // Higher for more human-like output
+                            maxOutputTokens: 8192,
+                            topP: 0.95,
+                            topK: 40
                         }
                     })
                 }
@@ -793,16 +923,76 @@ Write the complete article now with TOPIC-SPECIFIC headings:`;
             
             if (googleData.candidates?.[0]?.content?.parts?.[0]?.text) {
                 content = googleData.candidates[0].content.parts[0].text;
+                apiUsed = 'Google AI (Gemini 2.0)';
                 console.log('[Bulk Content] ✅ Google AI success');
+            } else {
+                console.log('[Bulk Content] Google AI response:', JSON.stringify(googleData).substring(0, 500));
             }
         } catch (err) {
             console.log('[Bulk Content] Google AI error:', err.message);
         }
     }
     
-    if (!content) {
-        throw new Error('All AI services failed. Check API keys in your server .env file.');
+    // Fallback to OpenRouter with free models
+    if (!content && OPENROUTER_API_KEY) {
+        try {
+            console.log('[Bulk Content] Trying OpenRouter API...');
+            const modelsToTry = [
+                'google/gemini-2.0-flash-exp:free',
+                'meta-llama/llama-3.2-3b-instruct:free',
+                'anthropic/claude-3-haiku'
+            ];
+            
+            for (const model of modelsToTry) {
+                console.log(`[Bulk Content] Trying model: ${model}`);
+                const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+                        'Content-Type': 'application/json',
+                        'HTTP-Referer': process.env.FRONTEND_URL || 'https://aiblog.scalezix.com',
+                        'X-Title': 'AI Marketing Platform - Bulk Generator'
+                    },
+                    body: JSON.stringify({
+                        model: model,
+                        messages: [{ role: 'user', content: prompt }],
+                        max_tokens: 4000,
+                        temperature: 0.92
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.choices?.[0]?.message?.content) {
+                    content = data.choices[0].message.content;
+                    apiUsed = `OpenRouter (${model})`;
+                    console.log(`[Bulk Content] ✅ ${model} success`);
+                    break;
+                } else if (data.error) {
+                    console.log(`[Bulk Content] ${model} error:`, data.error.message?.substring(0, 200));
+                }
+            }
+        } catch (err) {
+            console.log('[Bulk Content] OpenRouter error:', err.message);
+        }
     }
+    
+    if (!content) {
+        throw new Error('All AI services failed. Check API keys (GOOGLE_AI_KEY or OPENROUTER_API_KEY) in your server .env file.');
+    }
+    
+    // Clean content - remove code blocks and meta text
+    content = content.replace(/```html\n?/gi, '');
+    content = content.replace(/```\n?/gi, '');
+    content = content.replace(/^<p>Here is[\s\S]*?<\/p>\n*/i, '');
+    content = content.replace(/^Here is[\s\S]*?\n\n/i, '');
+    content = content.replace(/---[\s\S]*?---\n*/gi, '');
+    content = content.trim();
+    
+    // CRITICAL: Remove forbidden AI words
+    content = cleanForbiddenWords(content);
+    
+    console.log(`[Bulk Content] Content generated using ${apiUsed}, cleaning forbidden words...`);
     
     // Fetch images using SerpAPI
     let images = [];
