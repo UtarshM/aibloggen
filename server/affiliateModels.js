@@ -48,15 +48,61 @@ const affiliateSchema = new mongoose.Schema({
   // Application status
   status: {
     type: String,
-    enum: ['pending', 'approved', 'rejected', 'suspended'],
+    enum: ['pending', 'approved', 'rejected', 'suspended', 'banned'],
     default: 'pending'
   },
   
-  // Optional profile info
+  // Rejection/Ban reason
+  rejectionReason: {
+    type: String
+  },
+  banReason: {
+    type: String
+  },
+  
+  // Profile & Social Info
   website: {
     type: String,
     trim: true
   },
+  youtube: {
+    type: String,
+    trim: true
+  },
+  tiktok: {
+    type: String,
+    trim: true
+  },
+  instagram: {
+    type: String,
+    trim: true
+  },
+  twitter: {
+    type: String,
+    trim: true
+  },
+  
+  // Audience & Promotion
+  audienceSize: {
+    type: String,
+    enum: ['<1k', '1k-10k', '10k-50k', '50k-100k', '100k+'],
+    default: '<1k'
+  },
+  promotionChannels: [{
+    type: String,
+    enum: ['YouTube', 'TikTok', 'Instagram', 'Blog', 'Email', 'Twitter/X', 'Facebook', 'Reddit', 'Other']
+  }],
+  whyJoin: {
+    type: String,
+    trim: true,
+    maxlength: 500
+  },
+  agreedToTerms: {
+    type: Boolean,
+    default: false
+  },
+  
+  // Legacy field for backward compatibility
   promotionMethod: {
     type: String,
     trim: true

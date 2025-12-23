@@ -101,7 +101,12 @@ setInterval(() => {
  */
 router.post('/apply', async (req, res) => {
   try {
-    const { name, email, password, website, promotionMethod } = req.body;
+    const { 
+      name, email, password, website, 
+      youtube, tiktok, instagram, twitter,
+      audienceSize, promotionChannels, whyJoin, agreedToTerms,
+      promotionMethod // Legacy field
+    } = req.body;
     
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'Name, email, and password are required' });
@@ -109,6 +114,10 @@ router.post('/apply', async (req, res) => {
     
     if (password.length < 8) {
       return res.status(400).json({ error: 'Password must be at least 8 characters' });
+    }
+    
+    if (!agreedToTerms) {
+      return res.status(400).json({ error: 'You must agree to the terms and conditions' });
     }
 
     const existingAffiliate = await Affiliate.findOne({ email: email.toLowerCase() });
@@ -119,10 +128,22 @@ router.post('/apply', async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
     
-    // Generate unique slug from name
-    const baseSlug = name.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 10);
-    const randomSuffix = crypto.randomBytes(4).toString('hex');
-    const slug = `${baseSlug}${randomSuffix}`;
+    // Generate unique 7-10 character alphanumeric slug
+    const generateSlug = () => {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      const length = 7 + Math.floor(Math.random() * 4); // 7-10 chars
+      let slug = '';
+      for (let i = 0; i < length; i++) {
+        slug += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return slug;
+    };
+    
+    // Ensure slug is unique
+    let slug = generateSlug();
+    while (await Affiliate.findOne({ slug })) {
+      slug = generateSlug();
+    }
     
     const affiliate = new Affiliate({
       name,
@@ -130,7 +151,15 @@ router.post('/apply', async (req, res) => {
       passwordHash,
       slug,
       website,
-      promotionMethod,
+      youtube,
+      tiktok,
+      instagram,
+      twitter,
+      audienceSize: audienceSize || '<1k',
+      promotionChannels: promotionChannels || [],
+      whyJoin,
+      agreedToTerms: true,
+      promotionMethod, // Legacy
       status: 'pending',
       commissionPercent: DEFAULT_COMMISSION_PERCENT
     });
@@ -143,12 +172,35 @@ router.post('/apply', async (req, res) => {
       targetType: 'affiliate',
       targetId: affiliate._id,
       action: 'application_submitted',
-      details: { name, email, website, promotionMethod }
+      details: { name, email, website, audienceSize, promotionChannels }
     });
+    
+    // Simulate admin notification email
+    console.log(`
+═══════════════════════════════════════════════════════════════
+📧 NEW AFFILIATE APPLICATION - ADMIN NOTIFICATION
+═══════════════════════════════════════════════════════════════
+To: admin@scalezix.com
+Subject: New Affiliate Application - ${name}
+
+A new affiliate application has been submitted:
+
+Name: ${name}
+Email: ${email}
+Website: ${website || 'Not provided'}
+Audience Size: ${audienceSize || 'Not specified'}
+Promotion Channels: ${promotionChannels?.join(', ') || 'Not specified'}
+
+Why they want to join:
+${whyJoin || 'Not provided'}
+
+Review at: https://aiblog.scalezix.com/affiliate-admin
+═══════════════════════════════════════════════════════════════
+    `);
     
     res.json({
       success: true,
-      message: 'Application submitted successfully! We will review and get back to you within 24-48 hours.',
+      message: 'Thank you! Your application has been submitted. We usually review within 1-3 business days.',
       affiliateId: affiliate._id
     });
   } catch (error) {
@@ -180,24 +232,36 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Invalid email or password' });
     }
     
+    // Handle different statuses
     if (affiliate.status === 'pending') {
       return res.status(403).json({ 
-        error: 'Your application is still under review. Please wait for approval.',
+        error: 'Your application is currently under review. We\'ll notify you by email soon.',
         status: 'pending'
       });
     }
     
     if (affiliate.status === 'rejected') {
       return res.status(403).json({ 
-        error: 'Your application was rejected. Please contact support.',
+        error: affiliate.rejectionReason 
+          ? `Your application was rejected: ${affiliate.rejectionReason}. Contact us at support@scalezix.com for more information.`
+          : 'Your application was rejected. Contact us at support@scalezix.com for more information.',
         status: 'rejected'
       });
     }
     
     if (affiliate.status === 'suspended') {
       return res.status(403).json({ 
-        error: 'Your account has been suspended. Please contact support.',
+        error: 'Your account has been suspended. Please contact support@scalezix.com.',
         status: 'suspended'
+      });
+    }
+    
+    if (affiliate.status === 'banned') {
+      return res.status(403).json({ 
+        error: affiliate.banReason 
+          ? `Your account has been permanently banned: ${affiliate.banReason}`
+          : 'Your account has been permanently banned. This decision is final.',
+        status: 'banned'
       });
     }
     
@@ -724,6 +788,132 @@ router.put('/admin/:id/reject', authenticateAdmin, async (req, res) => {
   } catch (error) {
     console.error('Reject error:', error);
     res.status(500).json({ error: 'Failed to reject affiliate' });
+  }
+});
+
+/**
+ * PUT /api/affiliate/admin/:id/ban
+ * Ban affiliate (admin)
+ */
+router.put('/admin/:id/ban', authenticateAdmin, async (req, res) => {
+  try {
+    const affiliate = await Affiliate.findById(req.params.id);
+    if (!affiliate) {
+      return res.status(404).json({ error: 'Affiliate not found' });
+    }
+    
+    const { reason, adminNotes } = req.body;
+    
+    affiliate.status = 'banned';
+    affiliate.banReason = reason;
+    if (adminNotes) affiliate.adminNotes = adminNotes;
+    
+    await affiliate.save();
+    
+    await AffiliateAuditLog.create({
+      actorType: 'admin',
+      actorId: req.adminId,
+      targetType: 'affiliate',
+      targetId: affiliate._id,
+      action: 'affiliate_banned',
+      details: { reason, adminNotes }
+    });
+    
+    // Simulate ban notification email
+    console.log(`
+═══════════════════════════════════════════════════════════════
+📧 AFFILIATE BANNED - EMAIL NOTIFICATION
+═══════════════════════════════════════════════════════════════
+To: ${affiliate.email}
+Subject: Your Affiliate Account Has Been Banned
+
+Dear ${affiliate.name},
+
+Your affiliate account has been permanently banned from the Scalezix Affiliate Program.
+
+${reason ? `Reason: ${reason}` : ''}
+
+This decision is final. Any pending commissions have been forfeited.
+
+If you believe this was done in error, contact support@scalezix.com.
+
+Scalezix Team
+═══════════════════════════════════════════════════════════════
+    `);
+    
+    res.json({ success: true, message: 'Affiliate banned', affiliate });
+  } catch (error) {
+    console.error('Ban error:', error);
+    res.status(500).json({ error: 'Failed to ban affiliate' });
+  }
+});
+
+/**
+ * PUT /api/affiliate/admin/:id/suspend
+ * Suspend affiliate (admin)
+ */
+router.put('/admin/:id/suspend', authenticateAdmin, async (req, res) => {
+  try {
+    const affiliate = await Affiliate.findById(req.params.id);
+    if (!affiliate) {
+      return res.status(404).json({ error: 'Affiliate not found' });
+    }
+    
+    const { reason, adminNotes } = req.body;
+    
+    affiliate.status = 'suspended';
+    if (adminNotes) affiliate.adminNotes = adminNotes;
+    
+    await affiliate.save();
+    
+    await AffiliateAuditLog.create({
+      actorType: 'admin',
+      actorId: req.adminId,
+      targetType: 'affiliate',
+      targetId: affiliate._id,
+      action: 'affiliate_suspended',
+      details: { reason, adminNotes }
+    });
+    
+    res.json({ success: true, message: 'Affiliate suspended', affiliate });
+  } catch (error) {
+    console.error('Suspend error:', error);
+    res.status(500).json({ error: 'Failed to suspend affiliate' });
+  }
+});
+
+/**
+ * PUT /api/affiliate/admin/:id/reactivate
+ * Reactivate suspended affiliate (admin)
+ */
+router.put('/admin/:id/reactivate', authenticateAdmin, async (req, res) => {
+  try {
+    const affiliate = await Affiliate.findById(req.params.id);
+    if (!affiliate) {
+      return res.status(404).json({ error: 'Affiliate not found' });
+    }
+    
+    if (affiliate.status === 'banned') {
+      return res.status(400).json({ error: 'Cannot reactivate a banned affiliate' });
+    }
+    
+    affiliate.status = 'approved';
+    
+    await affiliate.save();
+    
+    await AffiliateAuditLog.create({
+      actorType: 'admin',
+      actorId: req.adminId,
+      targetType: 'affiliate',
+      targetId: affiliate._id,
+      action: 'affiliate_reactivated',
+      details: {}
+    });
+    
+    res.json({ success: true, message: 'Affiliate reactivated', affiliate });
+  } catch (error) {
+    console.error('Reactivate error:', error);
+    res.status(500).json({ error: 'Failed to reactivate affiliate' });
   }
 });
 

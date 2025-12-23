@@ -29,6 +29,7 @@ import Policies from './pages/Policies'
 import OAuthCallback from './pages/OAuthCallback'
 import AffiliateLogin from './pages/AffiliateLogin'
 import AffiliateApply from './pages/AffiliateApply'
+import AffiliateTerms from './pages/AffiliateTerms'
 import AffiliateDashboard from './pages/AffiliateDashboard'
 import AffiliateAdmin from './pages/AffiliateAdmin'
 
@@ -59,6 +60,7 @@ function App() {
                         {/* Affiliate Routes */}
                         <Route path="/affiliate/login" element={<AffiliateLogin />} />
                         <Route path="/affiliate/apply" element={<AffiliateApply />} />
+                        <Route path="/affiliate/terms" element={<AffiliateTerms />} />
                         <Route path="/affiliate/dashboard" element={<AffiliateDashboard />} />
 
                         {/* Protected Dashboard Routes */}
