@@ -1313,3 +1313,398 @@ router.get('/verify', authenticateSuperAdmin, async (req, res) => {
 });
 
 export default router;
+
+
+// ═══════════════════════════════════════════════════════════════
+// ADDITIONAL IMPROVEMENTS - Affiliate Tracking & More
+// ═══════════════════════════════════════════════════════════════
+
+// Get all referred users (users who signed up via affiliate links)
+router.get('/referred-users', authenticateSuperAdmin, async (req, res) => {
+  try {
+    const { page = 1, limit = 20, affiliateId } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    
+    let query = { referredBy: { $exists: true, $ne: null } };
+    if (affiliateId) query.referredBy = affiliateId;
+    
+    const users = await User.find(query)
+      .select('name email plan isVerified createdAt lastLogin referredBy')
+      .populate('referredBy', 'name email slug totalEarnings')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+    
+    const total = await User.countDocuments(query);
+    
+    // Get affiliate breakdown
+    const affiliateBreakdown = await User.aggregate([
+      { $match: { referredBy: { $exists: true, $ne: null } } },
+      { $group: { _id: '$referredBy', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 10 }
+    ]);
+    
+    // Populate affiliate names
+    const affiliateIds = affiliateBreakdown.map(a => a._id);
+    const affiliates = await Affiliate.find({ _id: { $in: affiliateIds } }).select('name email slug');
+    const affiliateMap = {};
+    affiliates.forEach(a => { affiliateMap[a._id.toString()] = a; });
+    
+    const topAffiliatesByReferrals = affiliateBreakdown.map(a => ({
+      affiliate: affiliateMap[a._id.toString()],
+      referralCount: a.count
+    }));
+    
+    res.json({
+      users,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / parseInt(limit))
+      },
+      totalReferredUsers: total,
+      topAffiliatesByReferrals
+    });
+  } catch (error) {
+    console.error('[SuperAdmin] Get referred users error:', error);
+    res.status(500).json({ error: 'Failed to load referred users' });
+  }
+});
+
+// Get affiliate performance report
+router.get('/affiliate-performance', authenticateSuperAdmin, async (req, res) => {
+  try {
+    const { days = 30 } = req.query;
+    const startDate = new Date(Date.now() - parseInt(days) * 24 * 60 * 60 * 1000);
+    
+    // Get all approved affiliates with their stats
+    const affiliates = await Affiliate.find({ status: 'approved' })
+      .select('name email slug totalClicks totalConversions totalEarnings availableBalance withdrawnBalance createdAt')
+      .sort({ totalEarnings: -1 });
+    
+    // Get referred users count for each affiliate
+    const referralCounts = await User.aggregate([
+      { $match: { referredBy: { $exists: true, $ne: null } } },
+      { $group: { _id: '$referredBy', count: { $sum: 1 } } }
+    ]);
+    
+    const referralMap = {};
+    referralCounts.forEach(r => { referralMap[r._id.toString()] = r.count; });
+    
+    // Combine data
+    const performance = affiliates.map(aff => ({
+      id: aff._id,
+      name: aff.name,
+      email: aff.email,
+      slug: aff.slug,
+      totalClicks: aff.totalClicks,
+      totalConversions: aff.totalConversions,
+      referredUsers: referralMap[aff._id.toString()] || 0,
+      totalEarnings: aff.totalEarnings,
+      availableBalance: aff.availableBalance,
+      withdrawnBalance: aff.withdrawnBalance,
+      conversionRate: aff.totalClicks > 0 ? ((aff.totalConversions / aff.totalClicks) * 100).toFixed(2) : 0,
+      joinedAt: aff.createdAt
+    }));
+    
+    // Summary stats
+    const summary = {
+      totalAffiliates: affiliates.length,
+      totalClicks: affiliates.reduce((sum, a) => sum + a.totalClicks, 0),
+      totalConversions: affiliates.reduce((sum, a) => sum + a.totalConversions, 0),
+      totalReferredUsers: Object.values(referralMap).reduce((sum, c) => sum + c, 0),
+      totalEarnings: affiliates.reduce((sum, a) => sum + a.totalEarnings, 0),
+      totalWithdrawn: affiliates.reduce((sum, a) => sum + a.withdrawnBalance, 0)
+    };
+    
+    res.json({ performance, summary });
+  } catch (error) {
+    console.error('[SuperAdmin] Affiliate performance error:', error);
+    res.status(500).json({ error: 'Failed to load performance data' });
+  }
+});
+
+// Bulk approve affiliates
+router.post('/affiliates/bulk-approve', authenticateSuperAdmin, async (req, res) => {
+  try {
+    const { affiliateIds, commissionPercent = 20 } = req.body;
+    
+    if (!affiliateIds || !Array.isArray(affiliateIds) || affiliateIds.length === 0) {
+      return res.status(400).json({ error: 'Affiliate IDs are required' });
+    }
+    
+    const result = await Affiliate.updateMany(
+      { _id: { $in: affiliateIds }, status: 'pending' },
+      { 
+        $set: { 
+          status: 'approved', 
+          approvedAt: new Date(),
+          commissionPercent 
+        } 
+      }
+    );
+    
+    // Send approval emails
+    const affiliates = await Affiliate.find({ _id: { $in: affiliateIds } });
+    for (const affiliate of affiliates) {
+      try {
+        const { sendAffiliateApprovedEmail } = await import('./emailService.js');
+        await sendAffiliateApprovedEmail(affiliate.email, affiliate.name, affiliate.slug, commissionPercent);
+      } catch (emailErr) {
+        console.error('[SuperAdmin] Email error:', emailErr.message);
+      }
+    }
+    
+    res.json({ success: true, message: `${result.modifiedCount} affiliates approved`, count: result.modifiedCount });
+  } catch (error) {
+    console.error('[SuperAdmin] Bulk approve error:', error);
+    res.status(500).json({ error: 'Failed to bulk approve' });
+  }
+});
+
+// Bulk reject affiliates
+router.post('/affiliates/bulk-reject', authenticateSuperAdmin, async (req, res) => {
+  try {
+    const { affiliateIds, reason } = req.body;
+    
+    if (!affiliateIds || !Array.isArray(affiliateIds) || affiliateIds.length === 0) {
+      return res.status(400).json({ error: 'Affiliate IDs are required' });
+    }
+    
+    const result = await Affiliate.updateMany(
+      { _id: { $in: affiliateIds }, status: 'pending' },
+      { 
+        $set: { 
+          status: 'rejected', 
+          rejectedAt: new Date(),
+          rejectionReason: reason || 'Application did not meet our requirements'
+        } 
+      }
+    );
+    
+    // Send rejection emails
+    const affiliates = await Affiliate.find({ _id: { $in: affiliateIds } });
+    for (const affiliate of affiliates) {
+      try {
+        const { sendAffiliateRejectedEmail } = await import('./emailService.js');
+        await sendAffiliateRejectedEmail(affiliate.email, affiliate.name, reason);
+      } catch (emailErr) {
+        console.error('[SuperAdmin] Email error:', emailErr.message);
+      }
+    }
+    
+    res.json({ success: true, message: `${result.modifiedCount} affiliates rejected`, count: result.modifiedCount });
+  } catch (error) {
+    console.error('[SuperAdmin] Bulk reject error:', error);
+    res.status(500).json({ error: 'Failed to bulk reject' });
+  }
+});
+
+// Get user growth analytics
+router.get('/user-growth', authenticateSuperAdmin, async (req, res) => {
+  try {
+    const { days = 30 } = req.query;
+    const startDate = new Date(Date.now() - parseInt(days) * 24 * 60 * 60 * 1000);
+    
+    // Daily user signups
+    const dailySignups = await User.aggregate([
+      { $match: { createdAt: { $gte: startDate } } },
+      { 
+        $group: { 
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          total: { $sum: 1 },
+          verified: { $sum: { $cond: ['$isVerified', 1, 0] } },
+          referred: { $sum: { $cond: [{ $ne: ['$referredBy', null] }, 1, 0] } }
+        } 
+      },
+      { $sort: { _id: 1 } }
+    ]);
+    
+    // Plan distribution over time
+    const planStats = await User.aggregate([
+      { $group: { _id: '$plan', count: { $sum: 1 } } }
+    ]);
+    
+    // Verification rate
+    const totalUsers = await User.countDocuments();
+    const verifiedUsers = await User.countDocuments({ isVerified: true });
+    const verificationRate = totalUsers > 0 ? ((verifiedUsers / totalUsers) * 100).toFixed(2) : 0;
+    
+    // Referral rate
+    const referredUsers = await User.countDocuments({ referredBy: { $exists: true, $ne: null } });
+    const referralRate = totalUsers > 0 ? ((referredUsers / totalUsers) * 100).toFixed(2) : 0;
+    
+    res.json({
+      dailySignups,
+      planStats,
+      summary: {
+        totalUsers,
+        verifiedUsers,
+        verificationRate,
+        referredUsers,
+        referralRate
+      }
+    });
+  } catch (error) {
+    console.error('[SuperAdmin] User growth error:', error);
+    res.status(500).json({ error: 'Failed to load user growth data' });
+  }
+});
+
+// Send email to specific user
+router.post('/send-email', authenticateSuperAdmin, async (req, res) => {
+  try {
+    const { email, subject, message } = req.body;
+    
+    if (!email || !subject || !message) {
+      return res.status(400).json({ error: 'Email, subject, and message are required' });
+    }
+    
+    const { sendEmail } = await import('./emailService.js');
+    await sendEmail(email, subject, `<p>${message.replace(/\n/g, '<br>')}</p>`);
+    
+    console.log(`[SuperAdmin] Email sent to ${email}: ${subject}`);
+    
+    res.json({ success: true, message: 'Email sent successfully' });
+  } catch (error) {
+    console.error('[SuperAdmin] Send email error:', error);
+    res.status(500).json({ error: 'Failed to send email' });
+  }
+});
+
+// Get click analytics for affiliates
+router.get('/click-analytics', authenticateSuperAdmin, async (req, res) => {
+  try {
+    const { days = 30 } = req.query;
+    const startDate = new Date(Date.now() - parseInt(days) * 24 * 60 * 60 * 1000);
+    
+    // Daily clicks
+    const dailyClicks = await AffiliateClick.aggregate([
+      { $match: { createdAt: { $gte: startDate } } },
+      { 
+        $group: { 
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          total: { $sum: 1 },
+          converted: { $sum: { $cond: ['$converted', 1, 0] } }
+        } 
+      },
+      { $sort: { _id: 1 } }
+    ]);
+    
+    // Top pages
+    const topPages = await AffiliateClick.aggregate([
+      { $match: { createdAt: { $gte: startDate } } },
+      { $group: { _id: '$page', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 10 }
+    ]);
+    
+    // Clicks by affiliate
+    const clicksByAffiliate = await AffiliateClick.aggregate([
+      { $match: { createdAt: { $gte: startDate } } },
+      { $group: { _id: '$affiliateId', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 10 }
+    ]);
+    
+    // Populate affiliate names
+    const affiliateIds = clicksByAffiliate.map(c => c._id);
+    const affiliates = await Affiliate.find({ _id: { $in: affiliateIds } }).select('name slug');
+    const affiliateMap = {};
+    affiliates.forEach(a => { affiliateMap[a._id.toString()] = a; });
+    
+    const topAffiliatesByClicks = clicksByAffiliate.map(c => ({
+      affiliate: affiliateMap[c._id?.toString()],
+      clicks: c.count
+    }));
+    
+    res.json({
+      dailyClicks,
+      topPages,
+      topAffiliatesByClicks,
+      totalClicks: dailyClicks.reduce((sum, d) => sum + d.total, 0),
+      totalConversions: dailyClicks.reduce((sum, d) => sum + d.converted, 0)
+    });
+  } catch (error) {
+    console.error('[SuperAdmin] Click analytics error:', error);
+    res.status(500).json({ error: 'Failed to load click analytics' });
+  }
+});
+
+// Update affiliate commission
+router.put('/affiliates/:id/commission', authenticateSuperAdmin, async (req, res) => {
+  try {
+    const { commissionPercent } = req.body;
+    
+    if (commissionPercent < 0 || commissionPercent > 100) {
+      return res.status(400).json({ error: 'Commission must be between 0 and 100' });
+    }
+    
+    const affiliate = await Affiliate.findById(req.params.id);
+    if (!affiliate) {
+      return res.status(404).json({ error: 'Affiliate not found' });
+    }
+    
+    affiliate.commissionPercent = commissionPercent;
+    await affiliate.save();
+    
+    await AffiliateAuditLog.create({
+      actorType: 'admin',
+      actorId: req.superAdmin._id,
+      targetType: 'affiliate',
+      targetId: affiliate._id,
+      action: 'commission_updated',
+      details: { commissionPercent }
+    });
+    
+    res.json({ success: true, message: `Commission updated to ${commissionPercent}%`, affiliate });
+  } catch (error) {
+    console.error('[SuperAdmin] Update commission error:', error);
+    res.status(500).json({ error: 'Failed to update commission' });
+  }
+});
+
+// Get revenue analytics
+router.get('/revenue-analytics', authenticateSuperAdmin, async (req, res) => {
+  try {
+    const { days = 30 } = req.query;
+    const startDate = new Date(Date.now() - parseInt(days) * 24 * 60 * 60 * 1000);
+    
+    // Daily earnings
+    const dailyEarnings = await InternalEarning.aggregate([
+      { $match: { createdAt: { $gte: startDate } } },
+      { 
+        $group: { 
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          revenue: { $sum: '$revenueAmount' },
+          commission: { $sum: '$commissionAmount' }
+        } 
+      },
+      { $sort: { _id: 1 } }
+    ]);
+    
+    // Total stats
+    const totalRevenue = await InternalEarning.aggregate([
+      { $group: { _id: null, revenue: { $sum: '$revenueAmount' }, commission: { $sum: '$commissionAmount' } } }
+    ]);
+    
+    // Withdrawals
+    const withdrawalStats = await Withdrawal.aggregate([
+      { $match: { status: 'completed' } },
+      { $group: { _id: null, total: { $sum: '$amount' }, count: { $sum: 1 } } }
+    ]);
+    
+    res.json({
+      dailyEarnings,
+      totalRevenue: totalRevenue[0]?.revenue || 0,
+      totalCommission: totalRevenue[0]?.commission || 0,
+      totalWithdrawn: withdrawalStats[0]?.total || 0,
+      withdrawalCount: withdrawalStats[0]?.count || 0
+    });
+  } catch (error) {
+    console.error('[SuperAdmin] Revenue analytics error:', error);
+    res.status(500).json({ error: 'Failed to load revenue analytics' });
+  }
+});

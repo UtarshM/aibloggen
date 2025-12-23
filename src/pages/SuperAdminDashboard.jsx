@@ -142,10 +142,26 @@ const Icons = {
 };
 
 // Navigation Items
+// Add Link icon for referred users
+Icons.Link = () => (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+    </svg>
+);
+
+// Add Performance icon
+Icons.Performance = () => (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+    </svg>
+);
+
 const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Icons.Dashboard },
     { id: 'users', label: 'Users', icon: Icons.Users },
+    { id: 'referred', label: 'Referred Users', icon: Icons.Link },
     { id: 'affiliates', label: 'Affiliates', icon: Icons.Affiliates },
+    { id: 'performance', label: 'Performance', icon: Icons.Performance },
     { id: 'withdrawals', label: 'Withdrawals', icon: Icons.Withdrawals },
     { id: 'newsletter', label: 'Newsletter', icon: Icons.Newsletter },
     { id: 'wordpress', label: 'WordPress Jobs', icon: Icons.WordPress },
@@ -310,7 +326,9 @@ export default function SuperAdminDashboard() {
                     <AnimatePresence mode="wait">
                         {activeTab === 'dashboard' && <DashboardView stats={stats} loading={loading} />}
                         {activeTab === 'users' && <UsersView />}
+                        {activeTab === 'referred' && <ReferredUsersView />}
                         {activeTab === 'affiliates' && <AffiliatesView />}
+                        {activeTab === 'performance' && <PerformanceView />}
                         {activeTab === 'withdrawals' && <WithdrawalsView />}
                         {activeTab === 'newsletter' && <NewsletterView />}
                         {activeTab === 'wordpress' && <WordPressView />}
@@ -2000,9 +2018,9 @@ function ActivityView() {
                             <div key={log._id} className="p-4 hover:bg-gray-50 transition-colors">
                                 <div className="flex items-start gap-4">
                                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${log.action.includes('approved') ? 'bg-green-100 text-green-600' :
-                                            log.action.includes('rejected') || log.action.includes('banned') ? 'bg-red-100 text-red-600' :
-                                                log.action.includes('withdrawal') ? 'bg-blue-100 text-blue-600' :
-                                                    'bg-gray-100 text-gray-600'
+                                        log.action.includes('rejected') || log.action.includes('banned') ? 'bg-red-100 text-red-600' :
+                                            log.action.includes('withdrawal') ? 'bg-blue-100 text-blue-600' :
+                                                'bg-gray-100 text-gray-600'
                                         }`}>
                                         <Icons.Activity />
                                     </div>
@@ -2166,6 +2184,460 @@ function SettingsView() {
                     </div>
                 </div>
             </div>
+        </motion.div>
+    );
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// REFERRED USERS VIEW - Track which users came from which affiliate
+// ═══════════════════════════════════════════════════════════════
+function ReferredUsersView() {
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalReferredUsers, setTotalReferredUsers] = useState(0);
+    const [topAffiliates, setTopAffiliates] = useState([]);
+
+    useEffect(() => {
+        loadReferredUsers();
+    }, [page]);
+
+    const loadReferredUsers = async () => {
+        setLoading(true);
+        try {
+            const data = await api.getSuperAdminReferredUsers(page, 20);
+            setUsers(data.users || []);
+            setTotalPages(data.pagination?.pages || 1);
+            setTotalReferredUsers(data.totalReferredUsers || 0);
+            setTopAffiliates(data.topAffiliatesByReferrals || []);
+        } catch (error) {
+            console.error('Failed to load referred users:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="space-y-6"
+        >
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm text-gray-500">Total Referred Users</p>
+                            <p className="text-3xl font-semibold text-gray-900">{totalReferredUsers}</p>
+                        </div>
+                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center text-white">
+                            <Icons.Link />
+                        </div>
+                    </div>
+                </div>
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm text-gray-500">Active Affiliates</p>
+                            <p className="text-3xl font-semibold text-gray-900">{topAffiliates.length}</p>
+                        </div>
+                        <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center text-white">
+                            <Icons.Affiliates />
+                        </div>
+                    </div>
+                </div>
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm text-gray-500">Avg Users/Affiliate</p>
+                            <p className="text-3xl font-semibold text-gray-900">
+                                {topAffiliates.length > 0 ? Math.round(totalReferredUsers / topAffiliates.length) : 0}
+                            </p>
+                        </div>
+                        <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center text-white">
+                            <Icons.TrendingUp />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Top Affiliates by Referrals */}
+            {topAffiliates.length > 0 && (
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Affiliates by Referrals</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                        {topAffiliates.slice(0, 5).map((item, index) => (
+                            <div key={index} className="bg-gray-50 rounded-xl p-4 text-center">
+                                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-semibold mx-auto mb-2">
+                                    {item.affiliate?.name?.charAt(0) || '?'}
+                                </div>
+                                <p className="font-medium text-gray-900 truncate">{item.affiliate?.name || 'Unknown'}</p>
+                                <p className="text-xs text-gray-500 truncate">{item.affiliate?.slug || '-'}</p>
+                                <p className="text-lg font-bold text-purple-600 mt-1">{item.referralCount} users</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Referred Users Table */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="p-6 border-b border-gray-100">
+                    <h3 className="text-lg font-semibold text-gray-900">All Referred Users</h3>
+                    <p className="text-sm text-gray-500">Users who signed up through affiliate referral links</p>
+                </div>
+
+                {loading ? (
+                    <div className="flex items-center justify-center h-64">
+                        <div className="animate-spin w-8 h-8 border-2 border-gray-900 border-t-transparent rounded-full" />
+                    </div>
+                ) : users.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-64 text-gray-500">
+                        <Icons.Users />
+                        <p className="mt-2">No referred users yet</p>
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead className="bg-gray-50 border-b border-gray-100">
+                                <tr>
+                                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">User</th>
+                                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Referred By</th>
+                                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Affiliate Code</th>
+                                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Plan</th>
+                                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Status</th>
+                                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Joined</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {users.map((user) => (
+                                    <tr key={user._id} className="hover:bg-gray-50 transition-colors">
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-medium">
+                                                    {user.name?.charAt(0) || 'U'}
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium text-gray-900">{user.name}</p>
+                                                    <p className="text-sm text-gray-500">{user.email}</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div>
+                                                <p className="font-medium text-gray-900">{user.referredBy?.name || 'Unknown'}</p>
+                                                <p className="text-sm text-gray-500">{user.referredBy?.email || '-'}</p>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
+                                                {user.referredBy?.slug || '-'}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className="capitalize text-gray-700">{user.plan || 'free'}</span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <StatusBadge status={user.isVerified ? 'verified' : 'unverified'} />
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-gray-500">
+                                            {new Date(user.createdAt).toLocaleDateString()}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* Pagination */}
+                <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
+                    <p className="text-sm text-gray-500">Page {page} of {totalPages}</p>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setPage(Math.max(1, page - 1))}
+                            disabled={page === 1}
+                            className="px-4 py-2 bg-gray-100 rounded-lg disabled:opacity-50"
+                        >
+                            Previous
+                        </button>
+                        <button
+                            onClick={() => setPage(Math.min(totalPages, page + 1))}
+                            disabled={page === totalPages}
+                            className="px-4 py-2 bg-gray-100 rounded-lg disabled:opacity-50"
+                        >
+                            Next
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </motion.div>
+    );
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// PERFORMANCE VIEW - Affiliate Performance Analytics
+// ═══════════════════════════════════════════════════════════════
+function PerformanceView() {
+    const [performance, setPerformance] = useState([]);
+    const [summary, setSummary] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [selectedAffiliate, setSelectedAffiliate] = useState(null);
+
+    useEffect(() => {
+        loadPerformance();
+    }, []);
+
+    const loadPerformance = async () => {
+        setLoading(true);
+        try {
+            const data = await api.getSuperAdminAffiliatePerformance(30);
+            setPerformance(data.performance || []);
+            setSummary(data.summary || null);
+        } catch (error) {
+            console.error('Failed to load performance:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleUpdateCommission = async (affiliateId, newCommission) => {
+        try {
+            await api.superAdminUpdateAffiliateCommission(affiliateId, newCommission);
+            loadPerformance();
+        } catch (error) {
+            alert(error.message);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <div className="animate-spin w-8 h-8 border-2 border-gray-900 border-t-transparent rounded-full" />
+            </div>
+        );
+    }
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="space-y-6"
+        >
+            {/* Summary Stats */}
+            {summary && (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                        <p className="text-xs text-gray-500 mb-1">Total Affiliates</p>
+                        <p className="text-2xl font-semibold text-gray-900">{summary.totalAffiliates}</p>
+                    </div>
+                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                        <p className="text-xs text-gray-500 mb-1">Total Clicks</p>
+                        <p className="text-2xl font-semibold text-blue-600">{summary.totalClicks.toLocaleString()}</p>
+                    </div>
+                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                        <p className="text-xs text-gray-500 mb-1">Conversions</p>
+                        <p className="text-2xl font-semibold text-green-600">{summary.totalConversions}</p>
+                    </div>
+                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                        <p className="text-xs text-gray-500 mb-1">Referred Users</p>
+                        <p className="text-2xl font-semibold text-purple-600">{summary.totalReferredUsers}</p>
+                    </div>
+                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                        <p className="text-xs text-gray-500 mb-1">Total Earnings</p>
+                        <p className="text-2xl font-semibold text-emerald-600">₹{(summary.totalEarnings / 100).toLocaleString()}</p>
+                    </div>
+                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                        <p className="text-xs text-gray-500 mb-1">Total Withdrawn</p>
+                        <p className="text-2xl font-semibold text-orange-600">₹{(summary.totalWithdrawn / 100).toLocaleString()}</p>
+                    </div>
+                </div>
+            )}
+
+            {/* Performance Table */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                    <div>
+                        <h3 className="text-lg font-semibold text-gray-900">Affiliate Performance</h3>
+                        <p className="text-sm text-gray-500">Detailed performance metrics for all approved affiliates</p>
+                    </div>
+                    <button
+                        onClick={loadPerformance}
+                        className="p-2 hover:bg-gray-100 rounded-xl transition-all"
+                    >
+                        <Icons.Refresh />
+                    </button>
+                </div>
+
+                <div className="overflow-x-auto">
+                    <table className="w-full">
+                        <thead className="bg-gray-50 border-b border-gray-100">
+                            <tr>
+                                <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Affiliate</th>
+                                <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Code</th>
+                                <th className="text-center px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Clicks</th>
+                                <th className="text-center px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Conversions</th>
+                                <th className="text-center px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Users</th>
+                                <th className="text-center px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Conv. Rate</th>
+                                <th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Earnings</th>
+                                <th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Withdrawn</th>
+                                <th className="text-center px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {performance.map((aff) => (
+                                <tr key={aff.id} className="hover:bg-gray-50 transition-colors">
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-medium">
+                                                {aff.name?.charAt(0) || 'A'}
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-gray-900">{aff.name}</p>
+                                                <p className="text-sm text-gray-500">{aff.email}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-mono">
+                                            {aff.slug}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-center font-medium text-blue-600">
+                                        {aff.totalClicks.toLocaleString()}
+                                    </td>
+                                    <td className="px-6 py-4 text-center font-medium text-green-600">
+                                        {aff.totalConversions}
+                                    </td>
+                                    <td className="px-6 py-4 text-center font-medium text-purple-600">
+                                        {aff.referredUsers}
+                                    </td>
+                                    <td className="px-6 py-4 text-center">
+                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${parseFloat(aff.conversionRate) > 5 ? 'bg-green-100 text-green-700' :
+                                                parseFloat(aff.conversionRate) > 2 ? 'bg-yellow-100 text-yellow-700' :
+                                                    'bg-gray-100 text-gray-700'
+                                            }`}>
+                                            {aff.conversionRate}%
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-right font-medium text-emerald-600">
+                                        ₹{(aff.totalEarnings / 100).toLocaleString()}
+                                    </td>
+                                    <td className="px-6 py-4 text-right font-medium text-orange-600">
+                                        ₹{(aff.withdrawnBalance / 100).toLocaleString()}
+                                    </td>
+                                    <td className="px-6 py-4 text-center">
+                                        <button
+                                            onClick={() => setSelectedAffiliate(aff)}
+                                            className="p-2 hover:bg-gray-100 rounded-lg transition-all"
+                                            title="View Details"
+                                        >
+                                            <Icons.Eye />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {/* Affiliate Detail Modal */}
+            <AnimatePresence>
+                {selectedAffiliate && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                        onClick={() => setSelectedAffiliate(null)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-6"
+                        >
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-xl font-semibold text-gray-900">Affiliate Details</h3>
+                                <button onClick={() => setSelectedAffiliate(null)} className="p-2 hover:bg-gray-100 rounded-xl">
+                                    <Icons.X />
+                                </button>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center text-white text-2xl font-semibold">
+                                        {selectedAffiliate.name?.charAt(0)}
+                                    </div>
+                                    <div>
+                                        <h4 className="text-xl font-semibold text-gray-900">{selectedAffiliate.name}</h4>
+                                        <p className="text-gray-500">{selectedAffiliate.email}</p>
+                                        <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-mono">
+                                            {selectedAffiliate.slug}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="bg-gray-50 rounded-xl p-4">
+                                        <p className="text-xs text-gray-500">Total Clicks</p>
+                                        <p className="text-xl font-semibold text-blue-600">{selectedAffiliate.totalClicks}</p>
+                                    </div>
+                                    <div className="bg-gray-50 rounded-xl p-4">
+                                        <p className="text-xs text-gray-500">Conversions</p>
+                                        <p className="text-xl font-semibold text-green-600">{selectedAffiliate.totalConversions}</p>
+                                    </div>
+                                    <div className="bg-gray-50 rounded-xl p-4">
+                                        <p className="text-xs text-gray-500">Referred Users</p>
+                                        <p className="text-xl font-semibold text-purple-600">{selectedAffiliate.referredUsers}</p>
+                                    </div>
+                                    <div className="bg-gray-50 rounded-xl p-4">
+                                        <p className="text-xs text-gray-500">Conversion Rate</p>
+                                        <p className="text-xl font-semibold text-gray-900">{selectedAffiliate.conversionRate}%</p>
+                                    </div>
+                                    <div className="bg-gray-50 rounded-xl p-4">
+                                        <p className="text-xs text-gray-500">Total Earnings</p>
+                                        <p className="text-xl font-semibold text-emerald-600">₹{(selectedAffiliate.totalEarnings / 100).toLocaleString()}</p>
+                                    </div>
+                                    <div className="bg-gray-50 rounded-xl p-4">
+                                        <p className="text-xs text-gray-500">Available Balance</p>
+                                        <p className="text-xl font-semibold text-blue-600">₹{(selectedAffiliate.availableBalance / 100).toLocaleString()}</p>
+                                    </div>
+                                </div>
+
+                                <div className="pt-4 border-t border-gray-100">
+                                    <p className="text-sm text-gray-500 mb-2">Referral Link:</p>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="text"
+                                            readOnly
+                                            value={`https://aiblog.scalezix.com/?ref=${selectedAffiliate.slug}`}
+                                            className="flex-1 px-4 py-2 bg-gray-100 rounded-xl text-sm"
+                                        />
+                                        <button
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(`https://aiblog.scalezix.com/?ref=${selectedAffiliate.slug}`);
+                                                alert('Copied!');
+                                            }}
+                                            className="px-4 py-2 bg-gray-900 text-white rounded-xl text-sm"
+                                        >
+                                            Copy
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </motion.div>
     );
 }

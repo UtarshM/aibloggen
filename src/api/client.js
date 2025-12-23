@@ -1217,4 +1217,120 @@ export const api = {
     if (!res.ok) throw new Error(result.error || 'Failed to delete subscriber');
     return result;
   },
+
+  // ═══════════════════════════════════════════════════════════════
+  // SUPERADMIN - AFFILIATE TRACKING & ANALYTICS
+  // ═══════════════════════════════════════════════════════════════
+
+  getSuperAdminReferredUsers: async (page = 1, limit = 20, affiliateId = '') => {
+    const token = localStorage.getItem('superAdminToken');
+    const params = new URLSearchParams({ page, limit });
+    if (affiliateId) params.append('affiliateId', affiliateId);
+    const res = await fetch(`${API_BASE}/superadmin/referred-users?${params}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Failed to load referred users');
+    return result;
+  },
+
+  getSuperAdminAffiliatePerformance: async (days = 30) => {
+    const token = localStorage.getItem('superAdminToken');
+    const res = await fetch(`${API_BASE}/superadmin/affiliate-performance?days=${days}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Failed to load performance');
+    return result;
+  },
+
+  superAdminBulkApproveAffiliates: async (affiliateIds, commissionPercent = 20) => {
+    const token = localStorage.getItem('superAdminToken');
+    const res = await fetch(`${API_BASE}/superadmin/affiliates/bulk-approve`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}` 
+      },
+      body: JSON.stringify({ affiliateIds, commissionPercent })
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Failed to bulk approve');
+    return result;
+  },
+
+  superAdminBulkRejectAffiliates: async (affiliateIds, reason) => {
+    const token = localStorage.getItem('superAdminToken');
+    const res = await fetch(`${API_BASE}/superadmin/affiliates/bulk-reject`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}` 
+      },
+      body: JSON.stringify({ affiliateIds, reason })
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Failed to bulk reject');
+    return result;
+  },
+
+  getSuperAdminUserGrowth: async (days = 30) => {
+    const token = localStorage.getItem('superAdminToken');
+    const res = await fetch(`${API_BASE}/superadmin/user-growth?days=${days}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Failed to load user growth');
+    return result;
+  },
+
+  superAdminSendEmail: async (email, subject, message) => {
+    const token = localStorage.getItem('superAdminToken');
+    const res = await fetch(`${API_BASE}/superadmin/send-email`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}` 
+      },
+      body: JSON.stringify({ email, subject, message })
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Failed to send email');
+    return result;
+  },
+
+  getSuperAdminClickAnalytics: async (days = 30) => {
+    const token = localStorage.getItem('superAdminToken');
+    const res = await fetch(`${API_BASE}/superadmin/click-analytics?days=${days}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Failed to load click analytics');
+    return result;
+  },
+
+  superAdminUpdateAffiliateCommission: async (id, commissionPercent) => {
+    const token = localStorage.getItem('superAdminToken');
+    const res = await fetch(`${API_BASE}/superadmin/affiliates/${id}/commission`, {
+      method: 'PUT',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}` 
+      },
+      body: JSON.stringify({ commissionPercent })
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Failed to update commission');
+    return result;
+  },
+
+  getSuperAdminRevenueAnalytics: async (days = 30) => {
+    const token = localStorage.getItem('superAdminToken');
+    const res = await fetch(`${API_BASE}/superadmin/revenue-analytics?days=${days}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Failed to load revenue analytics');
+    return result;
+  },
 };
