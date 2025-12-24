@@ -1,6 +1,7 @@
 /**
  * Professional Social Media Management System
  * Real OAuth, Mandatory Media, Complete Scheduling
+ * MacBook-style UI/UX with Primary Color #52b2bf
  * @author Scalezix Venture PVT LTD
  * @copyright 2025 Scalezix Venture PVT LTD. All Rights Reserved.
  */
@@ -9,6 +10,8 @@ import { useState, useEffect } from 'react'
 import { Twitter, Instagram, Facebook, Calendar, Clock, Image as ImageIcon, Video, Send, Trash2, CheckCircle, XCircle, Loader2, Edit, Eye, Upload, X as CloseIcon } from 'lucide-react'
 import { api } from '../api/client'
 import Toast from '../components/Toast'
+import { useToast } from '../context/ToastContext'
+import { useModal } from '../components/Modal'
 
 export default function SocialMediaPro() {
     // State Management
@@ -23,6 +26,8 @@ export default function SocialMediaPro() {
     const [scheduledPosts, setScheduledPosts] = useState([])
     const [toast, setToast] = useState(null)
     const [loading, setLoading] = useState(false)
+    const globalToast = useToast()
+    const modal = useModal()
 
     const [uploadProgress, setUploadProgress] = useState(0)
     const [showAIGenerator, setShowAIGenerator] = useState(false)
@@ -163,7 +168,8 @@ export default function SocialMediaPro() {
     }
 
     const disconnectAccount = async (accountId) => {
-        if (!confirm('Are you sure you want to disconnect this account?')) return
+        const confirmed = await modal.confirm('Disconnect Account', 'Are you sure you want to disconnect this account?')
+        if (!confirmed) return
 
         try {
             await api.disconnectSocialAccount(accountId)
@@ -367,7 +373,8 @@ export default function SocialMediaPro() {
     }
 
     const deleteScheduledPost = async (postId) => {
-        if (!confirm('Delete this scheduled post?')) return
+        const confirmed = await modal.danger('Delete Post', 'Delete this scheduled post?', { confirmText: 'Delete' })
+        if (!confirmed) return
 
         try {
             await api.deleteScheduledPost(postId)

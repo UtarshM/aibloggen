@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Download, Calendar, Lock } from 'lucide-react'
 import { usePlan } from '../context/PlanContext'
+import { useToast } from '../context/ToastContext'
 import LockedFeature from '../components/LockedFeature'
 import { jsPDF } from 'jspdf'
 
@@ -9,6 +10,7 @@ export default function ClientReporting() {
     const [dateRange, setDateRange] = useState('30')
     const [showUpgradeModal, setShowUpgradeModal] = useState(false)
     const canAccessReporting = hasAccess('client-reporting')
+    const toast = useToast()
 
     const metrics = [
         { label: 'Total Visitors', value: '45,231', rawValue: 45231, change: '+12.5%', positive: true },
@@ -170,11 +172,11 @@ export default function ClientReporting() {
             const fileName = `Analytics_Report_${dateRange}days_${new Date().toISOString().split('T')[0]}.pdf`
             doc.save(fileName)
 
-            alert('✅ PDF Report downloaded successfully!')
+            toast.success('PDF Report downloaded successfully!')
 
         } catch (error) {
             console.error('Error generating PDF:', error)
-            alert(`Error: ${error.message}`)
+            toast.error(`Error: ${error.message}`)
         }
     }
 

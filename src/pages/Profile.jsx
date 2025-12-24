@@ -1,5 +1,6 @@
 /**
  * AI Marketing Platform - Profile Page
+ * MacBook-style UI/UX with Primary Color #52b2bf
  * 
  * @author Scalezix Venture PVT LTD
  * @copyright 2025 Scalezix Venture PVT LTD. All Rights Reserved.
@@ -9,6 +10,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { User, Mail, Phone, MapPin, Building, Globe, Calendar, Award, TrendingUp, Target, Briefcase, Camera, Shield, Bell, Link as LinkIcon, Twitter, Linkedin, Github, Instagram, Save, Edit2, Check, X } from 'lucide-react'
 import { usePlan } from '../context/PlanContext'
+import { useToast } from '../context/ToastContext'
 import axios from 'axios'
 
 // API URL from environment
@@ -22,6 +24,7 @@ export default function Profile() {
     const [activeTab, setActiveTab] = useState('personal')
     const [loading, setLoading] = useState(true)
     const [uploadingImage, setUploadingImage] = useState(false)
+    const toast = useToast()
 
     const [profile, setProfile] = useState({
         // Personal Info - Empty defaults, will be filled from database
@@ -148,13 +151,13 @@ export default function Profile() {
 
         // Validate file type
         if (!file.type.startsWith('image/')) {
-            alert('❌ Please select an image file')
+            toast.error('Please select an image file')
             return
         }
 
         // Validate file size (max 5MB)
         if (file.size > 5 * 1024 * 1024) {
-            alert('❌ Image size must be less than 5MB')
+            toast.error('Image size must be less than 5MB')
             return
         }
 
@@ -163,7 +166,7 @@ export default function Profile() {
         try {
             const token = localStorage.getItem('token')
             if (!token) {
-                alert('❌ Please login first')
+                toast.error('Please login first')
                 return
             }
 
@@ -187,27 +190,27 @@ export default function Profile() {
                         profileImage: base64Image
                     }))
 
-                    alert('✅ Profile image uploaded successfully!')
+                    toast.success('Profile image uploaded successfully!')
                     window.dispatchEvent(new Event('profileUpdated'))
                     setUploadingImage(false)
                 } catch (error) {
                     console.error('Image upload error:', error)
                     if (error.response?.status === 413) {
-                        alert('❌ Image is too large. Please choose a smaller image (under 5MB)')
+                        toast.error('Image is too large. Please choose a smaller image (under 5MB)')
                     } else {
-                        alert('❌ Failed to upload image. Please try again.')
+                        toast.error('Failed to upload image. Please try again.')
                     }
                     setUploadingImage(false)
                 }
             }
             reader.onerror = () => {
-                alert('❌ Failed to read image file')
+                toast.error('Failed to read image file')
                 setUploadingImage(false)
             }
             reader.readAsDataURL(file)
         } catch (error) {
             console.error('Image upload error:', error)
-            alert('❌ Failed to upload image. Please try again.')
+            toast.error('Failed to upload image. Please try again.')
         } finally {
             setUploadingImage(false)
         }
@@ -217,7 +220,7 @@ export default function Profile() {
         try {
             const token = localStorage.getItem('token')
             if (!token) {
-                alert('❌ Please login first')
+                toast.error('Please login first')
                 return
             }
 
@@ -227,13 +230,13 @@ export default function Profile() {
             })
 
             setIsEditing(false)
-            alert('✅ Profile updated successfully and saved to database!')
+            toast.success('Profile updated successfully!')
 
             // Dispatch event to notify Layout component to refresh user data
             window.dispatchEvent(new Event('profileUpdated'))
         } catch (error) {
             console.error('Save profile error:', error)
-            alert('❌ Failed to save profile. Please try again.')
+            toast.error('Failed to save profile. Please try again.')
         }
     }
 

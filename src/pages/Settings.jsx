@@ -1,5 +1,6 @@
 /**
  * AI Marketing Platform - Settings Page
+ * MacBook-style UI/UX with Primary Color #52b2bf
  * 
  * @author Scalezix Venture PVT LTD
  * @copyright 2025 Scalezix Venture PVT LTD. All Rights Reserved.
@@ -9,12 +10,16 @@ import { useState, useEffect } from 'react'
 import { Settings as SettingsIcon, Bell, Shield, Palette, Database, Key, Mail, Smartphone, Download, Upload, Trash2, Zap, Volume2, Monitor, Save, CheckCircle, Copy } from 'lucide-react'
 import { usePlan } from '../context/PlanContext'
 import { useTheme } from '../context/ThemeContext'
+import { useToast } from '../context/ToastContext'
+import { useModal } from '../components/Modal'
 
 export default function Settings() {
     const { currentPlan } = usePlan()
     const [activeTab, setActiveTab] = useState('general')
     const [saveStatus, setSaveStatus] = useState('')
     const [apiKeyCopied, setApiKeyCopied] = useState(false)
+    const toast = useToast()
+    const modal = useModal()
 
     const [settings, setSettings] = useState({
         // General Settings
@@ -117,7 +122,7 @@ export default function Settings() {
         link.href = url
         link.download = `settings_backup_${new Date().toISOString().split('T')[0]}.json`
         link.click()
-        alert('✅ Settings exported successfully!')
+        toast.success('Settings exported successfully!')
     }
 
     const handleImportData = (event) => {
@@ -129,22 +134,24 @@ export default function Settings() {
             try {
                 const imported = JSON.parse(e.target.result)
                 setSettings(imported)
-                alert('✅ Settings imported successfully!')
+                toast.success('Settings imported successfully!')
             } catch (error) {
-                alert('❌ Error importing settings. Please check the file format.')
+                toast.error('Error importing settings. Please check the file format.')
             }
         }
         reader.readAsText(file)
     }
 
-    const handleDeleteAllData = () => {
-        if (window.confirm('⚠️ Are you sure you want to delete all data? This action cannot be undone.')) {
-            if (window.confirm('⚠️ Final confirmation: This will permanently delete all your data!')) {
-                localStorage.clear()
-                alert('✅ All data has been deleted.')
-                window.location.reload()
-            }
-        }
+    const handleDeleteAllData = async () => {
+        const confirmed = await modal.danger('Delete All Data', 'Are you sure you want to delete all data? This action cannot be undone.', { confirmText: 'Delete All' })
+        if (!confirmed) return
+
+        const finalConfirm = await modal.danger('Final Confirmation', 'This will permanently delete all your data!', { confirmText: 'Yes, Delete Everything' })
+        if (!finalConfirm) return
+
+        localStorage.clear()
+        toast.success('All data has been deleted.')
+        window.location.reload()
     }
 
     const copyApiKey = () => {
@@ -157,7 +164,7 @@ export default function Settings() {
         if ('Notification' in window && Notification.permission === 'default') {
             const permission = await Notification.requestPermission()
             if (permission === 'granted') {
-                alert('✅ Notification permission granted!')
+                toast.success('Notification permission granted!')
             }
         }
     }
@@ -529,7 +536,7 @@ export default function Settings() {
                                             </p>
                                             <button
                                                 onClick={async () => {
-                                                    const confirmed = window.confirm('⚠️ Are you sure you want to delete your account? This action cannot be undone.');
+                                                    const confirmed = await modal.danger('Delete Account', 'Are you sure you want to delete your account? This action cannot be undone.', { confirmText: 'Delete Account' })
                                                     if (!confirmed) return;
 
                                                     try {
@@ -547,15 +554,15 @@ export default function Settings() {
 
                                                         if (typeData.isGoogleUser) {
                                                             // Google user - ask to type DELETE
-                                                            const confirmText = window.prompt('You signed in with Google. Type "DELETE" to confirm account deletion:');
+                                                            const confirmText = await modal.prompt('Confirm Deletion', 'You signed in with Google. Type "DELETE" to confirm account deletion:', { placeholder: 'Type DELETE' });
                                                             if (confirmText !== 'DELETE') {
-                                                                alert('❌ You must type DELETE exactly to confirm.');
+                                                                toast.error('You must type DELETE exactly to confirm.');
                                                                 return;
                                                             }
                                                             deleteBody = { confirmText };
                                                         } else {
                                                             // Email/password user - ask for password
-                                                            const password = window.prompt('Enter your password to confirm deletion:');
+                                                            const password = await modal.prompt('Confirm Deletion', 'Enter your password to confirm deletion:', { placeholder: 'Your password' });
                                                             if (!password) return;
                                                             deleteBody = { password };
                                                         }
@@ -572,14 +579,14 @@ export default function Settings() {
                                                         const data = await response.json();
 
                                                         if (response.ok) {
-                                                            alert('✅ Account deleted successfully');
+                                                            toast.success('Account deleted successfully');
                                                             localStorage.clear();
                                                             window.location.href = '/';
                                                         } else {
-                                                            alert(`❌ ${data.error || 'Failed to delete account'}`);
+                                                            toast.error(data.error || 'Failed to delete account');
                                                         }
                                                     } catch (error) {
-                                                        alert('❌ Error deleting account. Please try again.');
+                                                        toast.error('Error deleting account. Please try again.');
                                                     }
                                                 }}
                                                 className="w-full flex items-center justify-center gap-2 bg-red-600 text-white py-3 rounded-lg font-semibold hover:bg-red-700 transition-all"

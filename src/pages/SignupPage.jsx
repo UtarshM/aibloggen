@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import axios from 'axios';
+import { useToast } from '../context/ToastContext';
 
 // API URL from environment
 const API_URL = import.meta.env.VITE_API_URL ||
@@ -14,6 +15,7 @@ export default function SignupPage() {
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
     const navigate = useNavigate();
+    const toast = useToast();
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -50,6 +52,7 @@ export default function SignupPage() {
             } else {
                 setMessage(response.data.message || 'OTP sent to your email. Please check your inbox.');
             }
+            toast.success('OTP sent to your email!');
             setStep('verify');
         } catch (err) {
             setError(err.response?.data?.error || 'Signup failed');
@@ -71,6 +74,7 @@ export default function SignupPage() {
 
             localStorage.setItem('token', response.data.token);
             localStorage.setItem('user', JSON.stringify(response.data.user));
+            toast.success('Email verified! Welcome to Scalezix!');
             setMessage('Email verified! Redirecting...');
             setTimeout(() => navigate('/dashboard'), 1500);
         } catch (err) {
@@ -89,6 +93,7 @@ export default function SignupPage() {
                 email: formData.email
             });
             setMessage(response.data.message);
+            toast.success('OTP resent successfully!');
         } catch (err) {
             setError(err.response?.data?.error || 'Failed to resend OTP');
         } finally {
@@ -97,7 +102,7 @@ export default function SignupPage() {
     };
 
     return (
-        <div className="min-h-screen bg-white relative overflow-hidden flex items-center justify-center py-12">
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-primary-50 relative overflow-hidden flex items-center justify-center py-12">
             {/* Animated Background */}
             <div className="fixed inset-0 z-0 pointer-events-none">
                 <div className="absolute inset-0 bg-[linear-gradient(to_right,#e5e7eb_1px,transparent_1px),linear-gradient(to_bottom,#e5e7eb_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-30"></div>

@@ -1,6 +1,7 @@
 /**
  * Affiliate Admin Management Page
  * SUPERADMIN ONLY - Access restricted to users with isAdmin: true
+ * MacBook-style UI/UX with Primary Color #52b2bf
  * @author Scalezix Venture PVT LTD
  * @copyright 2025 Scalezix Venture PVT LTD. All Rights Reserved.
  */
@@ -12,6 +13,8 @@ import {
     Eye, RefreshCw, AlertCircle, Wallet, ArrowUpRight, Plus, ShieldX, Lock
 } from 'lucide-react'
 import { api } from '../api/client'
+import { useToast } from '../context/ToastContext'
+import { useModal } from '../components/Modal'
 
 export default function AffiliateAdmin() {
     const navigate = useNavigate()
@@ -28,6 +31,8 @@ export default function AffiliateAdmin() {
     const [accessDenied, setAccessDenied] = useState(false)
     const [showSimulatePurchaseModal, setShowSimulatePurchaseModal] = useState(false)
     const [purchaseForm, setPurchaseForm] = useState({ userEmail: '', planName: 'Premium', amount: '99999' })
+    const toast = useToast()
+    const modal = useModal()
 
     useEffect(() => {
         checkAdminAccess()
@@ -121,49 +126,50 @@ export default function AffiliateAdmin() {
 
 
     const handleApprove = async (id) => {
-        if (!confirm('Approve this affiliate?')) return
+        const confirmed = await modal.confirm('Approve Affiliate', 'Are you sure you want to approve this affiliate?')
+        if (!confirmed) return
         try {
             await api.approveAffiliate(id, {})
             loadData()
-            alert('✅ Affiliate approved!')
+            toast.success('Affiliate approved!')
         } catch (err) {
-            alert('❌ ' + err.message)
+            toast.error(err.message)
         }
     }
 
     const handleReject = async (id) => {
-        const reason = prompt('Rejection reason:')
+        const reason = await modal.prompt('Reject Affiliate', 'Enter rejection reason:', { placeholder: 'Reason for rejection...' })
         if (!reason) return
         try {
             await api.rejectAffiliate(id, { reason })
             loadData()
-            alert('✅ Affiliate rejected')
+            toast.success('Affiliate rejected')
         } catch (err) {
-            alert('❌ ' + err.message)
+            toast.error(err.message)
         }
     }
 
     const handleCompleteWithdrawal = async (id) => {
-        const transactionId = prompt('Enter transaction ID:')
+        const transactionId = await modal.prompt('Complete Withdrawal', 'Enter transaction ID:', { placeholder: 'Transaction ID...' })
         if (!transactionId) return
         try {
             await api.completeWithdrawal(id, { transactionId })
             loadData()
-            alert('✅ Withdrawal completed!')
+            toast.success('Withdrawal completed!')
         } catch (err) {
-            alert('❌ ' + err.message)
+            toast.error(err.message)
         }
     }
 
     const handleRejectWithdrawal = async (id) => {
-        const reason = prompt('Rejection reason:')
+        const reason = await modal.prompt('Reject Withdrawal', 'Enter rejection reason:', { placeholder: 'Reason for rejection...' })
         if (!reason) return
         try {
             await api.rejectWithdrawal(id, { reason })
             loadData()
-            alert('✅ Withdrawal rejected and funds returned')
+            toast.success('Withdrawal rejected and funds returned')
         } catch (err) {
-            alert('❌ ' + err.message)
+            toast.error(err.message)
         }
     }
 
@@ -178,9 +184,9 @@ export default function AffiliateAdmin() {
             setShowAddEarningModal(false)
             setEarningForm({ affiliateId: '', revenueAmount: '', description: '' })
             loadData()
-            alert('✅ Earning added!')
+            toast.success('Earning added!')
         } catch (err) {
-            alert('❌ ' + err.message)
+            toast.error(err.message)
         }
     }
 
@@ -195,9 +201,9 @@ export default function AffiliateAdmin() {
             setShowSimulatePurchaseModal(false)
             setPurchaseForm({ userEmail: '', planName: 'Premium', amount: '99999' })
             loadData()
-            alert(`✅ ${result.message}`)
+            toast.success(result.message)
         } catch (err) {
-            alert('❌ ' + err.message)
+            toast.error(err.message)
         }
     }
 

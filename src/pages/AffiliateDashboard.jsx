@@ -1,5 +1,6 @@
 /**
  * Affiliate Dashboard - Main affiliate portal
+ * MacBook-style UI/UX with Primary Color #52b2bf
  * @author Scalezix Venture PVT LTD
  * @copyright 2025 Scalezix Venture PVT LTD. All Rights Reserved.
  */
@@ -12,6 +13,7 @@ import {
     CreditCard, Building, Smartphone, ChevronRight, RefreshCw
 } from 'lucide-react'
 import { api } from '../api/client'
+import { useToast } from '../context/ToastContext'
 
 export default function AffiliateDashboard() {
     const navigate = useNavigate()
@@ -28,6 +30,7 @@ export default function AffiliateDashboard() {
     })
     const [withdrawing, setWithdrawing] = useState(false)
     const [error, setError] = useState('')
+    const toast = useToast() = useState('')
 
     useEffect(() => {
         const token = localStorage.getItem('affiliateToken')
@@ -97,7 +100,7 @@ export default function AffiliateDashboard() {
                 upiId: '', paypalEmail: '', note: ''
             })
             loadDashboard()
-            alert('✅ Withdrawal request submitted successfully!')
+            toast.success('Withdrawal request submitted successfully!')
         } catch (err) {
             setError(err.message)
         } finally {
@@ -609,16 +612,17 @@ function SettingsTab({ affiliate, onUpdate }) {
     const [passwordForm, setPasswordForm] = useState({ current: '', new: '', confirm: '' })
     const [saving, setSaving] = useState(false)
     const [changingPassword, setChangingPassword] = useState(false)
+    const toast = useToast()
 
     const handleSave = async (e) => {
         e.preventDefault()
         setSaving(true)
         try {
             await api.updateAffiliateProfile(form)
-            alert('✅ Profile updated!')
+            toast.success('Profile updated!')
             onUpdate()
         } catch (err) {
-            alert('❌ ' + err.message)
+            toast.error(err.message)
         } finally {
             setSaving(false)
         }
@@ -627,16 +631,16 @@ function SettingsTab({ affiliate, onUpdate }) {
     const handleChangePassword = async (e) => {
         e.preventDefault()
         if (passwordForm.new !== passwordForm.confirm) {
-            alert('❌ Passwords do not match')
+            toast.error('Passwords do not match')
             return
         }
         setChangingPassword(true)
         try {
             await api.changeAffiliatePassword(passwordForm.current, passwordForm.new)
-            alert('✅ Password changed!')
+            toast.success('Password changed!')
             setPasswordForm({ current: '', new: '', confirm: '' })
         } catch (err) {
-            alert('❌ ' + err.message)
+            toast.error(err.message)
         } finally {
             setChangingPassword(false)
         }

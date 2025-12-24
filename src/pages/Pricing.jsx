@@ -1,5 +1,6 @@
 /**
  * AI Marketing Platform - Pricing Page
+ * MacBook-style UI/UX with Primary Color #52b2bf
  * 
  * @author Scalezix Venture PVT LTD
  * @copyright 2025 Scalezix Venture PVT LTD. All Rights Reserved.
@@ -8,6 +9,8 @@
 import { Check, Lock } from 'lucide-react'
 import { useState } from 'react'
 import { usePlan } from '../context/PlanContext'
+import { useToast } from '../context/ToastContext'
+import { useModal } from '../components/Modal'
 
 const plans = [
     {
@@ -77,13 +80,15 @@ const plans = [
 export default function Pricing() {
     const [hoveredLock, setHoveredLock] = useState(null)
     const { currentPlan, upgradePlan } = usePlan()
+    const toast = useToast()
+    const modal = useModal()
 
-    const handleUpgrade = (planName) => {
+    const handleUpgrade = async (planName) => {
         // Show confirmation dialog
-        const confirmed = window.confirm(
-            `Upgrade to ${planName} plan?\n\n` +
-            `You will be charged immediately and get access to all ${planName} features.\n\n` +
-            `Click OK to proceed with the upgrade.`
+        const confirmed = await modal.confirm(
+            `Upgrade to ${planName}`,
+            `You will be charged immediately and get access to all ${planName} features. Click Confirm to proceed with the upgrade.`,
+            { confirmText: 'Upgrade Now' }
         )
 
         if (confirmed) {
@@ -91,14 +96,10 @@ export default function Pricing() {
             upgradePlan(planName.toLowerCase())
 
             // Show success message
-            alert(
-                `🎉 Successfully upgraded to ${planName} plan!\n\n` +
-                `All ${planName} features are now unlocked.\n` +
-                `You can start using them immediately.`
-            )
+            toast.success(`Successfully upgraded to ${planName} plan! All features are now unlocked.`)
 
             // Reload page to reflect changes
-            window.location.reload()
+            setTimeout(() => window.location.reload(), 1500)
         }
     }
 

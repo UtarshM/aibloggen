@@ -1,6 +1,6 @@
 /**
  * SuperAdmin Dashboard - Complete Control Center
- * Apple-inspired design with 25+ functionalities
+ * MacBook-style UI/UX with Primary Color #52b2bf
  * @author Scalezix Venture PVT LTD
  * @copyright 2025 All Rights Reserved
  */
@@ -9,6 +9,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../api/client';
+import { useToast } from '../context/ToastContext';
+import { useModal } from '../components/Modal';
 
 // Icons Component
 const Icons = {
@@ -223,7 +225,7 @@ export default function SuperAdminDashboard() {
                 {/* Logo */}
                 <div className="p-6 border-b border-gray-100">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-gray-900 to-gray-700 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <div className="w-10 h-10 bg-gradient-to-br from-primary-400 to-primary-600 rounded-xl flex items-center justify-center flex-shrink-0 text-white">
                             <Icons.Shield />
                         </div>
                         {!sidebarCollapsed && (
@@ -248,8 +250,8 @@ export default function SuperAdminDashboard() {
                             whileHover={{ x: 4 }}
                             whileTap={{ scale: 0.98 }}
                             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${activeTab === item.id
-                                ? 'bg-gray-900 text-white shadow-lg'
-                                : 'text-gray-600 hover:bg-gray-100'
+                                ? 'bg-gradient-to-r from-primary-400 to-primary-500 text-white shadow-lg'
+                                : 'text-gray-600 hover:bg-primary-50 hover:text-primary-600'
                                 }`}
                         >
                             <item.icon />
@@ -504,6 +506,8 @@ function UsersView() {
     const [selectedUser, setSelectedUser] = useState(null);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
+    const toast = useToast();
+    const modal = useModal();
 
     useEffect(() => {
         loadUsers();
@@ -531,25 +535,33 @@ function UsersView() {
     const handleAction = async (userId, action, data = {}) => {
         try {
             if (action === 'delete') {
-                if (!confirm('Are you sure you want to delete this user?')) return;
+                const confirmed = await modal.danger('Delete User', 'Are you sure you want to delete this user? This action cannot be undone.');
+                if (!confirmed) return;
                 await api.superAdminDeleteUser(userId);
+                toast.success('User deleted successfully');
             } else if (action === 'verify') {
                 await api.superAdminVerifyUser(userId);
+                toast.success('User verified successfully');
             } else if (action === 'makeAdmin') {
                 await api.superAdminToggleAdmin(userId, true);
+                toast.success('User is now an admin');
             } else if (action === 'removeAdmin') {
                 await api.superAdminToggleAdmin(userId, false);
+                toast.success('Admin privileges removed');
             } else if (action === 'block') {
-                const reason = prompt('Enter reason for blocking this user:');
-                if (reason === null) return; // User cancelled
+                const reason = await modal.prompt('Block User', 'Enter reason for blocking this user:', { placeholder: 'Reason for blocking...' });
+                if (reason === null) return;
                 await api.superAdminBlockUser(userId, reason);
+                toast.success('User blocked successfully');
             } else if (action === 'unblock') {
-                if (!confirm('Are you sure you want to unblock this user?')) return;
+                const confirmed = await modal.confirm('Unblock User', 'Are you sure you want to unblock this user?');
+                if (!confirmed) return;
                 await api.superAdminUnblockUser(userId);
+                toast.success('User unblocked successfully');
             }
             loadUsers();
         } catch (error) {
-            alert(error.message);
+            toast.error(error.message);
         }
     };
 
@@ -842,6 +854,7 @@ function AffiliatesView() {
     const [actionModal, setActionModal] = useState(null);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
+    const toast = useToast();
 
     useEffect(() => {
         loadAffiliates();
@@ -865,19 +878,24 @@ function AffiliatesView() {
         try {
             if (action === 'approve') {
                 await api.approveAffiliate(affiliateId, data);
+                toast.success('Affiliate approved successfully');
             } else if (action === 'reject') {
                 await api.rejectAffiliate(affiliateId, data);
+                toast.success('Affiliate rejected');
             } else if (action === 'suspend') {
                 await api.suspendAffiliate(affiliateId, data);
+                toast.warning('Affiliate suspended');
             } else if (action === 'ban') {
                 await api.banAffiliate(affiliateId, data);
+                toast.error('Affiliate banned');
             } else if (action === 'reactivate') {
                 await api.reactivateAffiliate(affiliateId);
+                toast.success('Affiliate reactivated');
             }
             setActionModal(null);
             loadAffiliates();
         } catch (error) {
-            alert(error.message);
+            toast.error(error.message);
         }
     };
 
@@ -1227,6 +1245,7 @@ function WithdrawalsView() {
     const [actionModal, setActionModal] = useState(null);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
+    const toast = useToast();
 
     useEffect(() => {
         loadWithdrawals();
@@ -1250,13 +1269,15 @@ function WithdrawalsView() {
         try {
             if (action === 'complete') {
                 await api.completeWithdrawal(withdrawalId, data);
+                toast.success('Withdrawal completed successfully');
             } else if (action === 'reject') {
                 await api.rejectWithdrawal(withdrawalId, data);
+                toast.warning('Withdrawal rejected');
             }
             setActionModal(null);
             loadWithdrawals();
         } catch (error) {
-            alert(error.message);
+            toast.error(error.message);
         }
     };
 
@@ -1494,6 +1515,7 @@ function NewsletterView() {
     const [showCompose, setShowCompose] = useState(false);
     const [emailData, setEmailData] = useState({ subject: '', headline: '', body: '', ctaText: '', ctaUrl: '' });
     const [sending, setSending] = useState(false);
+    const toast = useToast();
 
     useEffect(() => {
         loadSubscribers();
@@ -1513,17 +1535,17 @@ function NewsletterView() {
 
     const handleSendNewsletter = async () => {
         if (!emailData.subject || !emailData.headline || !emailData.body) {
-            alert('Please fill in all required fields');
+            toast.warning('Please fill in all required fields');
             return;
         }
         setSending(true);
         try {
             await api.sendSuperAdminNewsletter(emailData);
-            alert('Newsletter sent successfully!');
+            toast.success('Newsletter sent successfully!');
             setShowCompose(false);
             setEmailData({ subject: '', headline: '', body: '', ctaText: '', ctaUrl: '' });
         } catch (error) {
-            alert('Failed to send: ' + error.message);
+            toast.error('Failed to send: ' + error.message);
         } finally {
             setSending(false);
         }
@@ -1539,6 +1561,7 @@ function NewsletterView() {
         a.href = url;
         a.download = 'newsletter-subscribers.csv';
         a.click();
+        toast.success('CSV exported successfully');
     };
 
     return (
@@ -2106,6 +2129,8 @@ function SettingsView() {
     });
     const [saving, setSaving] = useState(false);
     const [loading, setLoading] = useState(true);
+    const toast = useToast();
+    const modal = useModal();
 
     useEffect(() => {
         loadSettings();
@@ -2133,21 +2158,22 @@ function SettingsView() {
         setSaving(true);
         try {
             await api.updateSuperAdminSettings(settings);
-            alert('Settings saved successfully!');
+            toast.success('Settings saved successfully!');
         } catch (error) {
-            alert('Failed to save: ' + error.message);
+            toast.error('Failed to save: ' + error.message);
         } finally {
             setSaving(false);
         }
     };
 
     const handleClearLogs = async () => {
-        if (!confirm('Are you sure you want to clear all activity logs? This cannot be undone.')) return;
+        const confirmed = await modal.danger('Clear All Logs', 'Are you sure you want to clear all activity logs? This cannot be undone.', { confirmText: 'Clear Logs' });
+        if (!confirmed) return;
         try {
             await api.superAdminClearLogs();
-            alert('Activity logs cleared successfully!');
+            toast.success('Activity logs cleared successfully!');
         } catch (error) {
-            alert('Failed to clear logs: ' + error.message);
+            toast.error('Failed to clear logs: ' + error.message);
         }
     };
 
@@ -2493,6 +2519,7 @@ function PerformanceView() {
     const [summary, setSummary] = useState(null);
     const [loading, setLoading] = useState(true);
     const [selectedAffiliate, setSelectedAffiliate] = useState(null);
+    const toast = useToast();
 
     useEffect(() => {
         loadPerformance();
@@ -2514,10 +2541,16 @@ function PerformanceView() {
     const handleUpdateCommission = async (affiliateId, newCommission) => {
         try {
             await api.superAdminUpdateAffiliateCommission(affiliateId, newCommission);
+            toast.success('Commission rate updated');
             loadPerformance();
         } catch (error) {
-            alert(error.message);
+            toast.error(error.message);
         }
+    };
+
+    const handleCopyLink = (slug) => {
+        navigator.clipboard.writeText(`https://aiblog.scalezix.com/?ref=${slug}`);
+        toast.success('Referral link copied!');
     };
 
     if (loading) {
@@ -2728,11 +2761,8 @@ function PerformanceView() {
                                             className="flex-1 px-4 py-2 bg-gray-100 rounded-xl text-sm"
                                         />
                                         <button
-                                            onClick={() => {
-                                                navigator.clipboard.writeText(`https://aiblog.scalezix.com/?ref=${selectedAffiliate.slug}`);
-                                                alert('Copied!');
-                                            }}
-                                            className="px-4 py-2 bg-gray-900 text-white rounded-xl text-sm"
+                                            onClick={() => handleCopyLink(selectedAffiliate.slug)}
+                                            className="px-4 py-2 bg-gradient-to-r from-primary-400 to-primary-500 text-white rounded-xl text-sm hover:from-primary-500 hover:to-primary-600 transition-all"
                                         >
                                             Copy
                                         </button>

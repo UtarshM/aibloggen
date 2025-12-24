@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Check, ChevronRight, Sparkles, Users, FileText, Calendar, Upload, Download, AlertCircle, CheckCircle, X, XCircle, Edit, Trash2 } from 'lucide-react'
 import { usePlan } from '../context/PlanContext'
+import { useToast } from '../context/ToastContext'
+import { useModal } from '../components/Modal'
 import LockedFeature from '../components/LockedFeature'
 import Toast from '../components/Toast'
 
@@ -18,6 +20,8 @@ export default function ClientOnboarding() {
     const [editFormData, setEditFormData] = useState(null)
     const [statusFilter, setStatusFilter] = useState('All')
     const [toast, setToast] = useState(null)
+    const globalToast = useToast()
+    const modal = useModal()
 
     const showToast = (message, type = 'success') => {
         setToast({ message, type })
@@ -236,8 +240,9 @@ export default function ClientOnboarding() {
         showToast('Client updated successfully!', 'success')
     }
 
-    const handleDeleteClient = (clientId) => {
-        if (window.confirm('Are you sure you want to delete this client?')) {
+    const handleDeleteClient = async (clientId) => {
+        const confirmed = await modal.danger('Delete Client', 'Are you sure you want to delete this client?', { confirmText: 'Delete' })
+        if (confirmed) {
             const updatedClients = clients.filter(c => c.id !== clientId)
             localStorage.setItem('onboardedClients', JSON.stringify(updatedClients))
             setClients(updatedClients)

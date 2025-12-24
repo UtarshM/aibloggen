@@ -1,6 +1,7 @@
 /**
  * Job History & Management Page
  * View and manage all bulk import jobs and published posts
+ * MacBook-style UI/UX with Primary Color #52b2bf
  * @author Scalezix Venture PVT LTD
  * @copyright 2025 Scalezix Venture PVT LTD. All Rights Reserved.
  */
@@ -9,6 +10,8 @@ import { useState, useEffect } from 'react'
 import { History, Trash2, Download, ExternalLink, CheckCircle, XCircle, Clock, Loader2, RefreshCw, AlertCircle } from 'lucide-react'
 import { api } from '../api/client'
 import Toast from '../components/Toast'
+import { useToast } from '../context/ToastContext'
+import { useModal } from '../components/Modal'
 
 export default function JobHistory() {
     const [jobs, setJobs] = useState([])
@@ -19,6 +22,8 @@ export default function JobHistory() {
     const [deleteLoading, setDeleteLoading] = useState(false)
     const [selectedPosts, setSelectedPosts] = useState([])
     const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false)
+    const globalToast = useToast()
+    const modal = useModal()
 
     useEffect(() => {
         loadJobs()
@@ -73,7 +78,8 @@ export default function JobHistory() {
             return
         }
 
-        if (!confirm(`Delete "${post.title}" from WordPress?\n\nThis will permanently remove the post from your WordPress site.`)) return
+        const confirmed = await modal.danger('Delete Post', `Delete "${post.title}" from WordPress? This will permanently remove the post from your WordPress site.`, { confirmText: 'Delete' })
+        if (!confirmed) return
 
         try {
             showToast('🗑️ Deleting post from WordPress...', 'info')
@@ -98,7 +104,8 @@ export default function JobHistory() {
             return
         }
 
-        if (!confirm(`Delete ${selectedPosts.length} posts from WordPress?`)) return
+        const confirmed = await modal.danger('Delete Posts', `Delete ${selectedPosts.length} posts from WordPress?`, { confirmText: 'Delete All' })
+        if (!confirmed) return
 
         setDeleteLoading(true)
         try {

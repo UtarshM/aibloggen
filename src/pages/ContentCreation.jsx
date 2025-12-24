@@ -1,5 +1,6 @@
 /**
  * Content Creation & Publishing Tool
+ * MacBook-style UI/UX with Primary Color #52b2bf
  * @author Scalezix Venture PVT LTD
  * @copyright 2025 Scalezix Venture PVT LTD. All Rights Reserved.
  */
@@ -9,6 +10,8 @@ import { Bold, Italic, List, Link as LinkIcon, Save, Eye, Download, Sparkles, Lo
 import { api } from '../api/client'
 import Toast from '../components/Toast'
 import ContentGenerationModal from '../components/ContentGenerationModal'
+import { useToast } from '../context/ToastContext'
+import { useModal } from '../components/Modal'
 import jsPDF from 'jspdf'
 import { Document, Paragraph, TextRun, ImageRun, HeadingLevel, AlignmentType, Packer } from 'docx'
 import { saveAs } from 'file-saver'
@@ -27,6 +30,8 @@ export default function ContentCreation() {
     const [generationStep, setGenerationStep] = useState(0)
     const [generationProgress, setGenerationProgress] = useState('')
     const [showModal, setShowModal] = useState(false)
+    const globalToast = useToast()
+    const modal = useModal()
 
     // WordPress state
     const [showWordPressModal, setShowWordPressModal] = useState(false)
@@ -208,7 +213,8 @@ export default function ContentCreation() {
     }
 
     const deleteWordPressSite = async (siteId) => {
-        if (!confirm('Are you sure you want to remove this WordPress site?')) return
+        const confirmed = await modal.danger('Remove Site', 'Are you sure you want to remove this WordPress site?', { confirmText: 'Remove' })
+        if (!confirmed) return
 
         try {
             await api.deleteWordPressSite(siteId)
