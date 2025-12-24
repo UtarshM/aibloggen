@@ -1,7 +1,11 @@
 /**
  * Tailwind CSS Configuration - MacBook Style Premium UI 2025
- * Primary Color: #1E8A9A (Darker Teal)
- * Design: Clean, Minimal, Smooth Animations
+ * 
+ * COLOR SCHEME (4 Colors):
+ * - Primary: #52B2BF (Teal) - Main brand color, buttons, links
+ * - Secondary: #8B5CF6 (Purple) - Accents, highlights, special features
+ * - Accent: #F59E0B (Amber) - Warnings, stars, attention elements
+ * - Success: #10B981 (Emerald) - Success states, positive indicators
  * 
  * @author Scalezix Venture PVT LTD
  * @copyright 2025 All Rights Reserved
@@ -15,45 +19,59 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Primary brand color - DARKER TEAL for better visibility
+        // Primary brand color - Teal (#52B2BF)
         primary: {
-          50: '#e6f4f6',
-          100: '#cce9ed',
-          200: '#99d3db',
-          300: '#66bdc9',
-          400: '#33a7b7',
-          500: '#1E8A9A',  // Main primary - darker and more visible
-          600: '#186f7c',
-          700: '#12545d',
-          800: '#0c393f',
-          900: '#061e20',
-          950: '#030f10',
+          50: '#f0fafb',
+          100: '#d9f2f5',
+          200: '#b8e6ec',
+          300: '#87d4de',
+          400: '#52B2BF',
+          500: '#3a9aa8',
+          600: '#2d7a87',
+          700: '#28636e',
+          800: '#26525b',
+          900: '#24454d',
+          950: '#122c33',
         },
-        // Secondary colors
+        // Secondary color - Purple (#8B5CF6)
         secondary: {
           50: '#faf5ff',
           100: '#f3e8ff',
           200: '#e9d5ff',
           300: '#d8b4fe',
-          400: '#c084fc',
-          500: '#a855f7',
-          600: '#9333ea',
-          700: '#7e22ce',
-          800: '#6b21a8',
-          900: '#581c87',
+          400: '#a78bfa',
+          500: '#8B5CF6',
+          600: '#7c3aed',
+          700: '#6d28d9',
+          800: '#5b21b6',
+          900: '#4c1d95',
+          950: '#2e1065',
         },
-        // Accent colors for variety
+        // Accent color - Amber (#F59E0B)
         accent: {
-          blue: '#3b82f6',
-          indigo: '#6366f1',
-          purple: '#8b5cf6',
-          pink: '#ec4899',
-          rose: '#f43f5e',
-          orange: '#f97316',
-          amber: '#f59e0b',
-          emerald: '#10b981',
-          teal: '#14b8a6',
-          cyan: '#06b6d4',
+          50: '#fffbeb',
+          100: '#fef3c7',
+          200: '#fde68a',
+          300: '#fcd34d',
+          400: '#F59E0B',
+          500: '#d97706',
+          600: '#b45309',
+          700: '#92400e',
+          800: '#78350f',
+          900: '#451a03',
+        },
+        // Success color - Emerald (#10B981)
+        success: {
+          50: '#ecfdf5',
+          100: '#d1fae5',
+          200: '#a7f3d0',
+          300: '#6ee7b7',
+          400: '#34d399',
+          500: '#10B981',
+          600: '#059669',
+          700: '#047857',
+          800: '#065f46',
+          900: '#064e3b',
         },
         // Surface colors for cards and backgrounds
         surface: {
@@ -99,10 +117,12 @@ export default {
         'soft-2xl': '0 25px 50px -12px rgba(0, 0, 0, 0.15)',
         'card': '0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.03)',
         'card-hover': '0 8px 24px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04)',
-        'button': '0 2px 4px rgba(30, 138, 154, 0.2), 0 4px 12px rgba(30, 138, 154, 0.15)',
-        'button-hover': '0 4px 8px rgba(30, 138, 154, 0.25), 0 8px 20px rgba(30, 138, 154, 0.2)',
-        'glow': '0 0 20px rgba(30, 138, 154, 0.3)',
-        'glow-lg': '0 0 40px rgba(30, 138, 154, 0.4)',
+        'button': '0 2px 4px rgba(82, 178, 191, 0.2), 0 4px 12px rgba(82, 178, 191, 0.15)',
+        'button-hover': '0 4px 8px rgba(82, 178, 191, 0.25), 0 8px 20px rgba(82, 178, 191, 0.2)',
+        'button-secondary': '0 2px 4px rgba(139, 92, 246, 0.2), 0 4px 12px rgba(139, 92, 246, 0.15)',
+        'glow': '0 0 20px rgba(82, 178, 191, 0.3)',
+        'glow-purple': '0 0 20px rgba(139, 92, 246, 0.3)',
+        'glow-lg': '0 0 40px rgba(82, 178, 191, 0.4)',
         'inner': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.03)',
         'sidebar': '4px 0 24px rgba(0, 0, 0, 0.04)',
         'dropdown': '0 10px 40px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.05)',
@@ -202,8 +222,8 @@ export default {
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
-        'mesh-gradient': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        'hero-gradient': 'linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #4facfe 100%)',
+        'mesh-gradient': 'linear-gradient(135deg, #52B2BF 0%, #8B5CF6 100%)',
+        'hero-gradient': 'linear-gradient(135deg, #52B2BF 0%, #8B5CF6 50%, #F59E0B 100%)',
       },
     },
   },

@@ -359,13 +359,13 @@ function DashboardView({ stats, loading }) {
 
     const statCards = [
         { label: 'Total Users', value: stats?.totalUsers || 0, icon: Icons.Users, color: 'from-primary-400 to-primary-500', change: '+12%' },
-        { label: 'Verified Users', value: stats?.verifiedUsers || 0, icon: Icons.Check, color: 'from-primary-400 to-primary-500', change: '+8%' },
-        { label: 'Total Affiliates', value: stats?.totalAffiliates || 0, icon: Icons.Affiliates, color: 'from-primary-400 to-primary-500', change: '+15%' },
-        { label: 'Pending Applications', value: stats?.pendingAffiliates || 0, icon: Icons.Clock, color: 'from-primary-400 to-primary-500', change: '' },
-        { label: 'Newsletter Subscribers', value: stats?.newsletterSubscribers || 0, icon: Icons.Mail, color: 'from-primary-400 to-primary-500', change: '+22%' },
-        { label: 'WordPress Sites', value: stats?.wordpressSites || 0, icon: Icons.Globe, color: 'from-primary-400 to-primary-500', change: '' },
-        { label: 'Total Earnings (₹)', value: `₹${((stats?.totalAffiliateEarnings || 0) / 100).toLocaleString()}`, icon: Icons.TrendingUp, color: 'from-primary-400 to-primary-500', change: '+18%' },
-        { label: 'Pending Withdrawals', value: stats?.pendingWithdrawals || 0, icon: Icons.Withdrawals, color: 'from-primary-400 to-primary-500', change: '' },
+        { label: 'Verified Users', value: stats?.verifiedUsers || 0, icon: Icons.Check, color: 'from-success-400 to-success-500', change: '+8%' },
+        { label: 'Total Affiliates', value: stats?.totalAffiliates || 0, icon: Icons.Affiliates, color: 'from-secondary-400 to-secondary-500', change: '+15%' },
+        { label: 'Pending Applications', value: stats?.pendingAffiliates || 0, icon: Icons.Clock, color: 'from-accent-400 to-accent-500', change: '' },
+        { label: 'Newsletter Subscribers', value: stats?.newsletterSubscribers || 0, icon: Icons.Mail, color: 'from-primary-400 to-secondary-500', change: '+22%' },
+        { label: 'WordPress Sites', value: stats?.wordpressSites || 0, icon: Icons.Globe, color: 'from-secondary-400 to-primary-500', change: '' },
+        { label: 'Total Earnings (₹)', value: `₹${((stats?.totalAffiliateEarnings || 0) / 100).toLocaleString()}`, icon: Icons.TrendingUp, color: 'from-success-400 to-success-500', change: '+18%' },
+        { label: 'Pending Withdrawals', value: stats?.pendingWithdrawals || 0, icon: Icons.Withdrawals, color: 'from-accent-400 to-accent-500', change: '' },
     ];
 
     return (

@@ -23,22 +23,30 @@ import axios from 'axios'
 const API_URL = import.meta.env.VITE_API_URL ||
     (import.meta.env.PROD ? 'https://blogapi.scalezix.com/api' : 'http://localhost:3001/api')
 
-// Navigation items - All using primary color for consistency
+// Navigation items - Multi-color scheme for visual variety
 const navItems = [
-    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { name: 'Content Creation', path: '/tools/content-creation', icon: FileText },
-    { name: 'Job History', path: '/tools/job-history', icon: History },
-    { name: 'Client Reporting', path: '/tools/client-reporting', icon: BarChart3 },
-    { name: 'SEO Automation', path: '/tools/seo-automation', icon: Search },
-    { name: 'Campaign', path: '/tools/campaign-optimization', icon: TrendingUp },
-    { name: 'Client Onboarding', path: '/tools/client-onboarding', icon: UserPlus },
-    { name: 'Social Media', path: '/tools/social-media', icon: Share2 },
+    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, color: 'primary' },
+    { name: 'Content Creation', path: '/tools/content-creation', icon: FileText, color: 'primary' },
+    { name: 'Job History', path: '/tools/job-history', icon: History, color: 'secondary' },
+    { name: 'Client Reporting', path: '/tools/client-reporting', icon: BarChart3, color: 'secondary' },
+    { name: 'SEO Automation', path: '/tools/seo-automation', icon: Search, color: 'success' },
+    { name: 'Campaign', path: '/tools/campaign-optimization', icon: TrendingUp, color: 'accent' },
+    { name: 'Client Onboarding', path: '/tools/client-onboarding', icon: UserPlus, color: 'success' },
+    { name: 'Social Media', path: '/tools/social-media', icon: Share2, color: 'secondary' },
 ]
 
 const bottomNavItems = [
-    { name: 'Pricing', path: '/pricing', icon: DollarSign },
-    { name: 'Settings', path: '/settings', icon: Settings },
+    { name: 'Pricing', path: '/pricing', icon: DollarSign, color: 'accent' },
+    { name: 'Settings', path: '/settings', icon: Settings, color: 'primary' },
 ]
+
+// Color mapping for icons
+const colorMap = {
+    primary: { bg: 'bg-primary-50', text: 'text-primary-500', activeBg: 'bg-primary-100', activeText: 'text-primary-600' },
+    secondary: { bg: 'bg-secondary-50', text: 'text-secondary-500', activeBg: 'bg-secondary-100', activeText: 'text-secondary-600' },
+    accent: { bg: 'bg-accent-50', text: 'text-accent-500', activeBg: 'bg-accent-100', activeText: 'text-accent-600' },
+    success: { bg: 'bg-success-50', text: 'text-success-500', activeBg: 'bg-success-100', activeText: 'text-success-600' },
+}
 
 // Animation variants
 const sidebarItemVariants = {
@@ -160,6 +168,7 @@ export default function Layout({ children }) {
                         {navItems.map((item, index) => {
                             const Icon = item.icon
                             const active = isActive(item.path)
+                            const colors = colorMap[item.color]
                             return (
                                 <motion.div
                                     key={item.path}
@@ -172,17 +181,17 @@ export default function Layout({ children }) {
                                     <Link
                                         to={item.path}
                                         className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${active
-                                            ? 'bg-primary-50 text-primary-600'
+                                            ? `${colors.activeBg} ${colors.activeText}`
                                             : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                                             }`}
                                     >
                                         <motion.div
                                             whileHover={{ scale: 1.1 }}
                                             whileTap={{ scale: 0.95 }}
-                                            className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${active ? 'bg-primary-100' : 'bg-primary-50'
+                                            className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${active ? colors.activeBg : colors.bg
                                                 }`}
                                         >
-                                            <Icon className={`w-5 h-5 ${active ? 'text-primary-600' : 'text-primary-500'}`} />
+                                            <Icon className={`w-5 h-5 ${active ? colors.activeText : colors.text}`} />
                                         </motion.div>
                                         <AnimatePresence>
                                             {sidebarOpen && (
@@ -208,18 +217,19 @@ export default function Layout({ children }) {
                     {bottomNavItems.map((item) => {
                         const Icon = item.icon
                         const active = isActive(item.path)
+                        const colors = colorMap[item.color]
                         return (
                             <motion.div key={item.path} whileHover={{ x: 4 }}>
                                 <Link
                                     to={item.path}
                                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${active
-                                        ? 'bg-primary-50 text-primary-600'
+                                        ? `${colors.activeBg} ${colors.activeText}`
                                         : 'text-gray-600 hover:bg-gray-50'
                                         }`}
                                 >
-                                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${active ? 'bg-primary-100' : 'bg-gray-50'
+                                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${active ? colors.activeBg : colors.bg
                                         }`}>
-                                        <Icon className={`w-5 h-5 ${active ? 'text-primary-600' : 'text-gray-500'}`} />
+                                        <Icon className={`w-5 h-5 ${active ? colors.activeText : colors.text}`} />
                                     </div>
                                     <AnimatePresence>
                                         {sidebarOpen && (
