@@ -226,138 +226,185 @@ export const UsageLog = mongoose.model('UsageLog', usageLogSchema);
  * Check if user has enough tokens for an operation
  */
 export async function checkTokenBalance(userId, operation) {
-  const user = await User.findById(userId);
-  if (!user) return { allowed: false, reason: 'User not found' };
-  
-  const cost = TOKEN_COSTS[operation] || 0;
-  const planLimits = PLAN_TOKEN_LIMITS[user.plan] || PLAN_TOKEN_LIMITS.free;
-  
-  // Check if tokens need to be reset (monthly)
-  const now = new Date();
-  const lastReset = user.tokenBalance?.lastReset || user.createdAt;
-  const daysSinceReset = (now - lastReset) / (1000 * 60 * 60 * 24);
-  
-  if (daysSinceReset >= 30) {
-    // Reset tokens for new month
-    user.tokenBalance = {
-      current: planLimits.monthlyTokens,
-      used: 0,
-      total: planLimits.monthlyTokens,
-      lastReset: now,
-      nextReset: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
-    };
-    await user.save();
-  }
-  
-  const currentBalance = user.tokenBalance?.current || planLimits.monthlyTokens;
-  
-  if (currentBalance < cost) {
+  try {
+    const user = await User.findById(userId);
+    if (!user) return { allowed: true, reason: 'User not found - allowing operation', cost: 0 };
+    
+    const cost = TOKEN_COSTS[operation] || 0;
+    const planLimits = PLAN_TOKEN_LIMITS[user.plan] || PLAN_TOKEN_LIMITS.free;
+    
+    // Initialize tokenBalance if it doesn't exist
+    if (!user.tokenBalance || !user.tokenBalance.current) {
+      user.tokenBalance = {
+        current: planLimits.monthlyTokens,
+        used: 0,
+        total: planLimits.monthlyTokens,
+        lastReset: new Date(),
+        nextReset: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+      };
+      await user.save();
+    }
+    
+    // Check if tokens need to be reset (monthly)
+    const now = new Date();
+    const lastReset = user.tokenBalance?.lastReset || user.createdAt;
+    const daysSinceReset = (now - new Date(lastReset)) / (1000 * 60 * 60 * 24);
+    
+    if (daysSinceReset >= 30) {
+      // Reset tokens for new month
+      user.tokenBalance = {
+        current: planLimits.monthlyTokens,
+        used: 0,
+        total: planLimits.monthlyTokens,
+        lastReset: now,
+        nextReset: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+      };
+      await user.save();
+    }
+    
+    const currentBalance = user.tokenBalance?.current || planLimits.monthlyTokens;
+    
+    if (currentBalance < cost) {
+      return { 
+        allowed: false, 
+        reason: 'Insufficient tokens',
+        required: cost,
+        available: currentBalance,
+        plan: user.plan
+      };
+    }
+    
     return { 
-      allowed: false, 
-      reason: 'Insufficient tokens',
-      required: cost,
-      available: currentBalance,
+      allowed: true, 
+      cost,
+      remaining: currentBalance - cost,
       plan: user.plan
     };
+  } catch (error) {
+    console.error('checkTokenBalance error:', error);
+    // Allow operation on error to not block users
+    return { allowed: true, cost: 0, reason: 'Error checking balance - allowing operation' };
   }
-  
-  return { 
-    allowed: true, 
-    cost,
-    remaining: currentBalance - cost,
-    plan: user.plan
-  };
 }
 
 /**
  * Deduct tokens after successful operation
  */
 export async function deductTokens(userId, operation, metadata = {}) {
-  const cost = TOKEN_COSTS[operation] || 0;
-  
-  const user = await User.findByIdAndUpdate(
-    userId,
-    {
-      $inc: {
-        'tokenBalance.current': -cost,
-        'tokenBalance.used': cost,
-        [`apiUsage.${operation === 'blogPost' ? 'contentGenerated' : 
-                     operation === 'socialPost' ? 'socialPosts' : 
-                     operation === 'seoAnalysis' ? 'seoAnalyses' : 
-                     'imagesGenerated'}`]: 1
-      }
-    },
-    { new: true }
-  );
-  
-  // Log the usage
-  await UsageLog.create({
-    userId,
-    operation,
-    tokensUsed: cost,
-    metadata,
-    status: 'success'
-  });
-  
-  return {
-    tokensUsed: cost,
-    remaining: user?.tokenBalance?.current || 0,
-    totalUsed: user?.tokenBalance?.used || cost
-  };
+  try {
+    const cost = TOKEN_COSTS[operation] || 0;
+    
+    const user = await User.findByIdAndUpdate(
+      userId,
+      {
+        $inc: {
+          'tokenBalance.current': -cost,
+          'tokenBalance.used': cost,
+          [`apiUsage.${operation === 'blogPost' ? 'contentGenerated' : 
+                       operation === 'socialPost' ? 'socialPosts' : 
+                       operation === 'seoAnalysis' ? 'seoAnalyses' : 
+                       'imagesGenerated'}`]: 1
+        }
+      },
+      { new: true }
+    );
+    
+    // Log the usage - wrapped in try-catch
+    try {
+      await UsageLog.create({
+        userId,
+        operation,
+        tokensUsed: cost,
+        metadata,
+        status: 'success'
+      });
+    } catch (logError) {
+      console.error('UsageLog create error:', logError);
+    }
+    
+    return {
+      tokensUsed: cost,
+      remaining: user?.tokenBalance?.current || 0,
+      totalUsed: user?.tokenBalance?.used || cost
+    };
+  } catch (error) {
+    console.error('deductTokens error:', error);
+    return { tokensUsed: 0, remaining: 0, totalUsed: 0 };
+  }
 }
 
 /**
  * Get user's usage statistics
  */
 export async function getUserUsageStats(userId, days = 30) {
-  const user = await User.findById(userId);
-  if (!user) return null;
-  
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - days);
-  
-  // Get usage logs for the period
-  const logs = await UsageLog.find({
-    userId,
-    createdAt: { $gte: startDate }
-  }).sort({ createdAt: -1 });
-  
-  // Aggregate by operation type
-  const byOperation = {};
-  logs.forEach(log => {
-    if (!byOperation[log.operation]) {
-      byOperation[log.operation] = { count: 0, tokens: 0 };
+  try {
+    const user = await User.findById(userId);
+    if (!user) return null;
+    
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    
+    // Get usage logs for the period - with error handling
+    let logs = [];
+    try {
+      logs = await UsageLog.find({
+        userId,
+        createdAt: { $gte: startDate }
+      }).sort({ createdAt: -1 }) || [];
+    } catch (e) {
+      console.log('UsageLog find error:', e.message);
+      logs = [];
     }
-    byOperation[log.operation].count++;
-    byOperation[log.operation].tokens += log.tokensUsed;
-  });
-  
-  // Daily usage for charts
-  const dailyUsage = {};
-  logs.forEach(log => {
-    const day = log.createdAt.toISOString().split('T')[0];
-    if (!dailyUsage[day]) dailyUsage[day] = 0;
-    dailyUsage[day] += log.tokensUsed;
-  });
-  
-  const planLimits = PLAN_TOKEN_LIMITS[user.plan] || PLAN_TOKEN_LIMITS.free;
-  
-  return {
-    balance: {
-      current: user.tokenBalance?.current || planLimits.monthlyTokens,
-      used: user.tokenBalance?.used || 0,
-      total: user.tokenBalance?.total || planLimits.monthlyTokens,
-      percentage: Math.round(((user.tokenBalance?.used || 0) / planLimits.monthlyTokens) * 100)
-    },
-    plan: {
-      name: user.plan,
-      limits: planLimits
-    },
-    usage: {
-      byOperation,
-      dailyUsage,
-      recentLogs: logs.slice(0, 20)
-    },
-    apiUsage: user.apiUsage
-  };
+    
+    // Aggregate by operation type
+    const byOperation = {};
+    logs.forEach(log => {
+      if (!byOperation[log.operation]) {
+        byOperation[log.operation] = { count: 0, tokens: 0 };
+      }
+      byOperation[log.operation].count++;
+      byOperation[log.operation].tokens += log.tokensUsed || 0;
+    });
+    
+    // Daily usage for charts
+    const dailyUsage = {};
+    logs.forEach(log => {
+      if (log.createdAt) {
+        const day = log.createdAt.toISOString().split('T')[0];
+        if (!dailyUsage[day]) dailyUsage[day] = 0;
+        dailyUsage[day] += log.tokensUsed || 0;
+      }
+    });
+    
+    const planLimits = PLAN_TOKEN_LIMITS[user.plan] || PLAN_TOKEN_LIMITS.free;
+    
+    // Initialize tokenBalance if needed
+    const tokenBalance = user.tokenBalance || {
+      current: planLimits.monthlyTokens,
+      used: 0,
+      total: planLimits.monthlyTokens
+    };
+    
+    return {
+      balance: {
+        current: tokenBalance.current || planLimits.monthlyTokens,
+        used: tokenBalance.used || 0,
+        total: tokenBalance.total || planLimits.monthlyTokens,
+        percentage: Math.round(((tokenBalance.used || 0) / planLimits.monthlyTokens) * 100)
+      },
+      plan: {
+        name: user.plan,
+        limits: planLimits
+      },
+      usage: {
+        byOperation,
+        dailyUsage,
+        recentLogs: logs.slice(0, 20)
+      },
+      apiUsage: user.apiUsage || { contentGenerated: 0, socialPosts: 0, seoAnalyses: 0, imagesGenerated: 0 }
+    };
+  } catch (error) {
+    console.error('getUserUsageStats error:', error);
+    return null;
+  }
 }
