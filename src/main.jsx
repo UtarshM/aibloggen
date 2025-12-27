@@ -10,6 +10,15 @@ import ReactDOM from 'react-dom/client'
 import App from './App'
 import './index.css'
 
+// Suppress console logs in production for security
+if (import.meta.env.PROD) {
+    const noop = () => { };
+    console.log = noop;
+    console.debug = noop;
+    console.info = noop;
+    // Keep console.warn and console.error for critical issues
+}
+
 // Developed by: Scalezix Venture PVT LTD
 ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>

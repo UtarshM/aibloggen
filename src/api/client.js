@@ -5,8 +5,10 @@ import axios from 'axios';
 const API_BASE = import.meta.env.VITE_API_URL || 
   (import.meta.env.PROD ? 'https://blogapi.scalezix.com/api' : 'http://localhost:3001/api');
 
-// Debug: Log API URL in console
-console.log('[API] Environment:', import.meta.env.MODE, 'Using:', API_BASE);
+// Only log in development mode
+if (import.meta.env.DEV) {
+  console.log('[API] Environment:', import.meta.env.MODE, 'Using:', API_BASE);
+}
 
 // Export for use in other components
 export const getApiUrl = () => API_BASE;

@@ -17,6 +17,10 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import mongoSanitize from 'express-mongo-sanitize';
+import hpp from 'hpp';
 import connectDB, { Lead, Content, SocialPost, Client, Campaign, ChatMessage, WhiteLabelConfig, SEOAnalysis } from './database.js';
 import * as aiServices from './aiServices.js';
 import { analyzeWebsite } from './seoAnalyzer.js';
@@ -34,7 +38,81 @@ const isProduction = process.env.NODE_ENV === 'production';
 // Connect to MongoDB
 connectDB();
 
-// CORS Configuration - Production Ready
+// ═══════════════════════════════════════════════════════════════
+// SECURITY MIDDLEWARE - Production Grade Protection
+// ═══════════════════════════════════════════════════════════════
+
+// 1. Helmet - Set security HTTP headers
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https:", "blob:"],
+      scriptSrc: ["'self'"],
+      connectSrc: ["'self'", "https://blogapi.scalezix.com", "https://aiblog.scalezix.com"],
+    },
+  },
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+
+// 2. Rate Limiting - Prevent brute force & DDoS
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // 100 requests per window
+  message: { error: 'Too many requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => !isProduction // Skip in development
+});
+
+// Strict rate limit for auth endpoints
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // 10 attempts per window
+  message: { error: 'Too many login attempts, please try again after 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => !isProduction
+});
+
+// Very strict limit for OTP/password reset
+const otpLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5, // 5 OTP requests per hour
+  message: { error: 'Too many OTP requests, please try again after 1 hour.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => !isProduction
+});
+
+// API rate limit for AI operations (expensive)
+const aiLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 10, // 10 AI requests per minute
+  message: { error: 'AI rate limit exceeded. Please wait a moment.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => !isProduction
+});
+
+// Apply general rate limiting
+app.use('/api/', generalLimiter);
+
+// 3. Data Sanitization - Prevent NoSQL injection
+app.use(mongoSanitize({
+  replaceWith: '_',
+  onSanitize: ({ req, key }) => {
+    console.warn(`[Security] Sanitized field: ${key} from ${req.ip}`);
+  }
+}));
+
+// 4. Prevent HTTP Parameter Pollution
+app.use(hpp());
+
+// 5. CORS Configuration - Production Ready
 const corsOptions = {
   origin: isProduction 
     ? [
@@ -45,7 +123,8 @@ const corsOptions = {
     : ['http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  maxAge: 86400 // 24 hours
 };
 
 app.use(cors(corsOptions));
@@ -55,11 +134,11 @@ if (isProduction) {
   app.set('trust proxy', 1);
 }
 
-// Increase payload size limit for image uploads (50MB)
-app.use(bodyParser.json({ limit: '50mb' }));
-app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+// 6. Body Parser with size limits
+app.use(bodyParser.json({ limit: '10mb' })); // Reduced from 50mb for security
+app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
 
-// Request logging in development
+// 7. Request logging (minimal in production)
 if (!isProduction) {
   app.use((req, res, next) => {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
@@ -67,13 +146,82 @@ if (!isProduction) {
   });
 }
 
-// Global error handler
+// 8. Security headers middleware
+app.use((req, res, next) => {
+  // Remove server fingerprint
+  res.removeHeader('X-Powered-By');
+  
+  // Additional security headers
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+  
+  next();
+});
+
+// 9. Block suspicious requests
+app.use((req, res, next) => {
+  const suspiciousPatterns = [
+    /\.\.\//,           // Path traversal
+    /<script/i,         // XSS attempts
+    /javascript:/i,     // JavaScript injection
+    /on\w+=/i,          // Event handlers
+    /union.*select/i,   // SQL injection
+    /exec\s*\(/i,       // Command execution
+    /eval\s*\(/i,       // Eval injection
+  ];
+  
+  const requestData = JSON.stringify(req.body) + req.url + JSON.stringify(req.query);
+  
+  for (const pattern of suspiciousPatterns) {
+    if (pattern.test(requestData)) {
+      console.warn(`[Security] Blocked suspicious request from ${req.ip}: ${pattern}`);
+      return res.status(403).json({ error: 'Request blocked for security reasons' });
+    }
+  }
+  
+  next();
+});
+
+// 10. Global error handler (hide details in production)
 app.use((err, req, res, next) => {
   console.error('Server Error:', err);
   res.status(500).json({ 
     error: isProduction ? 'Internal server error' : err.message 
   });
 });
+
+// ═══════════════════════════════════════════════════════════════
+// SPAM PREVENTION - Track failed attempts
+// ═══════════════════════════════════════════════════════════════
+const failedAttempts = new Map();
+const BLOCK_DURATION = 30 * 60 * 1000; // 30 minutes
+const MAX_FAILED_ATTEMPTS = 5;
+
+const checkBlocked = (identifier) => {
+  const record = failedAttempts.get(identifier);
+  if (!record) return false;
+  
+  if (Date.now() - record.lastAttempt > BLOCK_DURATION) {
+    failedAttempts.delete(identifier);
+    return false;
+  }
+  
+  return record.count >= MAX_FAILED_ATTEMPTS;
+};
+
+const recordFailedAttempt = (identifier) => {
+  const record = failedAttempts.get(identifier) || { count: 0, lastAttempt: 0 };
+  record.count++;
+  record.lastAttempt = Date.now();
+  failedAttempts.set(identifier, record);
+};
+
+const clearFailedAttempts = (identifier) => {
+  failedAttempts.delete(identifier);
+};
 
 // JWT Secret
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
@@ -449,18 +597,38 @@ app.get('/api/auth/github/url', (req, res) => {
 });
 
 // Sign Up - Step 1: Create account and send OTP
-app.post('/api/auth/signup', async (req, res) => {
+app.post('/api/auth/signup', authLimiter, async (req, res) => {
   try {
     const { name, email, password, affiliateRef } = req.body;
+
+    // Check if IP is blocked
+    const clientIP = req.ip || req.connection.remoteAddress;
+    if (checkBlocked(clientIP)) {
+      return res.status(429).json({ error: 'Too many attempts. Please try again later.' });
+    }
 
     // Validation
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
-    if (password.length < 6) {
-      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
     }
+
+    // Password strength validation
+    if (password.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters' });
+    }
+
+    if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
+      return res.status(400).json({ error: 'Password must contain uppercase, lowercase, and numbers' });
+    }
+
+    // Sanitize name
+    const sanitizedName = name.replace(/[<>\"'&]/g, '').trim().slice(0, 100);
 
     // Check if user already exists
     const existingUser = await User.findOne({ email: email.toLowerCase() });
@@ -468,8 +636,8 @@ app.post('/api/auth/signup', async (req, res) => {
       return res.status(400).json({ error: 'Email already registered' });
     }
 
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
+    // Hash password with stronger salt
+    const salt = await bcrypt.genSalt(12);
     const hashedPassword = await bcrypt.hash(password, salt);
 
     // Track affiliate referral
@@ -553,7 +721,7 @@ app.post('/api/auth/signup', async (req, res) => {
 });
 
 // Verify OTP
-app.post('/api/auth/verify-otp', async (req, res) => {
+app.post('/api/auth/verify-otp', otpLimiter, async (req, res) => {
   try {
     const { email, otp } = req.body;
 
@@ -614,7 +782,7 @@ app.post('/api/auth/verify-otp', async (req, res) => {
 });
 
 // Resend OTP
-app.post('/api/auth/resend-otp', async (req, res) => {
+app.post('/api/auth/resend-otp', otpLimiter, async (req, res) => {
   try {
     const { email } = req.body;
 
@@ -656,9 +824,17 @@ app.post('/api/auth/resend-otp', async (req, res) => {
 });
 
 // Login
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', authLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
+    const clientIP = req.ip || req.connection.remoteAddress;
+
+    // Check if IP is blocked due to failed attempts
+    if (checkBlocked(clientIP) || checkBlocked(email?.toLowerCase())) {
+      return res.status(429).json({ 
+        error: 'Account temporarily locked due to too many failed attempts. Please try again in 30 minutes.' 
+      });
+    }
 
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
@@ -687,6 +863,7 @@ app.post('/api/auth/login', async (req, res) => {
           }
         });
       } else {
+        recordFailedAttempt(clientIP);
         return res.status(400).json({ error: 'Invalid credentials. Use test@example.com / Test123456' });
       }
     }
@@ -694,6 +871,9 @@ app.post('/api/auth/login', async (req, res) => {
     // Find user
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
+      recordFailedAttempt(clientIP);
+      recordFailedAttempt(email.toLowerCase());
+      // Use generic message to prevent email enumeration
       return res.status(400).json({ error: 'Invalid email or password' });
     }
 
@@ -717,19 +897,28 @@ app.post('/api/auth/login', async (req, res) => {
     // Check password
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
+      recordFailedAttempt(clientIP);
+      recordFailedAttempt(email.toLowerCase());
       return res.status(400).json({ error: 'Invalid email or password' });
     }
+
+    // Clear failed attempts on successful login
+    clearFailedAttempts(clientIP);
+    clearFailedAttempts(email.toLowerCase());
 
     // Update last login
     user.lastLogin = new Date();
     await user.save();
 
-    // Generate JWT
+    // Generate JWT with shorter expiry for security
     const token = jwt.sign(
       { userId: user._id, email: user.email },
       JWT_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn: '24h' } // Reduced from 7d to 24h for security
     );
+
+    // Log successful login (without sensitive data)
+    console.log(`[Auth] Successful login: ${user.email} from ${clientIP}`);
 
     res.json({
       success: true,
@@ -744,25 +933,25 @@ app.post('/api/auth/login', async (req, res) => {
 
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ error: error.message || 'Server error during login' });
+    res.status(500).json({ error: 'Server error during login' });
   }
 });
 
 // Get current user
 app.get('/api/auth/me', authenticateToken, async (req, res) => {
   try {
-    const user = await User.findById(req.user.userId).select('-password');
+    const user = await User.findById(req.user.userId).select('-password -resetToken -resetTokenExpiry');
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
     res.json({ user });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Failed to fetch user data' });
   }
 });
 
 // Forgot Password - Send reset link
-app.post('/api/auth/forgot-password', async (req, res) => {
+app.post('/api/auth/forgot-password', otpLimiter, async (req, res) => {
   try {
     const { email } = req.body;
 
@@ -1681,7 +1870,7 @@ app.post('/api/content', async (req, res) => {
   }
 });
 
-app.post('/api/content/generate', async (req, res) => {
+app.post('/api/content/generate', aiLimiter, async (req, res) => {
   try {
     const { prompt } = req.body;
     const generatedContent = await aiServices.generateContent(prompt);
@@ -1844,7 +2033,7 @@ function insertImagesIntoContent(htmlContent, images) {
 }
 
 // ULTIMATE HUMAN CONTENT GENERATION - PROFESSIONAL JOURNALIST STYLE
-app.post('/api/content/generate-human', authenticateToken, async (req, res) => {
+app.post('/api/content/generate-human', authenticateToken, aiLimiter, async (req, res) => {
   try {
     console.log('[Content] generate-human endpoint called');
     const config = req.body;
