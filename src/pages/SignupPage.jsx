@@ -269,6 +269,7 @@ export default function SignupPage() {
                                             minLength={6}
                                             className="input pl-12 pr-12"
                                             placeholder="••••••••"
+                                            autoComplete="new-password"
                                         />
                                         <button
                                             type="button"

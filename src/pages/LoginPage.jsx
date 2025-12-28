@@ -163,6 +163,7 @@ export default function LoginPage() {
                                         required
                                         className="input pl-12"
                                         placeholder="you@example.com"
+                                        autoComplete="email"
                                     />
                                 </div>
                             </div>
@@ -179,6 +180,7 @@ export default function LoginPage() {
                                         required
                                         className="input pl-12 pr-12"
                                         placeholder="••••••••"
+                                        autoComplete="current-password"
                                     />
                                     <button
                                         type="button"

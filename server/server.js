@@ -78,8 +78,18 @@ const generalLimiter = rateLimit({
 // Strict rate limit for auth endpoints
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // 10 attempts per window
+  max: 15, // 15 attempts per window (increased from 10)
   message: { error: 'Too many login attempts, please try again after 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => !isProduction
+});
+
+// SuperAdmin rate limiter - more lenient for admin operations
+const superAdminLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 30, // 30 requests per window for superadmin
+  message: { error: 'Too many requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => !isProduction
@@ -120,14 +130,36 @@ app.use(mongoSanitize({
 app.use(hpp());
 
 // 5. CORS Configuration - Production Ready
+const allowedOrigins = [
+  'https://aiblog.scalezix.com',
+  'https://aiblogfinal.vercel.app',
+  'https://blogapi.scalezix.com'
+];
+
+// Add FRONTEND_URL if defined
+if (process.env.FRONTEND_URL) {
+  allowedOrigins.push(process.env.FRONTEND_URL);
+}
+
 const corsOptions = {
-  origin: isProduction 
-    ? [
-        process.env.FRONTEND_URL, 
-        'https://aiblog.scalezix.com',
-        'https://aiblogfinal.vercel.app'
-      ].filter(Boolean)
-    : ['http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173'],
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) {
+      return callback(null, true);
+    }
+    
+    if (isProduction) {
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.warn(`[CORS] Blocked origin: ${origin}`);
+        callback(new Error('Not allowed by CORS'));
+      }
+    } else {
+      // In development, allow all origins
+      callback(null, true);
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
@@ -135,6 +167,9 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+
+// Handle preflight requests explicitly
+app.options('*', cors(corsOptions));
 
 // Trust proxy for production (behind Nginx/Load Balancer)
 if (isProduction) {
@@ -3663,8 +3698,8 @@ Return ONLY valid JSON, no other text.`;
 // Affiliate Routes
 app.use('/api/affiliate', affiliateRoutes);
 
-// SuperAdmin Routes
-app.use('/api/superadmin', superAdminRoutes);
+// SuperAdmin Routes - with dedicated rate limiter
+app.use('/api/superadmin', superAdminLimiter, superAdminRoutes);
 
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);

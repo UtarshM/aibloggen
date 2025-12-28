@@ -21,7 +21,22 @@ export function MaintenanceProvider({ children }) {
     // Check maintenance status
     const checkMaintenanceStatus = useCallback(async () => {
         try {
-            const response = await fetch(`${API_BASE}/maintenance/status`);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+            const response = await fetch(`${API_BASE}/maintenance/status`, {
+                signal: controller.signal,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch maintenance status');
+            }
+
             const data = await response.json();
 
             setIsMaintenanceMode(data.maintenanceMode || false);
@@ -30,8 +45,13 @@ export function MaintenanceProvider({ children }) {
 
             return data.maintenanceMode;
         } catch (error) {
-            console.error('Failed to check maintenance status:', error);
-            // On error, assume not in maintenance mode
+            // Silently handle errors - don't block the app
+            if (error.name === 'AbortError') {
+                console.log('Maintenance check timed out');
+            } else {
+                console.log('Maintenance check failed:', error.message);
+            }
+            // On error, assume not in maintenance mode to not block users
             setIsMaintenanceMode(false);
             return false;
         } finally {

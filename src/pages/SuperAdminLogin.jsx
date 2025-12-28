@@ -93,6 +93,7 @@ export default function SuperAdminLogin() {
                                 className="input"
                                 placeholder="admin@scalezix.com"
                                 required
+                                autoComplete="email"
                             />
                         </div>
 
@@ -105,6 +106,7 @@ export default function SuperAdminLogin() {
                                 className="input"
                                 placeholder="••••••••"
                                 required
+                                autoComplete="current-password"
                             />
                         </div>
 

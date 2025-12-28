@@ -179,6 +179,7 @@ export default function SuperAdminDashboard() {
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState(null);
     const [adminUser, setAdminUser] = useState(null);
+    const [maintenanceActive, setMaintenanceActive] = useState(false);
     const toast = useToast();
 
     useEffect(() => {
@@ -217,6 +218,16 @@ export default function SuperAdminDashboard() {
             // Token is valid, load dashboard data
             const data = await api.getSuperAdminStats();
             setStats(data);
+
+            // Also check maintenance status
+            try {
+                const settingsData = await api.getSuperAdminSettings();
+                if (settingsData.settings) {
+                    setMaintenanceActive(settingsData.settings.maintenanceMode || false);
+                }
+            } catch (e) {
+                console.error('Failed to load maintenance status:', e);
+            }
         } catch (error) {
             console.error('Failed to load stats:', error);
 
@@ -338,6 +349,24 @@ export default function SuperAdminDashboard() {
                 className="flex-1 transition-all duration-300"
                 style={{ marginLeft: sidebarCollapsed ? 80 : 280 }}
             >
+                {/* Maintenance Mode Banner */}
+                {maintenanceActive && (
+                    <div className="bg-gradient-to-r from-red-500 to-orange-500 text-white px-4 py-3 flex items-center justify-center gap-3 shadow-lg">
+                        <svg className="w-5 h-5 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <span className="font-medium">
+                            🔧 Maintenance Mode is ACTIVE - Regular users cannot access the platform
+                        </span>
+                        <button
+                            onClick={() => setActiveTab('settings')}
+                            className="ml-4 px-3 py-1 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-all"
+                        >
+                            Manage Settings
+                        </button>
+                    </div>
+                )}
+
                 {/* Header */}
                 <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-gray-200/50 px-8 py-4">
                     <div className="flex items-center justify-between">
@@ -379,7 +408,7 @@ export default function SuperAdminDashboard() {
                         {activeTab === 'wordpress' && <WordPressView />}
                         {activeTab === 'analytics' && <AnalyticsView stats={stats} />}
                         {activeTab === 'activity' && <ActivityView />}
-                        {activeTab === 'settings' && <SettingsView />}
+                        {activeTab === 'settings' && <SettingsView onMaintenanceChange={setMaintenanceActive} />}
                     </AnimatePresence>
                 </div>
             </main>
@@ -2163,7 +2192,7 @@ function ActivityView() {
 // ═══════════════════════════════════════════════════════════════
 // SETTINGS VIEW - Platform Settings
 // ═══════════════════════════════════════════════════════════════
-function SettingsView() {
+function SettingsView({ onMaintenanceChange }) {
     const navigate = useNavigate();
     const [settings, setSettings] = useState({
         commissionRate: 20,
@@ -2215,6 +2244,10 @@ function SettingsView() {
         try {
             await api.updateSuperAdminSettings(settings);
             toast.success('Settings saved successfully!');
+            // Update parent state for maintenance banner
+            if (onMaintenanceChange) {
+                onMaintenanceChange(settings.maintenanceMode);
+            }
         } catch (error) {
             if (error.message?.includes('Invalid') || error.message?.includes('expired') || error.message?.includes('token')) {
                 handleSessionExpired();
