@@ -2125,7 +2125,8 @@ function SettingsView() {
         commissionRate: 20,
         cookieDuration: 30,
         minimumWithdrawal: 50000,
-        maintenanceMode: false
+        maintenanceMode: false,
+        maintenanceMessage: 'We are currently performing maintenance. Please check back soon.'
     });
     const [saving, setSaving] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -2144,7 +2145,8 @@ function SettingsView() {
                     commissionRate: data.settings.commissionRate || 20,
                     cookieDuration: data.settings.cookieDuration || 30,
                     minimumWithdrawal: data.settings.minimumWithdrawal || 50000,
-                    maintenanceMode: data.settings.maintenanceMode || false
+                    maintenanceMode: data.settings.maintenanceMode || false,
+                    maintenanceMessage: data.settings.maintenanceMessage || 'We are currently performing maintenance. Please check back soon.'
                 });
             }
         } catch (error) {
@@ -2236,6 +2238,7 @@ function SettingsView() {
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                 <h3 className="text-lg font-semibold text-gray-900 mb-6">Platform Settings</h3>
                 <div className="space-y-4">
+                    {/* Maintenance Mode Toggle */}
                     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                         <div>
                             <p className="font-medium text-gray-900">Maintenance Mode</p>
@@ -2248,6 +2251,28 @@ function SettingsView() {
                             <div className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow transition-transform ${settings.maintenanceMode ? 'translate-x-7' : 'translate-x-1'}`} />
                         </button>
                     </div>
+
+                    {/* Maintenance Message - Only show when maintenance mode is enabled */}
+                    {settings.maintenanceMode && (
+                        <div className="p-4 bg-red-50 rounded-xl border border-red-200">
+                            <label className="block text-sm font-medium text-red-800 mb-2">
+                                Maintenance Message
+                            </label>
+                            <textarea
+                                value={settings.maintenanceMessage}
+                                onChange={(e) => setSettings({ ...settings, maintenanceMessage: e.target.value })}
+                                rows={3}
+                                className="w-full px-4 py-3 bg-white border border-red-200 rounded-xl focus:ring-2 focus:ring-red-400/20 focus:border-red-400 outline-none text-gray-900"
+                                placeholder="Enter the message to display during maintenance..."
+                            />
+                            <p className="text-xs text-red-600 mt-2 flex items-center gap-1">
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                Warning: When enabled, all users except SuperAdmin will see the maintenance page
+                            </p>
+                        </div>
+                    )}
                 </div>
             </div>
 

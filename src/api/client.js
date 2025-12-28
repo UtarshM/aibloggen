@@ -7,7 +7,7 @@ const API_BASE = import.meta.env.VITE_API_URL ||
 
 // Only log in development mode
 if (import.meta.env.DEV) {
-  console.log('[API] Environment:', import.meta.env.MODE, 'Using:', API_BASE);
+  // console.log('[API] Environment:', import.meta.env.MODE, 'Using:', API_BASE);
 }
 
 // Export for use in other components

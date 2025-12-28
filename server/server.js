@@ -287,6 +287,39 @@ app.get('/api/health', (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════
+// MAINTENANCE MODE - Public Status Check
+// ═══════════════════════════════════════════════════════════════
+
+// Public endpoint to check maintenance status (no auth required)
+app.get('/api/maintenance/status', async (req, res) => {
+  try {
+    const { PlatformSettings } = await import('./database.js');
+    
+    let settings = await PlatformSettings.findOne({ key: 'main' });
+    
+    if (!settings) {
+      // No settings exist, not in maintenance mode
+      return res.json({
+        maintenanceMode: false,
+        maintenanceMessage: ''
+      });
+    }
+    
+    res.json({
+      maintenanceMode: settings.maintenanceMode || false,
+      maintenanceMessage: settings.maintenanceMessage || 'We are currently performing maintenance. Please check back soon.'
+    });
+  } catch (error) {
+    console.error('Maintenance status check error:', error);
+    // On error, assume not in maintenance mode
+    res.json({
+      maintenanceMode: false,
+      maintenanceMessage: ''
+    });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
 // NEWSLETTER ENDPOINTS
 // ═══════════════════════════════════════════════════════════════
 
