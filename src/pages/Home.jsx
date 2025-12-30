@@ -10,7 +10,7 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
     FileText,
-    ArrowRight, Sparkles, Plus, Calendar, MoreHorizontal, CheckCircle, Coins, RefreshCw
+    ArrowRight, Sparkles, Plus, Calendar, MoreHorizontal, CheckCircle, Coins, RefreshCw, History
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { usePlan } from '../context/PlanContext'
@@ -96,13 +96,13 @@ export default function Home() {
             change: 'Published'
         },
         {
-            label: 'Social Posts',
-            value: dashboardStats?.socialPosts?.toString() || '0',
-            icon: Share2,
+            label: 'Job History',
+            value: dashboardStats?.totalJobs?.toString() || '0',
+            icon: History,
             color: 'text-secondary-500',
             bgColor: 'bg-secondary-50',
             borderColor: 'border-secondary-200',
-            change: 'Scheduled'
+            change: 'Total jobs'
         },
     ]
 

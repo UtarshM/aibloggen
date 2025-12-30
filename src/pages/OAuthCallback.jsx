@@ -25,7 +25,7 @@ export default function OAuthCallback() {
         }
 
         if (success) {
-            // Social media connection success
+            // OAuth connection success
             setStatus(`${success.replace('_', ' ')} successfully!`);
             setTimeout(() => navigate('/dashboard'), 2000);
             return;

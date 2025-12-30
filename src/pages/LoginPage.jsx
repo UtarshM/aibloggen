@@ -110,7 +110,7 @@ export default function LoginPage() {
 
                         {/* Feature Pills */}
                         <div className="flex flex-wrap gap-3 mt-8">
-                            {['AI Content', 'SEO Tools', 'Analytics', 'Social Media'].map((feature) => (
+                            {['AI Content', 'WordPress Publishing', 'Analytics', 'Bulk Generation'].map((feature) => (
                                 <span key={feature} className="px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm">
                                     {feature}
                                 </span>

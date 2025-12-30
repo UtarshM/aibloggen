@@ -42,7 +42,7 @@ export default function Settings() {
         desktopNotifications: true,
         soundEnabled: true,
         notifyOnNewClient: true,
-        notifyOnCampaignComplete: true,
+        notifyOnContentComplete: true,
         notifyOnReportReady: true,
         weeklyDigest: true,
         monthlyReport: true,
@@ -443,7 +443,7 @@ export default function Settings() {
                                         { key: 'desktopNotifications', label: 'Desktop Notifications', desc: 'System notifications', icon: Monitor },
                                         { key: 'soundEnabled', label: 'Sound', desc: 'Play sound for notifications', icon: Volume2 },
                                         { key: 'notifyOnNewClient', label: 'New Client', desc: 'Alert when new client signs up', icon: Bell },
-                                        { key: 'notifyOnCampaignComplete', label: 'Campaign Complete', desc: 'Alert when campaign finishes', icon: Bell },
+                                        { key: 'notifyOnContentComplete', label: 'Content Complete', desc: 'Alert when content generation finishes', icon: Bell },
                                         { key: 'notifyOnReportReady', label: 'Report Ready', desc: 'Alert when report is generated', icon: Bell },
                                         { key: 'weeklyDigest', label: 'Weekly Digest', desc: 'Summary of weekly activity', icon: Mail },
                                         { key: 'monthlyReport', label: 'Monthly Report', desc: 'Detailed monthly analytics', icon: Mail }

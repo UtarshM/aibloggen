@@ -63,7 +63,7 @@ export default function Profile() {
 
         // Stats - Start at 0
         projectsCompleted: 0,
-        campaignsLaunched: 0,
+        contentGenerated: 0,
         clientsServed: 0,
         reportsGenerated: 0
     })
@@ -124,7 +124,7 @@ export default function Profile() {
                 instagram: profileData.instagram || '',
                 bio: profileData.bio || '',
                 projectsCompleted: profileData.projectsCompleted || 0,
-                campaignsLaunched: profileData.campaignsLaunched || 0,
+                contentGenerated: profileData.contentGenerated || 0,
                 clientsServed: profileData.clientsServed || 0,
                 reportsGenerated: profileData.reportsGenerated || 0
             }))
@@ -350,9 +350,9 @@ export default function Profile() {
                 <div className="bg-white p-6 rounded-xl shadow-sm border">
                     <div className="flex items-center justify-between mb-2">
                         <TrendingUp className="text-green-600" size={24} />
-                        <span className="text-2xl font-bold">{profile.campaignsLaunched}</span>
+                        <span className="text-2xl font-bold">{profile.contentGenerated}</span>
                     </div>
-                    <p className="text-gray-600 text-sm">Campaigns Launched</p>
+                    <p className="text-gray-600 text-sm">Content Generated</p>
                 </div>
                 <div className="bg-white p-6 rounded-xl shadow-sm border">
                     <div className="flex items-center justify-between mb-2">
@@ -679,10 +679,10 @@ export default function Profile() {
                                 </div>
                                 <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl border border-green-200">
                                     <div className="flex items-center justify-between mb-4">
-                                        <h3 className="font-semibold text-gray-900">Campaigns Launched</h3>
+                                        <h3 className="font-semibold text-gray-900">Content Generated</h3>
                                         <TrendingUp className="text-green-600" size={24} />
                                     </div>
-                                    <p className="text-4xl font-bold text-green-600 mb-2">{profile.campaignsLaunched}</p>
+                                    <p className="text-4xl font-bold text-green-600 mb-2">{profile.contentGenerated}</p>
                                     <p className="text-sm text-gray-600">+28 this month</p>
                                 </div>
                                 <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-xl border border-purple-200">

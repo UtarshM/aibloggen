@@ -146,12 +146,11 @@ export default function Policies() {
                                     <h3 className="text-2xl font-semibold mb-3">2. Service Description</h3>
                                     <p className="text-gray-700 mb-3">AI Marketing Platform provides:</p>
                                     <ul className="list-disc pl-6 space-y-2 text-gray-700">
-                                        <li>Content creation and publishing tools</li>
-                                        <li>SEO automation and optimization</li>
-                                        <li>Client reporting and analytics</li>
-                                        <li>Campaign performance optimization</li>
-                                        <li>Social media management</li>
-                                        <li>Client onboarding automation</li>
+                                        <li>AI-powered content creation and publishing tools</li>
+                                        <li>WordPress auto-publishing integration</li>
+                                        <li>Bulk content generation</li>
+                                        <li>Human content engine (AI detection bypass)</li>
+                                        <li>Job history and analytics</li>
                                     </ul>
                                 </section>
 
