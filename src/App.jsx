@@ -7,7 +7,7 @@
  * @license Proprietary
  */
 
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { PlanProvider } from './context/PlanContext'
 import { ThemeProvider } from './context/ThemeContext'
 import { ToastProvider } from './context/ToastContext'
@@ -46,17 +46,26 @@ function ProtectedRoute({ children }) {
     return token ? children : <Navigate to="/" replace />;
 }
 
-// Maintenance Wrapper - Shows maintenance page when enabled
+// Maintenance Wrapper - Shows maintenance page when enabled (but not for SuperAdmin routes)
 function MaintenanceWrapper({ children }) {
     const { isMaintenanceMode, maintenanceMessage, loading, canBypassMaintenance } = useMaintenance();
+    const location = useLocation();
 
-    // Show loading spinner while checking maintenance status
-    if (loading) {
+    // SuperAdmin routes should ALWAYS bypass maintenance
+    const isSuperAdminRoute = location.pathname.startsWith('/superadmin');
+
+    // Show loading spinner while checking maintenance status (but not for superadmin)
+    if (loading && !isSuperAdminRoute) {
         return (
             <div className="min-h-screen bg-slate-900 flex items-center justify-center">
                 <div className="w-12 h-12 border-4 border-[#52b2bf] border-t-transparent rounded-full animate-spin" />
             </div>
         );
+    }
+
+    // SuperAdmin routes always bypass maintenance
+    if (isSuperAdminRoute) {
+        return children;
     }
 
     // If in maintenance mode and user can't bypass, show maintenance page
@@ -68,104 +77,110 @@ function MaintenanceWrapper({ children }) {
 }
 
 // Created by: Scalezix Venture PVT LTD
-function AppContent() {
+function AppRoutes() {
     return (
         <MaintenanceWrapper>
-            <Router
-                future={{
-                    v7_startTransition: true,
-                    v7_relativeSplatPath: true
-                }}
-            >
-                <Routes>
-                    {/* Public Routes */}
-                    <Route path="/" element={<LandingPage />} />
-                    <Route path="/login" element={<LoginPage />} />
-                    <Route path="/signup" element={<SignupPage />} />
-                    <Route path="/oauth/callback" element={<OAuthCallback />} />
+            <Routes>
+                {/* Public Routes */}
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/signup" element={<SignupPage />} />
+                <Route path="/oauth/callback" element={<OAuthCallback />} />
 
-                    {/* Affiliate Routes */}
-                    <Route path="/affiliate/login" element={<AffiliateLogin />} />
-                    <Route path="/affiliate/apply" element={<AffiliateApply />} />
-                    <Route path="/affiliate/terms" element={<AffiliateTerms />} />
-                    <Route path="/affiliate/dashboard" element={<AffiliateDashboard />} />
+                {/* Affiliate Routes */}
+                <Route path="/affiliate/login" element={<AffiliateLogin />} />
+                <Route path="/affiliate/apply" element={<AffiliateApply />} />
+                <Route path="/affiliate/terms" element={<AffiliateTerms />} />
+                <Route path="/affiliate/dashboard" element={<AffiliateDashboard />} />
 
-                    {/* SuperAdmin Routes - Always accessible */}
-                    <Route path="/superadmin/login" element={<SuperAdminLogin />} />
-                    <Route path="/superadmin/dashboard" element={<SuperAdminDashboard />} />
+                {/* SuperAdmin Routes - Always accessible (bypass maintenance) */}
+                <Route path="/superadmin/login" element={<SuperAdminLogin />} />
+                <Route path="/superadmin/dashboard" element={<SuperAdminDashboard />} />
 
-                    {/* Protected Dashboard Routes */}
-                    <Route path="/dashboard" element={
-                        <ProtectedRoute>
-                            <PlanSelector />
-                            <Layout>
-                                <Home />
-                            </Layout>
-                        </ProtectedRoute>
-                    } />
-                    <Route path="/tools/content-creation" element={
-                        <ProtectedRoute>
-                            <Layout><ContentCreation /></Layout>
-                        </ProtectedRoute>
-                    } />
-                    <Route path="/tools/client-reporting" element={
-                        <ProtectedRoute>
-                            <Layout><ClientReporting /></Layout>
-                        </ProtectedRoute>
-                    } />
-                    <Route path="/tools/seo-automation" element={
-                        <ProtectedRoute>
-                            <Layout><SEOAutomation /></Layout>
-                        </ProtectedRoute>
-                    } />
-                    <Route path="/tools/campaign-optimization" element={
-                        <ProtectedRoute>
-                            <Layout><CampaignOptimization /></Layout>
-                        </ProtectedRoute>
-                    } />
-                    <Route path="/tools/client-onboarding" element={
-                        <ProtectedRoute>
-                            <Layout><ClientOnboarding /></Layout>
-                        </ProtectedRoute>
-                    } />
-                    <Route path="/tools/social-media" element={
-                        <ProtectedRoute>
-                            <Layout><SocialMediaPro /></Layout>
-                        </ProtectedRoute>
-                    } />
-                    <Route path="/tools/job-history" element={
-                        <ProtectedRoute>
-                            <Layout><JobHistory /></Layout>
-                        </ProtectedRoute>
-                    } />
-                    <Route path="/pricing" element={
-                        <ProtectedRoute>
-                            <Layout><Pricing /></Layout>
-                        </ProtectedRoute>
-                    } />
-                    <Route path="/profile" element={
-                        <ProtectedRoute>
-                            <Layout><Profile /></Layout>
-                        </ProtectedRoute>
-                    } />
-                    <Route path="/settings" element={
-                        <ProtectedRoute>
-                            <Layout><Settings /></Layout>
-                        </ProtectedRoute>
-                    } />
-                    <Route path="/policies" element={
-                        <ProtectedRoute>
-                            <Layout><Policies /></Layout>
-                        </ProtectedRoute>
-                    } />
-                    <Route path="/tools/affiliate-admin" element={
-                        <ProtectedRoute>
-                            <Layout><AffiliateAdmin /></Layout>
-                        </ProtectedRoute>
-                    } />
-                </Routes>
-            </Router>
+                {/* Protected Dashboard Routes */}
+                <Route path="/dashboard" element={
+                    <ProtectedRoute>
+                        <PlanSelector />
+                        <Layout>
+                            <Home />
+                        </Layout>
+                    </ProtectedRoute>
+                } />
+                <Route path="/tools/content-creation" element={
+                    <ProtectedRoute>
+                        <Layout><ContentCreation /></Layout>
+                    </ProtectedRoute>
+                } />
+                <Route path="/tools/client-reporting" element={
+                    <ProtectedRoute>
+                        <Layout><ClientReporting /></Layout>
+                    </ProtectedRoute>
+                } />
+                <Route path="/tools/seo-automation" element={
+                    <ProtectedRoute>
+                        <Layout><SEOAutomation /></Layout>
+                    </ProtectedRoute>
+                } />
+                <Route path="/tools/campaign-optimization" element={
+                    <ProtectedRoute>
+                        <Layout><CampaignOptimization /></Layout>
+                    </ProtectedRoute>
+                } />
+                <Route path="/tools/client-onboarding" element={
+                    <ProtectedRoute>
+                        <Layout><ClientOnboarding /></Layout>
+                    </ProtectedRoute>
+                } />
+                <Route path="/tools/social-media" element={
+                    <ProtectedRoute>
+                        <Layout><SocialMediaPro /></Layout>
+                    </ProtectedRoute>
+                } />
+                <Route path="/tools/job-history" element={
+                    <ProtectedRoute>
+                        <Layout><JobHistory /></Layout>
+                    </ProtectedRoute>
+                } />
+                <Route path="/pricing" element={
+                    <ProtectedRoute>
+                        <Layout><Pricing /></Layout>
+                    </ProtectedRoute>
+                } />
+                <Route path="/profile" element={
+                    <ProtectedRoute>
+                        <Layout><Profile /></Layout>
+                    </ProtectedRoute>
+                } />
+                <Route path="/settings" element={
+                    <ProtectedRoute>
+                        <Layout><Settings /></Layout>
+                    </ProtectedRoute>
+                } />
+                <Route path="/policies" element={
+                    <ProtectedRoute>
+                        <Layout><Policies /></Layout>
+                    </ProtectedRoute>
+                } />
+                <Route path="/tools/affiliate-admin" element={
+                    <ProtectedRoute>
+                        <Layout><AffiliateAdmin /></Layout>
+                    </ProtectedRoute>
+                } />
+            </Routes>
         </MaintenanceWrapper>
+    );
+}
+
+function AppContent() {
+    return (
+        <Router
+            future={{
+                v7_startTransition: true,
+                v7_relativeSplatPath: true
+            }}
+        >
+            <AppRoutes />
+        </Router>
     );
 }
 
