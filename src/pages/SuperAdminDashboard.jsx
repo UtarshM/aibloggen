@@ -2244,6 +2244,10 @@ function SettingsView({ onMaintenanceChange }) {
         try {
             await api.updateSuperAdminSettings(settings);
             toast.success('Settings saved successfully!');
+
+            // Clear maintenance cache so changes take effect immediately
+            localStorage.removeItem('maintenanceStatus');
+
             // Update parent state for maintenance banner
             if (onMaintenanceChange) {
                 onMaintenanceChange(settings.maintenanceMode);
