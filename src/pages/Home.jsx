@@ -9,7 +9,7 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-    FileText, BarChart3, Search, TrendingUp, UserPlus, Share2,
+    FileText,
     ArrowRight, Sparkles, Plus, Calendar, MoreHorizontal, CheckCircle, Coins, RefreshCw
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
@@ -27,56 +27,6 @@ const tools = [
         bgColor: 'bg-primary-50',
         iconColor: 'text-primary-500',
         progress: 75,
-    },
-    {
-        name: 'Client Reporting',
-        path: '/tools/client-reporting',
-        icon: BarChart3,
-        description: 'Generate visual reports',
-        color: 'from-secondary-400 to-secondary-500',
-        bgColor: 'bg-secondary-50',
-        iconColor: 'text-secondary-500',
-        progress: 60,
-    },
-    {
-        name: 'SEO Automation',
-        path: '/tools/seo-automation',
-        icon: Search,
-        description: 'Optimize your content',
-        color: 'from-success-400 to-success-500',
-        bgColor: 'bg-success-50',
-        iconColor: 'text-success-500',
-        progress: 85,
-    },
-    {
-        name: 'Campaign Performance',
-        path: '/tools/campaign-optimization',
-        icon: TrendingUp,
-        description: 'Track campaign metrics',
-        color: 'from-accent-400 to-accent-500',
-        bgColor: 'bg-accent-50',
-        iconColor: 'text-accent-500',
-        progress: 45,
-    },
-    {
-        name: 'Client Onboarding',
-        path: '/tools/client-onboarding',
-        icon: UserPlus,
-        description: 'Streamline onboarding',
-        color: 'from-primary-400 to-secondary-500',
-        bgColor: 'bg-primary-50',
-        iconColor: 'text-primary-500',
-        progress: 90,
-    },
-    {
-        name: 'Social Media',
-        path: '/tools/social-media',
-        icon: Share2,
-        description: 'Manage social posts',
-        color: 'from-secondary-400 to-primary-500',
-        bgColor: 'bg-secondary-50',
-        iconColor: 'text-secondary-500',
-        progress: 55,
     },
 ]
 

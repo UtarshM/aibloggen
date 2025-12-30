@@ -20,11 +20,6 @@ import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
 import Home from './pages/Home'
 import ContentCreation from './pages/ContentCreation'
-import ClientReporting from './pages/ClientReporting'
-import SEOAutomation from './pages/SEOAutomation'
-import CampaignOptimization from './pages/CampaignOptimization'
-import ClientOnboarding from './pages/ClientOnboarding'
-import SocialMediaPro from './pages/SocialMediaPro'
 import JobHistory from './pages/JobHistory'
 import Pricing from './pages/Pricing'
 import Profile from './pages/Profile'
@@ -117,31 +112,6 @@ function AppRoutes() {
                 <Route path="/tools/content-creation" element={
                     <ProtectedRoute>
                         <Layout><ContentCreation /></Layout>
-                    </ProtectedRoute>
-                } />
-                <Route path="/tools/client-reporting" element={
-                    <ProtectedRoute>
-                        <Layout><ClientReporting /></Layout>
-                    </ProtectedRoute>
-                } />
-                <Route path="/tools/seo-automation" element={
-                    <ProtectedRoute>
-                        <Layout><SEOAutomation /></Layout>
-                    </ProtectedRoute>
-                } />
-                <Route path="/tools/campaign-optimization" element={
-                    <ProtectedRoute>
-                        <Layout><CampaignOptimization /></Layout>
-                    </ProtectedRoute>
-                } />
-                <Route path="/tools/client-onboarding" element={
-                    <ProtectedRoute>
-                        <Layout><ClientOnboarding /></Layout>
-                    </ProtectedRoute>
-                } />
-                <Route path="/tools/social-media" element={
-                    <ProtectedRoute>
-                        <Layout><SocialMediaPro /></Layout>
                     </ProtectedRoute>
                 } />
                 <Route path="/tools/job-history" element={

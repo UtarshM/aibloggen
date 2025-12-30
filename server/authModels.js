@@ -15,28 +15,28 @@ export const PLAN_TOKEN_LIMITS = {
     maxBlogPosts: 3,
     maxSocialPosts: 10,
     maxSeoAnalyses: 5,
-    features: ['content-creation', 'seo-automation']
+    features: ['content-creation']
   },
   basic: {
     monthlyTokens: 50000,      // 50K tokens/month (~10-15 blog posts)
     maxBlogPosts: 15,
     maxSocialPosts: 50,
     maxSeoAnalyses: 20,
-    features: ['content-creation', 'seo-automation']
+    features: ['content-creation']
   },
   advanced: {
     monthlyTokens: 200000,     // 200K tokens/month (~50+ blog posts)
     maxBlogPosts: 60,
     maxSocialPosts: 200,
     maxSeoAnalyses: 100,
-    features: ['content-creation', 'seo-automation', 'client-reporting', 'campaign-optimization', 'client-onboarding', 'social-media']
+    features: ['content-creation']
   },
   premium: {
     monthlyTokens: 1000000,    // 1M tokens/month (unlimited practical use)
     maxBlogPosts: -1,          // -1 = unlimited
     maxSocialPosts: -1,
     maxSeoAnalyses: -1,
-    features: ['content-creation', 'seo-automation', 'client-reporting', 'campaign-optimization', 'client-onboarding', 'social-media']
+    features: ['content-creation']
   }
 };
 

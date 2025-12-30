@@ -10,8 +10,8 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-    Menu, X, FileText, BarChart3, Search, TrendingUp,
-    UserPlus, Share2, ChevronLeft, DollarSign,
+    Menu, X, FileText,
+    ChevronLeft, DollarSign,
     User, Settings, LogOut, HelpCircle, History,
     Sparkles, LayoutDashboard
 } from 'lucide-react'
@@ -28,11 +28,6 @@ const navItems = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, color: 'primary' },
     { name: 'Content Creation', path: '/tools/content-creation', icon: FileText, color: 'primary' },
     { name: 'Job History', path: '/tools/job-history', icon: History, color: 'secondary' },
-    { name: 'Client Reporting', path: '/tools/client-reporting', icon: BarChart3, color: 'secondary' },
-    { name: 'SEO Automation', path: '/tools/seo-automation', icon: Search, color: 'success' },
-    { name: 'Campaign', path: '/tools/campaign-optimization', icon: TrendingUp, color: 'accent' },
-    { name: 'Client Onboarding', path: '/tools/client-onboarding', icon: UserPlus, color: 'success' },
-    { name: 'Social Media', path: '/tools/social-media', icon: Share2, color: 'secondary' },
 ]
 
 const bottomNavItems = [

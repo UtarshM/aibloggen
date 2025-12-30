@@ -44,10 +44,10 @@ export default function LandingPage() {
 
     const features = [
         { icon: FileText, title: 'AI Content', description: 'Generate SEO-optimized content in seconds', color: 'from-primary-400 to-primary-500' },
-        { icon: Search, title: 'SEO Tools', description: 'Analyze and optimize your rankings', color: 'from-secondary-400 to-secondary-500' },
+        { icon: Search, title: 'WordPress Publishing', description: 'Auto-publish to your WordPress sites', color: 'from-secondary-400 to-secondary-500' },
         { icon: BarChart3, title: 'Analytics', description: 'Track performance in real-time', color: 'from-success-400 to-success-500' },
-        { icon: Share2, title: 'Social Media', description: 'Schedule posts across platforms', color: 'from-accent-400 to-accent-500' },
-        { icon: Users, title: 'Team Collab', description: 'Work together seamlessly', color: 'from-primary-400 to-secondary-500' },
+        { icon: Share2, title: 'Bulk Generation', description: 'Create multiple articles at once', color: 'from-accent-400 to-accent-500' },
+        { icon: Users, title: 'Human Content', description: 'AI detection bypass technology', color: 'from-primary-400 to-secondary-500' },
         { icon: Zap, title: 'Automation', description: 'Automate repetitive tasks', color: 'from-secondary-400 to-primary-500' },
     ];
 
@@ -135,7 +135,7 @@ export default function LandingPage() {
                         </h1>
 
                         <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
-                            Create content, analyze SEO, manage campaigns, and grow your business with powerful AI tools.
+                            Create content, publish to WordPress, and grow your business with powerful AI tools.
                         </p>
 
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

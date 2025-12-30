@@ -26,7 +26,7 @@ export const PLAN_DETAILS = {
         maxSocialPosts: 10,
         maxSeoAnalyses: 5,
         price: 0,
-        features: ['content-creation', 'seo-automation'],
+        features: ['content-creation'],
         description: 'Perfect for trying out the platform'
     },
     [PLANS.BASIC]: {
@@ -36,7 +36,7 @@ export const PLAN_DETAILS = {
         maxSocialPosts: 50,
         maxSeoAnalyses: 20,
         price: 29,
-        features: ['content-creation', 'seo-automation'],
+        features: ['content-creation'],
         description: 'Great for individual creators'
     },
     [PLANS.ADVANCED]: {
@@ -46,7 +46,7 @@ export const PLAN_DETAILS = {
         maxSocialPosts: 200,
         maxSeoAnalyses: 100,
         price: 79,
-        features: ['content-creation', 'seo-automation', 'client-reporting', 'campaign-optimization', 'client-onboarding', 'social-media'],
+        features: ['content-creation'],
         description: 'For growing businesses'
     },
     [PLANS.PREMIUM]: {
@@ -56,7 +56,7 @@ export const PLAN_DETAILS = {
         maxSocialPosts: -1,
         maxSeoAnalyses: -1,
         price: 199,
-        features: ['content-creation', 'seo-automation', 'client-reporting', 'campaign-optimization', 'client-onboarding', 'social-media'],
+        features: ['content-creation'],
         description: 'For agencies and enterprises'
     }
 }

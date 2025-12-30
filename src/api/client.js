@@ -206,28 +206,6 @@ export const api = {
     return data;
   },
 
-  // Social Posts with AI Generation
-  getSocialPosts: async () => {
-    const res = await fetch(`${API_BASE}/social-posts`);
-    return res.json();
-  },
-  createSocialPost: async (data) => {
-    const res = await fetch(`${API_BASE}/social-posts`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    return res.json();
-  },
-  generateSocialPost: async (topic, platform) => {
-    const res = await fetch(`${API_BASE}/social-posts/generate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ topic, platform }),
-    });
-    return res.json();
-  },
-
   // Clients
   getClients: async () => {
     const res = await fetch(`${API_BASE}/clients`);
@@ -238,20 +216,6 @@ export const api = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
-    });
-    return res.json();
-  },
-
-  // Campaigns with AI Optimization
-  getCampaigns: async () => {
-    const res = await fetch(`${API_BASE}/campaigns`);
-    return res.json();
-  },
-  optimizeCampaign: async (campaignData) => {
-    const res = await fetch(`${API_BASE}/campaigns/optimize`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ campaignData }),
     });
     return res.json();
   },
@@ -270,131 +234,9 @@ export const api = {
     return res.json();
   },
 
-  // SEO with AI Analysis
-  analyzeKeywords: async (keyword) => {
-    const res = await fetch(`${API_BASE}/seo/keywords`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ keyword }),
-    });
-    return res.json();
-  },
-  analyzePage: async (url, keyword) => {
-    const res = await fetch(`${API_BASE}/seo/analyze`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url, keyword }),
-    });
-    return res.json();
-  },
-  checkTechnicalSEO: async (url) => {
-    const res = await fetch(`${API_BASE}/seo/technical`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url }),
-    });
-    return res.json();
-  },
-  compareCompetitor: async (yourUrl, competitorUrl, keyword) => {
-    const res = await fetch(`${API_BASE}/seo/competitor`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ yourUrl, competitorUrl, keyword }),
-    });
-    return res.json();
-  },
-
   // Analytics
   getMetrics: async () => {
     const res = await fetch(`${API_BASE}/analytics/metrics`);
-    return res.json();
-  },
-
-  // Social Media Management
-  getConnectedAccounts: async () => {
-    const token = localStorage.getItem('token');
-    const res = await fetch(`${API_BASE}/social/accounts`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    return res.json();
-  },
-  connectSocialAccount: async (data) => {
-    const token = localStorage.getItem('token');
-    const res = await fetch(`${API_BASE}/social/accounts/connect`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(data),
-    });
-    const result = await res.json();
-    if (!res.ok) {
-      throw new Error(result.error || 'Failed to connect account');
-    }
-    return result;
-  },
-  disconnectSocialAccount: async (accountId) => {
-    const token = localStorage.getItem('token');
-    const res = await fetch(`${API_BASE}/social/accounts/${accountId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    return res.json();
-  },
-  getScheduledPosts: async () => {
-    const token = localStorage.getItem('token');
-    const res = await fetch(`${API_BASE}/social/posts/scheduled`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    return res.json();
-  },
-  schedulePost: async (data) => {
-    const token = localStorage.getItem('token');
-    const res = await fetch(`${API_BASE}/social/posts/schedule`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(data),
-    });
-    const result = await res.json();
-    if (!res.ok) {
-      throw new Error(result.error || 'Failed to schedule post');
-    }
-    return result;
-  },
-  postToSocial: async (data) => {
-    const token = localStorage.getItem('token');
-    const res = await fetch(`${API_BASE}/social/posts/publish`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(data),
-    });
-    const result = await res.json();
-    if (!res.ok) {
-      throw new Error(result.error || 'Failed to publish post');
-    }
-    return result;
-  },
-  deleteScheduledPost: async (postId) => {
-    const token = localStorage.getItem('token');
-    const res = await fetch(`${API_BASE}/social/posts/${postId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
     return res.json();
   },
 
@@ -588,24 +430,6 @@ export const api = {
       }
     });
     return res.json();
-  },
-
-  // AI Social Content Generation
-  generateSocialContent: async (config) => {
-    const token = localStorage.getItem('token');
-    const res = await fetch(`${API_BASE}/social/generate-content`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(config),
-    });
-    const result = await res.json();
-    if (!res.ok) {
-      throw new Error(result.error || 'Failed to generate social content');
-    }
-    return result;
   },
 
   // ═══════════════════════════════════════════════════════════════
@@ -1535,17 +1359,6 @@ export const api = {
     });
     const result = await res.json();
     if (!res.ok) throw new Error(result.error || 'Failed to load reporting stats');
-    return result;
-  },
-
-  // Get real campaign data
-  getCampaignStats: async () => {
-    const token = localStorage.getItem('token');
-    const res = await fetch(`${API_BASE}/campaigns/stats`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    const result = await res.json();
-    if (!res.ok) throw new Error(result.error || 'Failed to load campaign stats');
     return result;
   },
 };
