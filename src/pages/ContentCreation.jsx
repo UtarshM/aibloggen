@@ -5,7 +5,7 @@
  * @copyright 2025 Scalezix Venture PVT LTD. All Rights Reserved.
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Bold, Italic, List, Link as LinkIcon, Save, Eye, Download, Sparkles, Loader2, Image as ImageIcon, RefreshCw, FileText, Settings, Upload, CheckCircle, XCircle, Clock, ExternalLink } from 'lucide-react'
 import { api } from '../api/client'
 import Toast from '../components/Toast'
@@ -15,6 +15,39 @@ import { useModal } from '../components/Modal'
 import jsPDF from 'jspdf'
 import { Document, Paragraph, TextRun, ImageRun, HeadingLevel, AlignmentType, Packer } from 'docx'
 import { saveAs } from 'file-saver'
+
+// Blocked domains that don't allow hotlinking
+const BLOCKED_IMAGE_DOMAINS = [
+    'wikia.nocookie.net',
+    'static.wikia.nocookie.net',
+    'fandom.com',
+    'vignette.wikia.nocookie.net'
+];
+
+// Sanitize image URL - convert HTTP to HTTPS and filter blocked domains
+const sanitizeImageUrl = (url) => {
+    if (!url) return null;
+
+    // Convert HTTP to HTTPS
+    let sanitizedUrl = url.replace(/^http:\/\//i, 'https://');
+
+    // Check if domain is blocked
+    try {
+        const urlObj = new URL(sanitizedUrl);
+        if (BLOCKED_IMAGE_DOMAINS.some(domain => urlObj.hostname.includes(domain))) {
+            return null;
+        }
+    } catch (e) {
+        return null;
+    }
+
+    return sanitizedUrl;
+};
+
+// Filter and sanitize array of image URLs
+const sanitizeImageUrls = (urls) => {
+    return urls.map(sanitizeImageUrl).filter(url => url !== null);
+};
 
 export default function ContentCreation() {
     const [content, setContent] = useState('')
@@ -30,6 +63,7 @@ export default function ContentCreation() {
     const [generationStep, setGenerationStep] = useState(0)
     const [generationProgress, setGenerationProgress] = useState('')
     const [showModal, setShowModal] = useState(false)
+    const [failedImages, setFailedImages] = useState(new Set())
     const globalToast = useToast()
     const modal = useModal()
 
@@ -44,6 +78,11 @@ export default function ContentCreation() {
     const [showPublishModal, setShowPublishModal] = useState(false)
     const [pollingInterval, setPollingInterval] = useState(null)
 
+    // Handle image load error
+    const handleImageError = useCallback((url) => {
+        setFailedImages(prev => new Set([...prev, url]));
+    }, []);
+
     // Load content from localStorage on mount
     useEffect(() => {
         loadContent()
@@ -56,7 +95,10 @@ export default function ContentCreation() {
 
         if (savedContent) setContent(savedContent)
         if (savedTitle) setTitle(savedTitle)
-        if (savedImages) setImageUrls(JSON.parse(savedImages))
+        if (savedImages) {
+            const parsed = JSON.parse(savedImages);
+            setImageUrls(sanitizeImageUrls(parsed));
+        }
         if (savedSelectedImages) setSelectedImages(JSON.parse(savedSelectedImages))
 
         // Check for ongoing bulk import job after page refresh
@@ -391,16 +433,25 @@ export default function ContentCreation() {
             console.log('[CONTENT] Has image markdown:', result.content.includes('!['))
             console.log('[CONTENT] Number of images in markdown:', (result.content.match(/!\[/g) || []).length)
 
-            setContent(result.content)
+            // Sanitize content - convert HTTP to HTTPS and filter blocked domains
+            let sanitizedContent = result.content.replace(/http:\/\//gi, 'https://');
+            // Remove images from blocked domains in the content
+            BLOCKED_IMAGE_DOMAINS.forEach(domain => {
+                const regex = new RegExp(`!\\[[^\\]]*\\]\\([^)]*${domain}[^)]*\\)`, 'gi');
+                sanitizedContent = sanitizedContent.replace(regex, '');
+            });
 
-            // Set high-quality images from Pexels
+            setContent(sanitizedContent)
+
+            // Set high-quality images from Pexels (sanitized)
             if (result.images && result.images.length > 0) {
                 console.log('[CONTENT] Received', result.images.length, 'image objects')
-                const imageUrls = result.images.map(img => img.url)
+                const rawImageUrls = result.images.map(img => img.url)
                 const imageAlts = result.images.map(img => img.alt)
-                setImageUrls(imageUrls)
-                setImagePrompts(imageAlts)
-                setSelectedImages(imageUrls)
+                const cleanImageUrls = sanitizeImageUrls(rawImageUrls)
+                setImageUrls(cleanImageUrls)
+                setImagePrompts(imageAlts.slice(0, cleanImageUrls.length))
+                setSelectedImages(cleanImageUrls)
             }
 
             setGenerationStep(0)
@@ -572,8 +623,9 @@ NOW REWRITE THIS TO BE 100% HUMAN. Make it natural, imperfect, conversational, a
             const prompts = realImages.map(img => img.title || topic)
             setImagePrompts(prompts)
 
-            // Get image URLs
-            const generatedImages = realImages.map(img => img.url)
+            // Get image URLs (sanitized)
+            const rawGeneratedImages = realImages.map(img => img.url)
+            const generatedImages = sanitizeImageUrls(rawGeneratedImages)
             setImageUrls(generatedImages)
 
             // Auto-insert images into content at strategic positions
@@ -1475,16 +1527,17 @@ Make each description specific, visual, and relevant to the content's main point
                         {/* Image Gallery */}
                         {imageUrls.length > 0 && !preview && (
                             <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
-                                <h3 className="text-sm font-semibold text-gray-700 mb-3">📸 Images in Content ({imageUrls.length})</h3>
+                                <h3 className="text-sm font-semibold text-gray-700 mb-3">📸 Images in Content ({imageUrls.filter(url => !failedImages.has(url)).length})</h3>
                                 <div className="grid grid-cols-4 gap-3">
-                                    {imageUrls.map((url, i) => (
+                                    {imageUrls.filter(url => !failedImages.has(url)).map((url, i) => (
                                         <div key={i} className="relative group">
                                             <img
                                                 src={url}
                                                 alt={imagePrompts[i] || `Image ${i + 1}`}
                                                 className="w-full h-24 object-cover rounded border"
                                                 onError={(e) => {
-                                                    e.target.src = `https://picsum.photos/200/150?random=${i}`
+                                                    handleImageError(url);
+                                                    e.target.style.display = 'none';
                                                 }}
                                             />
                                             <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded flex items-center justify-center">
@@ -1632,14 +1685,15 @@ Make each description specific, visual, and relevant to the content's main point
                             ) : (
                                 <>
                                     <div className="grid grid-cols-2 gap-4">
-                                        {imageUrls.map((url, i) => (
+                                        {imageUrls.filter(url => !failedImages.has(url)).map((url, i) => (
                                             <div key={i} className="relative group bg-white rounded-lg overflow-hidden shadow-md border-2 border-purple-100 hover:border-primary-300 transition-all">
                                                 <img
                                                     src={url}
                                                     alt={imagePrompts[i] || `AI Generated ${i + 1}`}
                                                     className="w-full h-48 object-cover"
                                                     onError={(e) => {
-                                                        e.target.src = `https://picsum.photos/800/600?random=${i + 100}`
+                                                        handleImageError(url);
+                                                        e.target.style.display = 'none';
                                                     }}
                                                 />
                                                 <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
