@@ -1275,8 +1275,7 @@ app.get('/api/dashboard/stats', authenticateToken, async (req, res) => {
     const wordpressCount = await WordPressPost.countDocuments({ userId }) || 0;
     
     // Get user's social posts count
-    const { SocialPost: UserSocialPost } = await import('./socialModels.js');
-    const socialCount = await UserSocialPost.countDocuments({ userId }) || 0;
+    const socialCount = await SocialPost.countDocuments({ userId }) || 0;
     
     // Get user's SEO analyses count
     const seoCount = await SEOAnalysis.countDocuments({ userId }) || 0;
@@ -1524,8 +1523,7 @@ app.get('/api/reporting/stats', authenticateToken, async (req, res) => {
     
     // Get social posts - with error handling
     try {
-      const { SocialPost: UserSocialPost } = await import('./socialModels.js');
-      socialPosts = await UserSocialPost.countDocuments({ 
+      socialPosts = await SocialPost.countDocuments({ 
         userId, 
         createdAt: { $gte: startDate } 
       }) || 0;
