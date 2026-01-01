@@ -3,7 +3,7 @@
  * 
  * Processes Excel/CSV files uploaded by clients through the web UI.
  * Uses client's WordPress sites stored in database.
- * Generates 10,000+ word human-like content using advanced prompts.
+ * Generates 10,000+ word human-like content using Chaos Engine v2.0.
  * 
  * @author Scalezix Venture PVT LTD
  * @copyright 2025 Scalezix Venture PVT LTD. All Rights Reserved.
@@ -11,13 +11,22 @@
 
 import axios from 'axios';
 import { WordPressSite, BulkImportJob } from './wordpressModels.js';
+import { 
+  advancedHumanize, 
+  generateHumanSignaturePrompt,
+  randomizedWordReplacement,
+  symmetryBreaking,
+  analyzeAIRisk
+} from './chaosEngine.js';
 
 // Configuration
 const CONFIG = {
   DELAY_BETWEEN_POSTS: 5000, // 5 seconds between API calls
   MAX_RETRIES: 3,
   WORD_TARGET: 10000, // 10,000 words minimum
-  WORDS_PER_SECTION: 1200 // 1200 words per H2 section
+  WORDS_PER_SECTION: 1200, // 1200 words per H2 section
+  CHAOS_ENGINE_PASSES: 3, // Number of humanization passes
+  DELAY_BETWEEN_PASSES: 15000 // 15 seconds between passes
 };
 
 /**
@@ -489,6 +498,41 @@ async function generateContent(prompt, retries = 0) {
   
   // Remove forbidden AI words (critical for human detection)
   content = cleanForbiddenWords(content);
+  
+  // ═══════════════════════════════════════════════════════════════
+  // CHAOS ENGINE v2.0 - Multi-Pass Humanization
+  // ═══════════════════════════════════════════════════════════════
+  console.log('[BulkGen] Applying Chaos Engine v2.0 humanization...');
+  console.log('[BulkGen] This will take 60-90 seconds for thorough processing...');
+  
+  try {
+    const humanizeResult = await advancedHumanize(content, {
+      passes: CONFIG.CHAOS_ENGINE_PASSES,
+      delayBetweenPasses: CONFIG.DELAY_BETWEEN_PASSES,
+      voiceFrequency: 0.12,
+      hedgeFrequency: 0.06,
+      questionFrequency: 0.08,
+      verbose: true
+    });
+    
+    content = humanizeResult.content;
+    
+    // Analyze final AI risk
+    const aiRisk = analyzeAIRisk(content);
+    console.log(`[BulkGen] Chaos Engine complete - Human Score: ${aiRisk.score}/100 (${aiRisk.riskLevel})`);
+    console.log(`[BulkGen] Burstiness: ${humanizeResult.burstiness.score.toFixed(1)}%`);
+    
+    // If risk is still high, apply additional cleanup
+    if (aiRisk.score < 75) {
+      console.log('[BulkGen] Risk elevated, applying final cleanup...');
+      content = randomizedWordReplacement(content);
+      content = symmetryBreaking(content);
+    }
+  } catch (humanizeError) {
+    console.log('[BulkGen] Chaos Engine error, using basic cleanup:', humanizeError.message);
+    // Fallback to basic cleanup if Chaos Engine fails
+    content = cleanForbiddenWords(content);
+  }
   
   // Count words
   const wordCount = countWords(content);

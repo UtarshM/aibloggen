@@ -31,6 +31,16 @@ import superAdminRoutes from './superAdminRoutes.js';
 // Human Content Engine - Advanced AI Detection Bypass
 import { humanizeContent, analyzeAIRisk, FORBIDDEN_AI_WORDS } from './humanContentEngine.js';
 import { generateMegaPrompt, PERSONAS } from './megaPromptEngine.js';
+// Chaos Engine v2.0 - Ultimate Human Content Generation (2-4 min processing)
+import { 
+  advancedHumanize, 
+  generateHumanContent, 
+  generateHumanSignaturePrompt,
+  analyzeAIRisk as chaosAnalyzeRisk,
+  randomizedWordReplacement,
+  symmetryBreaking,
+  HUMAN_SYNONYMS
+} from './chaosEngine.js';
 // StealthGPT Integration - Professional AI Humanizer
 import { humanizeWithStealth, generateStealthArticle, humanizeLongContent, checkStealthBalance } from './stealthService.js';
 // Undetectable.ai Integration - Premium AI Humanizer
@@ -2451,6 +2461,323 @@ app.post('/api/content/generate-human', authenticateToken, aiLimiter, async (req
 
   } catch (error) {
     console.error('[Content] Generation error:', error.message);
+    res.status(500).json({ error: error.message || 'An unexpected error occurred' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// CHAOS ENGINE v2.0 - ULTIMATE HUMAN CONTENT (2-4 MINUTES)
+// ═══════════════════════════════════════════════════════════════
+// This endpoint takes 2-4 minutes to generate truly human content
+// Uses multi-pass processing with deliberate delays for quality
+app.post('/api/content/generate-chaos', authenticateToken, aiLimiter, async (req, res) => {
+  // Set longer timeout for this endpoint (6 minutes)
+  req.setTimeout(360000);
+  res.setTimeout(360000);
+  
+  const startTime = Date.now();
+  
+  try {
+    console.log('[ChaosEngine] ═══════════════════════════════════════════════════════════════');
+    console.log('[ChaosEngine] STARTING ULTIMATE HUMAN CONTENT GENERATION');
+    console.log('[ChaosEngine] Expected time: 2-4 minutes');
+    console.log('[ChaosEngine] ═══════════════════════════════════════════════════════════════');
+    
+    const config = req.body;
+    const userId = req.user.userId;
+    
+    // Check token balance
+    const tokenCheck = await checkTokenBalance(userId, 'blogPost');
+    if (!tokenCheck.allowed) {
+      return res.status(403).json({ 
+        error: 'Insufficient tokens',
+        message: `You need ${tokenCheck.required} tokens but only have ${tokenCheck.available}. Please upgrade your plan.`,
+        tokensRequired: tokenCheck.required,
+        tokensAvailable: tokenCheck.available,
+        plan: tokenCheck.plan
+      });
+    }
+    
+    // Validate config
+    if (!config.topic || !config.topic.trim()) {
+      return res.status(400).json({ error: 'Topic is required' });
+    }
+
+    const topic = config.topic;
+    const minWords = parseInt(config.minWords) || parseInt(config.wordCount) || 5000;
+    const numImages = parseInt(config.numImages) || 4;
+    
+    // Parse headings
+    const customHeadings = config.headings || '';
+    const headings = customHeadings ? customHeadings.split(/[|\n]/).map(h => h.trim()).filter(h => h) : [];
+
+    // ═══════════════════════════════════════════════════════════════
+    // PHASE 1: GENERATE HUMAN SIGNATURE MEGA-PROMPT (5-10 seconds)
+    // ═══════════════════════════════════════════════════════════════
+    console.log('[ChaosEngine] Phase 1: Generating Human Signature mega-prompt...');
+    
+    const prompt = generateHumanSignaturePrompt({
+      topic,
+      keywords: config.keywords || topic,
+      targetAudience: config.targetAudience || 'professional peers',
+      tone: config.tone || 'conversational',
+      minWords,
+      headings,
+      references: config.references || '',
+      eeat: config.eeat || '',
+      persona: config.persona || 'journalist'
+    });
+    
+    console.log(`[ChaosEngine] Prompt generated (${prompt.length} characters)`);
+    
+    // Deliberate delay - simulates human thinking time
+    await new Promise(resolve => setTimeout(resolve, 3000));
+
+    // ═══════════════════════════════════════════════════════════════
+    // PHASE 2: AI CONTENT GENERATION (30-60 seconds)
+    // ═══════════════════════════════════════════════════════════════
+    console.log('[ChaosEngine] Phase 2: Generating raw content with AI...');
+    
+    let content = null;
+    let apiUsed = '';
+    const GOOGLE_AI_KEY = process.env.GOOGLE_AI_KEY;
+    const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+
+    // Try Google AI first (Gemini 2.0 Flash with high temperature)
+    if (GOOGLE_AI_KEY) {
+      console.log('[ChaosEngine] Trying Google AI (Gemini 2.0 Flash, temp=0.95)...');
+      try {
+        const googleResponse = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GOOGLE_AI_KEY}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: {
+                temperature: 0.95, // Higher for more creative/human output
+                maxOutputTokens: 8192,
+                topP: 0.95,
+                topK: 40
+              }
+            })
+          }
+        );
+
+        const googleData = await googleResponse.json();
+        
+        if (googleData.candidates?.[0]?.content?.parts?.[0]?.text) {
+          content = googleData.candidates[0].content.parts[0].text;
+          apiUsed = 'Google AI (Gemini 2.0)';
+          console.log('[ChaosEngine] Google AI success');
+        } else {
+          console.log('[ChaosEngine] Google AI response:', JSON.stringify(googleData).substring(0, 300));
+        }
+      } catch (err) {
+        console.log('[ChaosEngine] Google AI error:', err.message);
+      }
+    }
+
+    // Fallback to OpenRouter
+    if (!content && OPENROUTER_API_KEY) {
+      console.log('[ChaosEngine] Trying OpenRouter API...');
+      try {
+        const modelsToTry = [
+          'google/gemini-2.0-flash-exp:free',
+          'anthropic/claude-3-haiku'
+        ];
+        
+        for (const model of modelsToTry) {
+          console.log(`[ChaosEngine] Trying model: ${model}`);
+          const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+              'Content-Type': 'application/json',
+              'HTTP-Referer': process.env.FRONTEND_URL || 'https://aiblog.scalezix.com',
+              'X-Title': 'Scalezix Chaos Engine'
+            },
+            body: JSON.stringify({
+              model: model,
+              messages: [{ role: 'user', content: prompt }],
+              max_tokens: 4000,
+              temperature: 0.95
+            })
+          });
+
+          const data = await response.json();
+          
+          if (data.choices?.[0]?.message?.content) {
+            content = data.choices[0].message.content;
+            apiUsed = `OpenRouter (${model})`;
+            console.log(`[ChaosEngine] ${model} success`);
+            break;
+          }
+        }
+      } catch (err) {
+        console.log('[ChaosEngine] OpenRouter error:', err.message);
+      }
+    }
+
+    if (!content) {
+      return res.status(500).json({ 
+        error: 'AI services unavailable. Please check your API keys.' 
+      });
+    }
+
+    // Clean raw content
+    let cleanContent = content;
+    cleanContent = cleanContent.replace(/```html\n?/gi, '');
+    cleanContent = cleanContent.replace(/```\n?/gi, '');
+    cleanContent = cleanContent.replace(/^<p>Here is[\s\S]*?<\/p>\n*/i, '');
+    cleanContent = cleanContent.replace(/^Here is[\s\S]*?\n\n/i, '');
+    cleanContent = cleanContent.replace(/---[\s\S]*?---\n*/gi, '');
+    cleanContent = cleanContent.replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/gi, '');
+    cleanContent = cleanContent.replace(/\(?\d+,?\d*\s*words?\)?/gi, '');
+    cleanContent = cleanContent.trim();
+
+    const rawWordCount = cleanContent.replace(/<[^>]*>/g, ' ').split(/\s+/).filter(w => w.length > 0).length;
+    console.log(`[ChaosEngine] Raw content: ${rawWordCount} words`);
+    
+    // Deliberate delay - simulates review time
+    await new Promise(resolve => setTimeout(resolve, 5000));
+
+    // ═══════════════════════════════════════════════════════════════
+    // PHASE 3: MULTI-PASS CHAOS ENGINE HUMANIZATION (60-120 seconds)
+    // ═══════════════════════════════════════════════════════════════
+    console.log('[ChaosEngine] Phase 3: Multi-pass humanization with Chaos Engine...');
+    console.log('[ChaosEngine] This will take 60-120 seconds for thorough processing...');
+    
+    const humanizeResult = await advancedHumanize(cleanContent, {
+      passes: 3,
+      delayBetweenPasses: 20000, // 20 seconds between passes
+      voiceFrequency: 0.12,
+      hedgeFrequency: 0.06,
+      questionFrequency: 0.08,
+      verbose: true
+    });
+    
+    cleanContent = humanizeResult.content;
+    console.log(`[ChaosEngine] Humanization complete in ${(humanizeResult.processingTime/1000).toFixed(1)}s`);
+    console.log(`[ChaosEngine] Burstiness: ${humanizeResult.burstiness.score.toFixed(1)}%`);
+
+    // ═══════════════════════════════════════════════════════════════
+    // PHASE 4: PROFESSIONAL HUMANIZER (Optional - 30-60 seconds)
+    // ═══════════════════════════════════════════════════════════════
+    let stealthResult = null;
+    let undetectableResult = null;
+    const humanizer = config.humanizer || 'auto';
+    
+    const useStealthGPT = (humanizer === 'stealthgpt' || humanizer === 'auto') && 
+                          process.env.STEALTHGPT_API_KEY && 
+                          config.useStealthGPT !== false;
+    const useUndetectable = (humanizer === 'undetectable' || (humanizer === 'auto' && !useStealthGPT)) && 
+                            process.env.UNDETECTABLE_API_KEY && 
+                            config.useUndetectable !== false;
+    
+    if (useStealthGPT) {
+      console.log('[ChaosEngine] Phase 4: Applying StealthGPT neural rewrite...');
+      
+      stealthResult = await humanizeLongContent(cleanContent, {
+        tone: config.tone === 'academic' ? 'PhD' : 'Standard',
+        mode: 'High',
+        business: true
+      });
+      
+      if (stealthResult.success) {
+        cleanContent = stealthResult.content;
+        console.log(`[ChaosEngine] StealthGPT success! Words used: ${stealthResult.totalWordsUsed}`);
+      }
+    } else if (useUndetectable) {
+      console.log('[ChaosEngine] Phase 4: Applying Undetectable.ai neural rewrite...');
+      
+      undetectableResult = await humanizeLongContentUndetectable(cleanContent, {
+        readability: config.tone === 'academic' ? 'Doctorate' : 'Journalist',
+        purpose: 'Article',
+        strength: 'More Human',
+        model: 'v11sr'
+      });
+      
+      if (undetectableResult.success) {
+        cleanContent = undetectableResult.content;
+        console.log(`[ChaosEngine] Undetectable.ai success!`);
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // PHASE 5: FINAL QUALITY CHECK & CLEANUP (10-15 seconds)
+    // ═══════════════════════════════════════════════════════════════
+    console.log('[ChaosEngine] Phase 5: Final quality check...');
+    await new Promise(resolve => setTimeout(resolve, 5000));
+    
+    // Final AI risk analysis
+    const aiRiskAnalysis = chaosAnalyzeRisk(cleanContent);
+    console.log(`[ChaosEngine] Final AI Risk: ${aiRiskAnalysis.score}/100 (${aiRiskAnalysis.riskLevel})`);
+    
+    // If risk is still high, apply one more pass
+    if (aiRiskAnalysis.score < 75) {
+      console.log('[ChaosEngine] Risk still elevated, applying final cleanup...');
+      cleanContent = randomizedWordReplacement(cleanContent);
+      cleanContent = symmetryBreaking(cleanContent);
+    }
+
+    // Fetch and insert images
+    console.log('[ChaosEngine] Fetching images...');
+    const images = await fetchTopicImages(topic, numImages);
+    const contentWithImages = insertImagesIntoContent(cleanContent, images);
+    
+    // Final word count
+    const textOnly = contentWithImages.replace(/<[^>]*>/g, ' ');
+    const wordCount = textOnly.split(/\s+/).filter(w => w.length > 0).length;
+
+    // Deduct tokens
+    const tokenResult = await deductTokens(userId, 'blogPost', {
+      topic: topic,
+      wordCount: wordCount,
+      title: topic
+    });
+
+    const totalTime = Date.now() - startTime;
+    const humanizerUsed = stealthResult?.success ? 'StealthGPT + Chaos Engine' : 
+                          undetectableResult?.success ? 'Undetectable.ai + Chaos Engine' : 
+                          'Chaos Engine v2.0';
+
+    console.log('[ChaosEngine] ═══════════════════════════════════════════════════════════════');
+    console.log(`[ChaosEngine] GENERATION COMPLETE`);
+    console.log(`[ChaosEngine] Total time: ${(totalTime/1000/60).toFixed(1)} minutes`);
+    console.log(`[ChaosEngine] Word count: ${wordCount}`);
+    console.log(`[ChaosEngine] Human score: ${aiRiskAnalysis.score}/100`);
+    console.log(`[ChaosEngine] Burstiness: ${humanizeResult.burstiness.score.toFixed(1)}%`);
+    console.log('[ChaosEngine] ═══════════════════════════════════════════════════════════════');
+
+    res.json({
+      content: contentWithImages,
+      title: topic.charAt(0).toUpperCase() + topic.slice(1),
+      wordCount: wordCount,
+      topic: topic,
+      images: images,
+      keywords: config.keywords || topic,
+      scheduleDate: config.scheduleDate || null,
+      scheduleTime: config.scheduleTime || null,
+      tokensUsed: tokenResult.tokensUsed,
+      tokensRemaining: tokenResult.remaining,
+      // Chaos Engine specific metrics
+      processingTime: totalTime,
+      processingMinutes: (totalTime/1000/60).toFixed(1),
+      humanScore: aiRiskAnalysis.score,
+      humanizationLevel: aiRiskAnalysis.riskLevel,
+      burstinessScore: humanizeResult.burstiness.score.toFixed(1),
+      burstinessHumanLike: humanizeResult.burstiness.isHumanLike,
+      humanizerUsed: humanizerUsed,
+      chaosEnginePasses: 3,
+      stealthGPTUsed: stealthResult?.success || false,
+      undetectableUsed: undetectableResult?.success || false,
+      aiRiskIssues: aiRiskAnalysis.issues,
+      aiRiskRecommendations: aiRiskAnalysis.recommendations
+    });
+
+  } catch (error) {
+    console.error('[ChaosEngine] Generation error:', error.message);
     res.status(500).json({ error: error.message || 'An unexpected error occurred' });
   }
 });
