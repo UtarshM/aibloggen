@@ -1,6 +1,6 @@
 /**
- * Skeleton Loader Components - Professional Loading States
- * Human-crafted design with smooth animations
+ * Skeleton Loader Components
+ * Professional skeleton loading states for various UI elements
  * 
  * @author Scalezix Venture PVT LTD
  * @copyright 2025 All Rights Reserved
@@ -8,336 +8,275 @@
 
 import { motion } from 'framer-motion'
 
-// Base skeleton with shimmer effect
-export function Skeleton({ className = '', animate = true }) {
-    return (
-        <div
-            className={`bg-gray-200 rounded ${animate ? 'animate-pulse' : ''} ${className}`}
-            style={{
-                background: animate
-                    ? 'linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%)'
-                    : '#f0f0f0',
-                backgroundSize: '200% 100%',
-                animation: animate ? 'shimmer 1.5s ease-in-out infinite' : 'none'
-            }}
-        />
-    )
-}
+// Base Skeleton with shimmer animation
+const Skeleton = ({ className = '', style = {} }) => (
+    <div
+        className={`skeleton-shimmer bg-gray-200 rounded ${className}`}
+        style={style}
+    />
+)
 
-// Text skeleton
-export function SkeletonText({ lines = 3, className = '' }) {
-    return (
-        <div className={`space-y-3 ${className}`}>
-            {Array.from({ length: lines }).map((_, i) => (
-                <Skeleton
-                    key={i}
-                    className={`h-4 ${i === lines - 1 ? 'w-3/4' : 'w-full'}`}
-                />
+// Skeleton Line
+export const SkeletonLine = ({ width = '100%', height = '12px', className = '' }) => (
+    <Skeleton className={className} style={{ width, height }} />
+)
+
+// Skeleton Circle (for avatars)
+export const SkeletonCircle = ({ size = '40px' }) => (
+    <Skeleton className="rounded-full" style={{ width: size, height: size }} />
+)
+
+// Skeleton Card
+export const SkeletonCard = ({ className = '' }) => (
+    <div className={`bg-white rounded-xl p-5 shadow-sm border border-gray-100 ${className}`}>
+        <div className="flex items-start gap-4">
+            <Skeleton className="rounded-lg" style={{ width: '48px', height: '48px' }} />
+            <div className="flex-1 space-y-3">
+                <SkeletonLine width="70%" height="16px" />
+                <SkeletonLine width="100%" height="12px" />
+                <SkeletonLine width="50%" height="12px" />
+            </div>
+        </div>
+    </div>
+)
+
+// Skeleton Stats Card
+export const SkeletonStatsCard = () => (
+    <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+        <div className="flex items-center justify-between mb-3">
+            <SkeletonLine width="100px" height="14px" />
+            <Skeleton className="rounded-lg" style={{ width: '36px', height: '36px' }} />
+        </div>
+        <SkeletonLine width="60%" height="28px" />
+        <div className="mt-3 flex items-center gap-2">
+            <SkeletonLine width="50px" height="10px" />
+            <SkeletonLine width="80px" height="10px" />
+        </div>
+    </div>
+)
+
+// Skeleton Table Row
+export const SkeletonTableRow = ({ columns = 5 }) => (
+    <tr className="border-b border-gray-50">
+        {Array.from({ length: columns }).map((_, i) => (
+            <td key={i} className="py-4 px-4">
+                <SkeletonLine width={`${50 + Math.random() * 50}%`} height="14px" />
+            </td>
+        ))}
+    </tr>
+)
+
+// Skeleton Table
+export const SkeletonTable = ({ rows = 5, columns = 5 }) => (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        {/* Header */}
+        <div className="bg-gray-50 px-4 py-3 border-b border-gray-100">
+            <div className="flex gap-4">
+                {Array.from({ length: columns }).map((_, i) => (
+                    <SkeletonLine key={i} width="100px" height="12px" />
+                ))}
+            </div>
+        </div>
+        {/* Body */}
+        <table className="w-full">
+            <tbody>
+                {Array.from({ length: rows }).map((_, i) => (
+                    <SkeletonTableRow key={i} columns={columns} />
+                ))}
+            </tbody>
+        </table>
+    </div>
+)
+
+// Dashboard Skeleton
+export const DashboardSkeleton = () => (
+    <div className="space-y-6 animate-pulse">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+            <div>
+                <SkeletonLine width="200px" height="28px" />
+                <div className="mt-2">
+                    <SkeletonLine width="300px" height="14px" />
+                </div>
+            </div>
+            <SkeletonLine width="120px" height="40px" />
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+                <SkeletonStatsCard key={i} />
             ))}
         </div>
-    )
-}
 
-// Avatar skeleton
-export function SkeletonAvatar({ size = 'md' }) {
+        {/* Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Main Content */}
+            <div className="lg:col-span-2 space-y-4">
+                {[1, 2, 3].map((i) => (
+                    <SkeletonCard key={i} />
+                ))}
+            </div>
+
+            {/* Sidebar */}
+            <div className="space-y-4">
+                <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                    <SkeletonLine width="60%" height="16px" />
+                    <div className="mt-4 space-y-3">
+                        {[1, 2, 3, 4].map((i) => (
+                            <div key={i} className="flex items-center gap-3">
+                                <SkeletonCircle size="32px" />
+                                <div className="flex-1">
+                                    <SkeletonLine width="80%" height="12px" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+)
+
+// Content Creation Skeleton
+export const ContentCreationSkeleton = () => (
+    <div className="space-y-6 animate-pulse">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+            <SkeletonLine width="250px" height="32px" />
+            <div className="flex gap-3">
+                <SkeletonLine width="100px" height="40px" />
+                <SkeletonLine width="120px" height="40px" />
+            </div>
+        </div>
+
+        {/* Editor Area */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Left - Editor */}
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <SkeletonLine width="150px" height="20px" />
+                <div className="mt-4">
+                    <Skeleton style={{ width: '100%', height: '400px' }} className="rounded-lg" />
+                </div>
+            </div>
+
+            {/* Right - Preview */}
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <SkeletonLine width="100px" height="20px" />
+                <div className="mt-4 space-y-4">
+                    <SkeletonLine width="80%" height="24px" />
+                    <SkeletonLine width="100%" height="14px" />
+                    <SkeletonLine width="100%" height="14px" />
+                    <SkeletonLine width="70%" height="14px" />
+                    <Skeleton style={{ width: '100%', height: '200px' }} className="rounded-lg mt-4" />
+                    <SkeletonLine width="100%" height="14px" />
+                    <SkeletonLine width="90%" height="14px" />
+                </div>
+            </div>
+        </div>
+    </div>
+)
+
+// Profile Skeleton
+export const ProfileSkeleton = () => (
+    <div className="space-y-6 animate-pulse">
+        {/* Profile Header */}
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div className="flex items-center gap-6">
+                <SkeletonCircle size="96px" />
+                <div className="flex-1 space-y-3">
+                    <SkeletonLine width="200px" height="24px" />
+                    <SkeletonLine width="150px" height="14px" />
+                    <SkeletonLine width="250px" height="14px" />
+                </div>
+                <SkeletonLine width="100px" height="40px" />
+            </div>
+        </div>
+
+        {/* Profile Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <SkeletonLine width="150px" height="20px" />
+                <div className="mt-6 space-y-4">
+                    {[1, 2, 3, 4].map((i) => (
+                        <div key={i} className="flex items-center gap-4">
+                            <SkeletonLine width="120px" height="14px" />
+                            <SkeletonLine width="200px" height="14px" />
+                        </div>
+                    ))}
+                </div>
+            </div>
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <SkeletonLine width="100px" height="20px" />
+                <div className="mt-6 space-y-3">
+                    {[1, 2, 3].map((i) => (
+                        <SkeletonStatsCard key={i} />
+                    ))}
+                </div>
+            </div>
+        </div>
+    </div>
+)
+
+// Page Loading Skeleton with Logo
+export const PageLoadingSkeleton = ({ title = 'Loading...' }) => (
+    <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="min-h-[60vh] flex flex-col items-center justify-center"
+    >
+        <motion.img
+            src="/scalezix_logo.png"
+            alt="Scalezix"
+            className="w-16 h-16 mb-4"
+            animate={{ scale: [1, 1.1, 1] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+        />
+        <h3 className="text-lg font-medium text-gray-700 mb-2">{title}</h3>
+        <div className="w-48 h-1 bg-gray-100 rounded-full overflow-hidden">
+            <motion.div
+                className="h-full bg-gradient-to-r from-[#52b2bf] to-[#3d8a94] rounded-full"
+                initial={{ width: '0%' }}
+                animate={{ width: '100%' }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+            />
+        </div>
+    </motion.div>
+)
+
+// Inline Loading Spinner with Logo
+export const InlineLoader = ({ size = 'md', text = '' }) => {
     const sizes = {
         sm: 'w-8 h-8',
-        md: 'w-10 h-10',
-        lg: 'w-12 h-12',
-        xl: 'w-16 h-16'
+        md: 'w-12 h-12',
+        lg: 'w-16 h-16'
     }
-    return <Skeleton className={`${sizes[size]} rounded-full`} />
-}
 
-// Card skeleton
-export function SkeletonCard({ className = '' }) {
     return (
-        <div className={`bg-white rounded-2xl border border-gray-100 p-6 ${className}`}>
-            <div className="flex items-center gap-4 mb-4">
-                <SkeletonAvatar />
-                <div className="flex-1">
-                    <Skeleton className="h-4 w-1/3 mb-2" />
-                    <Skeleton className="h-3 w-1/2" />
-                </div>
-            </div>
-            <SkeletonText lines={3} />
+        <div className="flex items-center gap-3">
+            <motion.img
+                src="/scalezix_logo.png"
+                alt="Loading"
+                className={`${sizes[size]} object-contain`}
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+            />
+            {text && <span className="text-gray-600 text-sm">{text}</span>}
         </div>
     )
 }
 
-// Stats card skeleton
-export function SkeletonStatsCard() {
-    return (
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
-            <div className="flex items-center justify-between">
-                <div className="flex-1">
-                    <Skeleton className="h-10 w-20 mb-2" />
-                    <Skeleton className="h-4 w-24" />
-                </div>
-                <Skeleton className="w-12 h-12 rounded-xl" />
-            </div>
-        </div>
-    )
-}
-
-// Sidebar skeleton
-export function SkeletonSidebar() {
-    return (
-        <div className="w-64 h-screen bg-white border-r border-gray-100 p-4">
-            {/* Logo */}
-            <div className="flex items-center gap-3 mb-8 px-2">
-                <Skeleton className="w-10 h-10 rounded-xl" />
-                <Skeleton className="h-6 w-24" />
-            </div>
-
-            {/* Nav items */}
-            <div className="space-y-2">
-                {Array.from({ length: 5 }).map((_, i) => (
-                    <div key={i} className="flex items-center gap-3 px-3 py-3">
-                        <Skeleton className="w-9 h-9 rounded-lg" />
-                        <Skeleton className="h-4 w-24" />
-                    </div>
-                ))}
-            </div>
-        </div>
-    )
-}
-
-// Table skeleton
-export function SkeletonTable({ rows = 5, cols = 4 }) {
-    return (
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-            {/* Header */}
-            <div className="bg-gray-50 px-6 py-4 flex gap-4">
-                {Array.from({ length: cols }).map((_, i) => (
-                    <Skeleton key={i} className="h-4 flex-1" />
-                ))}
-            </div>
-
-            {/* Rows */}
-            {Array.from({ length: rows }).map((_, rowIndex) => (
-                <div key={rowIndex} className="px-6 py-4 border-t border-gray-100 flex gap-4">
-                    {Array.from({ length: cols }).map((_, colIndex) => (
-                        <Skeleton key={colIndex} className="h-4 flex-1" />
-                    ))}
-                </div>
-            ))}
-        </div>
-    )
-}
-
-
-// Dashboard skeleton - Full page loading state
-export function DashboardSkeleton() {
-    return (
-        <div className="max-w-7xl mx-auto space-y-6">
-            {/* Token Banner */}
-            <Skeleton className="h-32 w-full rounded-2xl" />
-
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <SkeletonStatsCard />
-                <SkeletonStatsCard />
-                <SkeletonStatsCard />
-            </div>
-
-            {/* Main Content */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Left Column */}
-                <div className="lg:col-span-2 space-y-6">
-                    <SkeletonCard className="h-64" />
-                    <SkeletonCard className="h-48" />
-                </div>
-
-                {/* Right Column */}
-                <div className="space-y-6">
-                    <SkeletonCard className="h-72" />
-                    <SkeletonCard className="h-48" />
-                </div>
-            </div>
-        </div>
-    )
-}
-
-// Content creation skeleton
-export function ContentCreationSkeleton() {
-    return (
-        <div className="max-w-6xl mx-auto space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <Skeleton className="h-8 w-48 mb-2" />
-                    <Skeleton className="h-4 w-64" />
-                </div>
-                <Skeleton className="h-10 w-32 rounded-xl" />
-            </div>
-
-            {/* Form */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <Skeleton className="h-4 w-20 mb-2" />
-                        <Skeleton className="h-12 w-full rounded-xl" />
-                    </div>
-                    <div>
-                        <Skeleton className="h-4 w-20 mb-2" />
-                        <Skeleton className="h-12 w-full rounded-xl" />
-                    </div>
-                </div>
-
-                <div>
-                    <Skeleton className="h-4 w-20 mb-2" />
-                    <Skeleton className="h-32 w-full rounded-xl" />
-                </div>
-
-                <div className="flex justify-end gap-3">
-                    <Skeleton className="h-10 w-24 rounded-xl" />
-                    <Skeleton className="h-10 w-32 rounded-xl" />
-                </div>
-            </div>
-        </div>
-    )
-}
-
-// Profile skeleton
-export function ProfileSkeleton() {
-    return (
-        <div className="max-w-4xl mx-auto space-y-6">
-            {/* Profile Header */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-8">
-                <div className="flex items-center gap-6">
-                    <Skeleton className="w-24 h-24 rounded-full" />
-                    <div className="flex-1">
-                        <Skeleton className="h-8 w-48 mb-2" />
-                        <Skeleton className="h-4 w-32 mb-4" />
-                        <div className="flex gap-3">
-                            <Skeleton className="h-8 w-24 rounded-lg" />
-                            <Skeleton className="h-8 w-24 rounded-lg" />
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Profile Form */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {Array.from({ length: 4 }).map((_, i) => (
-                        <div key={i}>
-                            <Skeleton className="h-4 w-20 mb-2" />
-                            <Skeleton className="h-12 w-full rounded-xl" />
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </div>
-    )
-}
-
-// Job history skeleton
-export function JobHistorySkeleton() {
-    return (
-        <div className="max-w-6xl mx-auto space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <Skeleton className="h-8 w-40 mb-2" />
-                    <Skeleton className="h-4 w-56" />
-                </div>
-                <div className="flex gap-3">
-                    <Skeleton className="h-10 w-32 rounded-xl" />
-                    <Skeleton className="h-10 w-10 rounded-xl" />
-                </div>
-            </div>
-
-            {/* Table */}
-            <SkeletonTable rows={8} cols={5} />
-        </div>
-    )
-}
-
-// Full page loading screen
-export function FullPageLoader() {
-    return (
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 z-50 flex items-center justify-center"
-        >
-            <div className="text-center">
-                {/* Animated Logo */}
-                <motion.div
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ duration: 0.5 }}
-                    className="mb-8"
-                >
-                    <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-primary-400 to-primary-500 flex items-center justify-center shadow-lg">
-                        <motion.svg
-                            animate={{ rotate: 360 }}
-                            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                            className="w-10 h-10 text-white"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                        </motion.svg>
-                    </div>
-                </motion.div>
-
-                {/* Brand Name */}
-                <motion.h1
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.2 }}
-                    className="text-2xl font-bold text-gray-900 mb-2"
-                >
-                    Scalezix
-                </motion.h1>
-
-                {/* Loading Text */}
-                <motion.p
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                    className="text-gray-500 mb-6"
-                >
-                    Loading your workspace...
-                </motion.p>
-
-                {/* Progress Bar */}
-                <motion.div
-                    initial={{ width: 0, opacity: 0 }}
-                    animate={{ width: 200, opacity: 1 }}
-                    transition={{ delay: 0.4 }}
-                    className="mx-auto"
-                >
-                    <div className="h-1 bg-gray-200 rounded-full overflow-hidden">
-                        <motion.div
-                            initial={{ x: '-100%' }}
-                            animate={{ x: '100%' }}
-                            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                            className="h-full w-1/2 bg-gradient-to-r from-primary-400 to-primary-500 rounded-full"
-                        />
-                    </div>
-                </motion.div>
-            </div>
-        </motion.div>
-    )
-}
-
+// Export default with all components
 export default {
-    Skeleton,
-    SkeletonText,
-    SkeletonAvatar,
+    SkeletonLine,
+    SkeletonCircle,
     SkeletonCard,
     SkeletonStatsCard,
-    SkeletonSidebar,
     SkeletonTable,
+    SkeletonTableRow,
     DashboardSkeleton,
     ContentCreationSkeleton,
     ProfileSkeleton,
-    JobHistorySkeleton,
-    FullPageLoader
+    PageLoadingSkeleton,
+    InlineLoader
 }
