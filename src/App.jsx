@@ -50,13 +50,6 @@ function MaintenanceWrapper({ children }) {
     // SuperAdmin routes should ALWAYS bypass maintenance
     const isSuperAdminRoute = location.pathname.startsWith('/superadmin');
 
-    // Debug logging
-    console.log('[MaintenanceWrapper] Path:', location.pathname);
-    console.log('[MaintenanceWrapper] isMaintenanceMode:', isMaintenanceMode);
-    console.log('[MaintenanceWrapper] loading:', loading);
-    console.log('[MaintenanceWrapper] canBypass:', canBypassMaintenance());
-    console.log('[MaintenanceWrapper] isSuperAdminRoute:', isSuperAdminRoute);
-
     // Show loading spinner while checking maintenance status (but not for superadmin)
     if (loading && !isSuperAdminRoute) {
         return (
@@ -73,7 +66,6 @@ function MaintenanceWrapper({ children }) {
 
     // If in maintenance mode and user can't bypass, show maintenance page
     if (isMaintenanceMode && !canBypassMaintenance()) {
-        console.log('[MaintenanceWrapper] Showing maintenance page');
         return <MaintenancePage message={maintenanceMessage} />;
     }
 
