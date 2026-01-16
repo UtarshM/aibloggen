@@ -761,7 +761,6 @@ export default function Settings() {
                                     {[
                                         { key: 'cacheEnabled', label: 'Cache', desc: 'Enable caching for faster load times' },
                                         { key: 'lazyLoading', label: 'Lazy Loading', desc: 'Load content as needed' },
-                                        { key: 'imageOptimization', label: 'Image Optimization', desc: 'Compress images automatically' },
                                         { key: 'offlineMode', label: 'Offline Mode', desc: 'Work without internet connection' }
                                     ].map(item => (
                                         <div key={item.key} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">

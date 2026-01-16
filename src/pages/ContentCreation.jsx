@@ -756,8 +756,8 @@ Make it:
             <h1 className="text-3xl font-bold mb-2">Content Creation & Publishing</h1>
             <p className="text-gray-600 mb-8">Create rich, well-researched content with AI assistance (Google AI)</p>
 
-            <div className="grid lg:grid-cols-4 gap-6">
-                <div className="lg:col-span-3 space-y-4">
+            <div className="space-y-6">
+                <div className="space-y-4">
                     <div className="bg-white p-6 rounded-lg shadow-sm border">
                         <input
                             type="text"
@@ -1104,7 +1104,6 @@ Make it:
                                     <div className="bg-blue-50 p-4 rounded-lg border border-primary-200">
                                         <h4 className="font-semibold text-primary-900 mb-2">Content Preview</h4>
                                         <p className="text-sm text-primary-800"><strong>Title:</strong> {title}</p>
-                                        <p className="text-sm text-primary-800 mt-1"><strong>Images:</strong> {imageUrls.length} images</p>
                                         <p className="text-sm text-primary-800 mt-1"><strong>Words:</strong> ~{content.split(' ').length}</p>
                                     </div>
 
@@ -1149,7 +1148,6 @@ Make it:
                                                     <li>Upload Excel file with "Title" column</li>
                                                     <li>AI generates content for each title</li>
                                                     <li>Content is humanized automatically</li>
-                                                    <li>Relevant images are added</li>
                                                     <li>Posts are published to WordPress</li>
                                                 </ol>
                                             </div>
@@ -1267,7 +1265,6 @@ Make it:
                                                                     <th className="px-4 py-2 text-left">#</th>
                                                                     <th className="px-4 py-2 text-left">Title</th>
                                                                     <th className="px-4 py-2 text-left">Status</th>
-                                                                    <th className="px-4 py-2 text-left">Images</th>
                                                                     <th className="px-4 py-2 text-left">Live Blog Link</th>
                                                                 </tr>
                                                             </thead>
@@ -1298,9 +1295,6 @@ Make it:
                                                                                     <Clock size={14} /> Pending
                                                                                 </span>
                                                                             )}
-                                                                        </td>
-                                                                        <td className="px-4 py-2 text-gray-600">
-                                                                            {post.uploadedImages || 0} / {post.imageCount || 0}
                                                                         </td>
                                                                         <td className="px-4 py-2">
                                                                             {post.wordpressPostUrl ? (
@@ -1358,80 +1352,6 @@ Make it:
                             </div>
                         </div>
                     )}
-                </div>
-
-                <div className="space-y-4">
-                    <div className="bg-white p-6 rounded-lg shadow-sm border">
-                        <h2 className="text-xl font-semibold mb-4">Saved Drafts</h2>
-                        <div className="space-y-3">
-                            {saved.length === 0 ? (
-                                <p className="text-gray-500 text-sm">No saved drafts</p>
-                            ) : (
-                                saved.map(draft => (
-                                    <div
-                                        key={draft.id}
-                                        className="p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
-                                        onClick={() => {
-                                            setTitle(draft.title)
-                                            setContent(draft.content)
-                                            showToast('Draft loaded', 'success')
-                                        }}
-                                    >
-                                        <p className="font-medium">{draft.title}</p>
-                                        <p className="text-xs text-gray-500">{draft.date}</p>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="bg-gradient-to-br from-primary-50 to-primary-100 p-6 rounded-lg border-2 border-primary-200">
-                        <h3 className="font-semibold text-primary-900 mb-3">🚀 3-Step AI Generation</h3>
-                        <ul className="text-sm text-primary-800 space-y-2">
-                            <li>• <span className="font-bold">Step 1:</span> AI generates content</li>
-                            <li>• <span className="font-bold">Step 2:</span> Humanizes the text</li>
-                            <li>• <span className="font-bold">Step 3:</span> Auto-inserts images</li>
-                            <li>• <span className="font-semibold text-pink-600">100% human-like writing</span></li>
-                            <li>• Natural grammar variations</li>
-                            <li>• Perfect image placement</li>
-                            <li>• Ready in 3 steps!</li>
-                        </ul>
-                    </div>
-
-                    <div className="bg-gradient-to-br from-green-50 to-teal-50 p-6 rounded-lg border-2 border-green-300">
-                        <h3 className="font-semibold text-green-900 mb-3">✨ AI Features</h3>
-                        <ul className="text-sm text-green-800 space-y-2">
-                            <li>• 1000+ word articles</li>
-                            <li>• Research & examples</li>
-                            <li>• Statistics & data</li>
-                            <li>• <span className="font-semibold text-primary-600">Human-like writing</span></li>
-                            <li>• Auto image insertion</li>
-                            <li>• <span className="font-semibold text-primary-500">Export to Word</span></li>
-                            <li>• <span className="font-semibold text-red-600">Export to PDF</span></li>
-                        </ul>
-                    </div>
-
-                    <div className="bg-gradient-to-br from-primary-50 to-primary-100 p-6 rounded-lg border-2 border-primary-200">
-                        <h3 className="font-semibold text-primary-900 mb-3">📄 Word Export</h3>
-                        <ul className="text-sm text-primary-800 space-y-2">
-                            <li>• Professional .docx format</li>
-                            <li>• All images embedded</li>
-                            <li>• Perfect formatting</li>
-                            <li>• Editable document</li>
-                            <li>• Ready to share</li>
-                        </ul>
-                    </div>
-
-                    <div className="bg-gradient-to-br from-orange-50 to-red-50 p-6 rounded-lg border-2 border-orange-300">
-                        <h3 className="font-semibold text-orange-900 mb-3">💡 Pro Tips</h3>
-                        <ul className="text-sm text-orange-800 space-y-2">
-                            <li>• Be specific with topics</li>
-                            <li>• Let AI complete all 3 steps</li>
-                            <li>• Images auto-placed perfectly</li>
-                            <li>• Export to Word for editing</li>
-                            <li>• Save drafts regularly</li>
-                        </ul>
-                    </div>
                 </div>
             </div>
         </div>

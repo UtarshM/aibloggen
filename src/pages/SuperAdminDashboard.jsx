@@ -893,9 +893,8 @@ function UserDetailModal({ user, onClose, onRefresh }) {
                     {user.apiUsage && (
                         <div className="space-y-4">
                             <h5 className="font-semibold text-gray-900">API Usage</h5>
-                            <div className="grid grid-cols-3 gap-4">
+                            <div className="grid grid-cols-2 gap-4">
                                 <InfoCard label="Content Generated" value={user.apiUsage.contentGenerated || 0} />
-                                <InfoCard label="Images Generated" value={user.apiUsage.imagesGenerated || 0} />
                                 <InfoCard label="Social Posts" value={user.apiUsage.socialPosts || 0} />
                             </div>
                         </div>

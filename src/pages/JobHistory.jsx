@@ -302,7 +302,6 @@ export default function JobHistory() {
                                                 <p className="font-medium text-gray-900">{post.title}</p>
                                                 <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
                                                     <span>{post.contentLength || 0} words</span>
-                                                    <span>{post.uploadedImages || 0} images</span>
                                                     {post.publishedAt && (
                                                         <span>{new Date(post.publishedAt).toLocaleString()}</span>
                                                     )}
@@ -417,7 +416,7 @@ export default function JobHistory() {
                                         <div className="flex-1">
                                             <p className="font-medium text-gray-900">{post.title}</p>
                                             <p className="text-sm text-gray-600">
-                                                {post.contentLength || 0} words • {post.uploadedImages || 0} images
+                                                {post.contentLength || 0} words
                                             </p>
                                         </div>
                                     </label>
