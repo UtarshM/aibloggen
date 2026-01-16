@@ -159,9 +159,15 @@ const corsOptions = {
     }
     
     if (isProduction) {
+      // Check if origin is in allowed list
       if (allowedOrigins.includes(origin)) {
         callback(null, true);
-      } else {
+      } 
+      // Allow all Vercel preview deployments for scalezix
+      else if (origin.includes('scalezixs-projects.vercel.app') || origin.includes('aiblogfinal') && origin.includes('vercel.app')) {
+        callback(null, true);
+      }
+      else {
         console.warn(`[CORS] Blocked origin: ${origin}`);
         callback(new Error('Not allowed by CORS'));
       }
