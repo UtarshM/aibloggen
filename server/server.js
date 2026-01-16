@@ -31,6 +31,10 @@ import superAdminRoutes from './superAdminRoutes.js';
 // Human Content Engine - Advanced AI Detection Bypass
 import { humanizeContent, analyzeAIRisk, FORBIDDEN_AI_WORDS } from './humanContentEngine.js';
 import { generateMegaPrompt, PERSONAS } from './megaPromptEngine.js';
+// SEO Mega-Prompt Engine v3.0 - Professional SEO Content Generation
+import { generateSEOMegaPrompt, SEO_PERSONAS } from './seoMegaPromptEngine.js';
+// Advanced Humanizer v2.0 - Professional Blog Humanization
+import { humanizeBlog, analyzeHumanScore, generateHumanizePrompt } from './advancedHumanizer.js';
 // Chaos Engine v2.0 - Ultimate Human Content Generation (2-4 min processing)
 import { 
   advancedHumanize, 
@@ -2969,23 +2973,29 @@ app.post('/api/content/generate-chaos', authenticateToken, aiLimiter, async (req
     const headings = customHeadings ? customHeadings.split(/[|\n]/).map(h => h.trim()).filter(h => h) : [];
 
     // ═══════════════════════════════════════════════════════════════
-    // PHASE 1: GENERATE HUMAN SIGNATURE MEGA-PROMPT (5-10 seconds)
+    // PHASE 1: GENERATE SEO MEGA-PROMPT v3.0 (5-10 seconds)
     // ═══════════════════════════════════════════════════════════════
-    console.log('[ChaosEngine] Phase 1: Generating Human Signature mega-prompt...');
+    console.log('[ChaosEngine] Phase 1: Generating SEO Expert mega-prompt (20+ years experience)...');
     
-    const prompt = generateHumanSignaturePrompt({
+    // Use new SEO Mega-Prompt Engine for professional SEO content
+    const prompt = generateSEOMegaPrompt({
       topic,
-      keywords: config.keywords || topic,
-      targetAudience: config.targetAudience || 'professional peers',
-      tone: config.tone || 'conversational',
+      primaryKeyword: config.keywords || topic,
+      secondaryKeywords: config.secondaryKeywords || '',
+      lsiKeywords: config.lsiKeywords || '',
+      searchIntent: config.searchIntent || 'informational',
+      targetAudience: config.targetAudience || 'professionals',
+      country: config.country || 'Global',
+      tone: config.tone || 'professional',
       minWords,
       headings,
-      references: config.references || '',
-      eeat: config.eeat || '',
-      persona: config.persona || 'journalist'
+      competitorUrls: config.competitorUrls || '',
+      internalLinks: config.internalLinks || '',
+      externalLinks: config.externalLinks || '',
+      persona: config.persona || 'seoExpert'
     });
     
-    console.log(`[ChaosEngine] Prompt generated (${prompt.length} characters)`);
+    console.log(`[ChaosEngine] SEO Mega-Prompt generated (${prompt.length} characters)`);
     
     // Deliberate delay - simulates human thinking time
     await new Promise(resolve => setTimeout(resolve, 3000));
@@ -3100,23 +3110,55 @@ app.post('/api/content/generate-chaos', authenticateToken, aiLimiter, async (req
     await new Promise(resolve => setTimeout(resolve, 5000));
 
     // ═══════════════════════════════════════════════════════════════
-    // PHASE 3: MULTI-PASS CHAOS ENGINE HUMANIZATION (60-120 seconds)
+    // PHASE 3: ADVANCED HUMANIZATION v2.0 (30-60 seconds)
     // ═══════════════════════════════════════════════════════════════
-    console.log('[ChaosEngine] Phase 3: Multi-pass humanization with Chaos Engine...');
-    console.log('[ChaosEngine] This will take 60-120 seconds for thorough processing...');
+    console.log('[ChaosEngine] Phase 3: Advanced Humanization v2.0...');
+    console.log('[ChaosEngine] Applying human writing patterns...');
     
-    const humanizeResult = await advancedHumanize(cleanContent, {
-      passes: 3,
-      delayBetweenPasses: 20000, // 20 seconds between passes
-      voiceFrequency: 0.12,
+    // First pass: Advanced Humanizer (new engine)
+    const humanizeResult = humanizeBlog(cleanContent, {
+      removeCliches: true,
+      casualize: true,
+      useContractions: true,
+      varySentences: true,
+      addStarters: true,
+      injectVoice: true,
+      addHedges: true,
+      addQuestions: true,
+      addAsides: true,
+      fixThreeRule: true,
+      addRepetition: true,
+      starterFrequency: 0.08,
+      voiceFrequency: 0.10,
       hedgeFrequency: 0.06,
-      questionFrequency: 0.08,
+      questionFrequency: 0.06,
+      asideFrequency: 0.04,
+      repetitionFrequency: 0.03,
       verbose: true
     });
     
     cleanContent = humanizeResult.content;
-    console.log(`[ChaosEngine] Humanization complete in ${(humanizeResult.processingTime/1000).toFixed(1)}s`);
-    console.log(`[ChaosEngine] Burstiness: ${humanizeResult.burstiness.score.toFixed(1)}%`);
+    console.log(`[ChaosEngine] Advanced Humanization complete in ${humanizeResult.metadata.processingTime}ms`);
+    
+    // Second pass: Chaos Engine for additional randomization
+    console.log('[ChaosEngine] Applying Chaos Engine randomization...');
+    const chaosResult = await advancedHumanize(cleanContent, {
+      passes: 2,
+      delayBetweenPasses: 10000, // 10 seconds between passes
+      voiceFrequency: 0.08,
+      hedgeFrequency: 0.04,
+      questionFrequency: 0.05,
+      verbose: true
+    });
+    
+    cleanContent = chaosResult.content;
+    console.log(`[ChaosEngine] Chaos Engine complete in ${(chaosResult.processingTime/1000).toFixed(1)}s`);
+    console.log(`[ChaosEngine] Burstiness: ${chaosResult.burstiness.score.toFixed(1)}%`);
+    
+    // Analyze human score
+    const humanScore = analyzeHumanScore(cleanContent);
+    console.log(`[ChaosEngine] Human Score: ${humanScore.score}/100 (${humanScore.riskLevel})`);
+
 
     // ═══════════════════════════════════════════════════════════════
     // PHASE 4: PROFESSIONAL HUMANIZER (Optional - 30-60 seconds)
