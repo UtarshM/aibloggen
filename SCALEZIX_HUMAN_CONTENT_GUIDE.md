@@ -4,6 +4,107 @@
 
 This system generates **100% human-like blog content** that passes AI detection tools like Originality.ai, GPTZero, and Copyleaks. It takes **2-4 minutes per article** to ensure maximum quality.
 
+### ✨ NEW Features (v2.1)
+- **Clickable Table of Contents** - Auto-generated TOC with smooth scroll navigation
+- **Advanced SEO Schema** - Full Article, FAQ, HowTo, and BreadcrumbList schemas
+- **Deep Humanization** - Enhanced imperfection patterns and emotional anchors
+- **5 Persona Types** - Journalist, Practitioner, Researcher, Mentor, Storyteller
+
+---
+
+## 📑 Table of Contents (Clickable Navigation)
+
+The system automatically generates a beautiful, interactive Table of Contents:
+
+### Features:
+- **Clickable Links** - Click any heading to smooth-scroll to that section
+- **Active State Tracking** - Highlights current section as you scroll
+- **Collapsible** - Toggle button to expand/collapse the TOC
+- **Nested Structure** - Supports H2 and H3 headings
+- **SEO-Friendly IDs** - Auto-generates clean URL-friendly anchor IDs
+
+### How It Works:
+1. System extracts all H2 and H3 headings from content
+2. Generates SEO-friendly IDs (e.g., "best-seo-tools-2026")
+3. Creates clickable navigation with smooth scroll
+4. Tracks scroll position to highlight active section
+5. Inserts TOC after the first paragraph
+
+### Example Output:
+```html
+<nav class="table-of-contents" id="article-toc">
+  <div class="toc-header">
+    <span class="toc-icon">📑</span>
+    <h3 class="toc-title">Table of Contents</h3>
+    <button class="toc-toggle">▼</button>
+  </div>
+  <ul class="toc-list">
+    <li class="toc-h2">
+      <a href="#best-seo-tools" class="toc-link">Best SEO Tools</a>
+      <ul class="toc-sub">
+        <li class="toc-h3">
+          <a href="#keyword-research" class="toc-link">Keyword Research</a>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+```
+
+---
+
+## 🔍 SEO Schema Markup
+
+The system generates comprehensive SEO schema for better search visibility:
+
+### Schema Types Generated:
+
+#### 1. Article Schema
+```json
+{
+  "@type": "Article",
+  "headline": "Your Title",
+  "author": { "@type": "Person", "name": "Expert Name" },
+  "publisher": { "@type": "Organization", "name": "Scalezix" },
+  "datePublished": "2026-01-07T...",
+  "wordCount": 5234
+}
+```
+
+#### 2. FAQ Schema (Auto-Extracted)
+- Automatically extracts Q&A patterns from content
+- Generates FAQPage schema for rich snippets
+- Supports up to 10 FAQ items
+
+#### 3. HowTo Schema (Auto-Extracted)
+- Detects step-by-step instructions
+- Generates HowTo schema for featured snippets
+- Includes estimated time and steps
+
+#### 4. BreadcrumbList Schema
+- Home → Blog → Article Title
+- Improves site navigation in search results
+
+#### 5. WebPage Schema
+- Speakable specification for voice search
+- Part of WebSite structure
+
+### API Response:
+```json
+{
+  "content": "...",
+  "seoSchema": {
+    "@context": "https://schema.org",
+    "@graph": [
+      { "@type": "Article", ... },
+      { "@type": "FAQPage", ... },
+      { "@type": "HowTo", ... },
+      { "@type": "BreadcrumbList", ... }
+    ]
+  }
+}
+```
+
 ---
 
 ## 🚀 Quick Start
@@ -22,14 +123,18 @@ POST /api/content/generate-chaos
 }
 ```
 
-### Response
+### Full Response
 ```json
 {
   "content": "<h2>...</h2><p>...</p>",
+  "title": "Best SEO Tools for 2026",
   "wordCount": 5234,
   "humanScore": 92,
   "processingMinutes": "2.8",
-  "burstinessScore": "48.5"
+  "burstinessScore": "48.5",
+  "seoSchema": { "@context": "https://schema.org", "@graph": [...] },
+  "tokensUsed": 1,
+  "tokensRemaining": 99
 }
 ```
 
@@ -43,11 +148,11 @@ POST /api/content/generate-chaos
 | **Phase 2** | 30-60s | AI generates raw content (Gemini 2.0) |
 | **Phase 3** | 60-120s | Chaos Engine humanization (3 passes) |
 | **Phase 4** | 30-60s | StealthGPT/Undetectable.ai (optional) |
-| **Phase 5** | 10-15s | Final quality check |
+| **Phase 5** | 10-15s | Final quality check + TOC + Schema |
 
 ---
 
-## 🔧 How It Works
+## 🔧 How Human Content Works
 
 ### 1. Randomized Word Replacement
 AI detectors look for patterns. We use **random selection** from synonym arrays:
@@ -89,14 +194,31 @@ AI loves listing exactly 3 items. We convert to 2 or 4:
 ✅ "Four factors matter: A, B, C, and D"
 ✅ "Two things drive this: A and B"
 
-### 5. Human Voice Markers
-Natural speech patterns injected throughout:
+### 5. Human Imperfection Patterns (NEW)
+Real humans make self-corrections and show uncertainty:
 
-- "Look,"
-- "Here's the thing:"
-- "Real talk:"
-- "Honestly,"
-- "I mean,"
+- "Actually, let me rephrase that."
+- "Wait, that's not quite right."
+- "I could be wrong about this."
+- "(don't ask how I know this)"
+
+### 6. Emotional Anchors (NEW)
+Content includes emotional descriptors:
+
+- "frustrating", "eye-opening", "humbling"
+- "satisfying", "maddening", "liberating"
+
+---
+
+## 👤 Persona Types
+
+| Persona | Voice | Best For |
+|---------|-------|----------|
+| **journalist** | Skeptical, direct, evidence-based | News, analysis |
+| **practitioner** | Practical, no-nonsense, experienced | How-to guides |
+| **researcher** | Analytical, contrarian, data-focused | Technical content |
+| **mentor** | Warm but direct, experienced | Educational content |
+| **storyteller** | Engaging, vivid, memorable | Brand content |
 
 ---
 
@@ -135,7 +257,7 @@ Natural speech patterns injected throughout:
   "eeat": "Write as a 15-year industry veteran",
   "references": "Reference Ahrefs, SEMrush, HubSpot",
   "humanizer": "auto",
-  "numImages": 4
+  "author": "John Smith"
 }
 ```
 
@@ -144,10 +266,10 @@ Natural speech patterns injected throughout:
 | Option | Values | Default |
 |--------|--------|---------|
 | `tone` | conversational, academic, professional | conversational |
-| `persona` | journalist, practitioner, researcher, mentor | journalist |
+| `persona` | journalist, practitioner, researcher, mentor, storyteller | journalist |
 | `humanizer` | auto, stealthgpt, undetectable, local | auto |
 | `minWords` | 1000-10000 | 5000 |
-| `numImages` | 0-10 | 4 |
+| `author` | Any name | Scalezix Expert |
 
 ---
 
@@ -166,6 +288,7 @@ Natural speech patterns injected throughout:
   "burstinessHumanLike": true,
   "humanizerUsed": "Chaos Engine v2.0",
   "chaosEnginePasses": 3,
+  "seoSchema": { "@graph": [...] },
   "aiRiskIssues": [],
   "aiRiskRecommendations": []
 }
@@ -213,11 +336,11 @@ POST /api/wordpress/bulk-import
 
 ```
 server/
-├── chaosEngine.js          # Main Chaos Engine (NEW)
+├── chaosEngine.js          # Main Chaos Engine (v2.0)
 ├── humanContentEngine.js   # Original humanization
-├── megaPromptEngine.js     # Prompt generation
+├── megaPromptEngine.js     # Enhanced prompt generation
 ├── bulkBlogGenerator.js    # Bulk import (uses Chaos Engine)
-├── server.js               # API endpoints
+├── server.js               # API endpoints + TOC + Schema
 ├── stealthService.js       # StealthGPT integration
 └── undetectableService.js  # Undetectable.ai integration
 ```
@@ -234,6 +357,15 @@ server/
 ### Processing too slow
 1. Use `"humanizer": "local"` to skip external APIs
 2. Reduce `minWords`
+
+### TOC not appearing
+1. Content needs at least 2 H2 headings
+2. Check if content already has `class="toc"`
+
+### Schema not generating
+1. Ensure content has enough structure
+2. FAQ schema needs Q&A patterns in content
+3. HowTo schema needs step-by-step instructions
 
 ### API errors
 1. Check `.env` file has `GOOGLE_AI_KEY` or `OPENROUTER_API_KEY`
@@ -262,6 +394,27 @@ UNDETECTABLE_API_KEY=your_undetectable_key
 3. **Include E-E-A-T signals** in the `eeat` field
 4. **5000+ words** for comprehensive articles
 5. **Use "journalist" persona** for most content
+6. **Include keywords** for better SEO schema extraction
+7. **Add author name** for better Article schema
+
+---
+
+## 🎯 SEO Schema Best Practices
+
+### For FAQ Rich Snippets:
+- Include questions in H2/H3 headings
+- Follow with clear answer paragraphs
+- Use "What is...", "How do...", "Why..." patterns
+
+### For HowTo Rich Snippets:
+- Use numbered steps: "Step 1:", "Step 2:"
+- Start list items with action verbs
+- Include specific instructions
+
+### For Article Rich Snippets:
+- Provide author name in request
+- Include relevant keywords
+- Use descriptive topic titles
 
 ---
 

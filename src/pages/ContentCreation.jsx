@@ -5,49 +5,16 @@
  * @copyright 2025 Scalezix Venture PVT LTD. All Rights Reserved.
  */
 
-import { useState, useEffect, useCallback } from 'react'
-import { Bold, Italic, List, Link as LinkIcon, Save, Eye, Download, Sparkles, Loader2, Image as ImageIcon, RefreshCw, FileText, Settings, Upload, CheckCircle, XCircle, Clock, ExternalLink } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Bold, Italic, List, Link as LinkIcon, Save, Eye, Download, Sparkles, Loader2, RefreshCw, FileText, Settings, Upload, CheckCircle, XCircle, ExternalLink } from 'lucide-react'
 import { api } from '../api/client'
 import Toast from '../components/Toast'
 import ContentGenerationModal from '../components/ContentGenerationModal'
 import { useToast } from '../context/ToastContext'
 import { useModal } from '../components/Modal'
 import jsPDF from 'jspdf'
-import { Document, Paragraph, TextRun, ImageRun, HeadingLevel, AlignmentType, Packer } from 'docx'
+import { Document, Paragraph, TextRun, HeadingLevel, AlignmentType, Packer } from 'docx'
 import { saveAs } from 'file-saver'
-
-// Blocked domains that don't allow hotlinking
-const BLOCKED_IMAGE_DOMAINS = [
-    'wikia.nocookie.net',
-    'static.wikia.nocookie.net',
-    'fandom.com',
-    'vignette.wikia.nocookie.net'
-];
-
-// Sanitize image URL - convert HTTP to HTTPS and filter blocked domains
-const sanitizeImageUrl = (url) => {
-    if (!url) return null;
-
-    // Convert HTTP to HTTPS
-    let sanitizedUrl = url.replace(/^http:\/\//i, 'https://');
-
-    // Check if domain is blocked
-    try {
-        const urlObj = new URL(sanitizedUrl);
-        if (BLOCKED_IMAGE_DOMAINS.some(domain => urlObj.hostname.includes(domain))) {
-            return null;
-        }
-    } catch (e) {
-        return null;
-    }
-
-    return sanitizedUrl;
-};
-
-// Filter and sanitize array of image URLs
-const sanitizeImageUrls = (urls) => {
-    return urls.map(sanitizeImageUrl).filter(url => url !== null);
-};
 
 export default function ContentCreation() {
     const [content, setContent] = useState('')
@@ -56,14 +23,9 @@ export default function ContentCreation() {
     const [saved, setSaved] = useState([])
     const [aiLoading, setAiLoading] = useState(false)
     const [toast, setToast] = useState(null)
-    const [imageUrls, setImageUrls] = useState([])
-    const [selectedImages, setSelectedImages] = useState([])
-    const [imageLoading, setImageLoading] = useState(false)
-    const [imagePrompts, setImagePrompts] = useState([])
     const [generationStep, setGenerationStep] = useState(0)
     const [generationProgress, setGenerationProgress] = useState('')
     const [showModal, setShowModal] = useState(false)
-    const [failedImages, setFailedImages] = useState(new Set())
     const globalToast = useToast()
     const modal = useModal()
 
@@ -78,11 +40,6 @@ export default function ContentCreation() {
     const [showPublishModal, setShowPublishModal] = useState(false)
     const [pollingInterval, setPollingInterval] = useState(null)
 
-    // Handle image load error
-    const handleImageError = useCallback((url) => {
-        setFailedImages(prev => new Set([...prev, url]));
-    }, []);
-
     // Load content from localStorage on mount
     useEffect(() => {
         loadContent()
@@ -90,16 +47,9 @@ export default function ContentCreation() {
         // Load persisted content from localStorage
         const savedContent = localStorage.getItem('contentCreation_content')
         const savedTitle = localStorage.getItem('contentCreation_title')
-        const savedImages = localStorage.getItem('contentCreation_images')
-        const savedSelectedImages = localStorage.getItem('contentCreation_selectedImages')
 
         if (savedContent) setContent(savedContent)
         if (savedTitle) setTitle(savedTitle)
-        if (savedImages) {
-            const parsed = JSON.parse(savedImages);
-            setImageUrls(sanitizeImageUrls(parsed));
-        }
-        if (savedSelectedImages) setSelectedImages(JSON.parse(savedSelectedImages))
 
         // Check for ongoing bulk import job after page refresh
         checkForOngoingJob()
@@ -127,18 +77,6 @@ export default function ContentCreation() {
         }
     }, [title])
 
-    useEffect(() => {
-        if (imageUrls.length > 0) {
-            localStorage.setItem('contentCreation_images', JSON.stringify(imageUrls))
-        }
-    }, [imageUrls])
-
-    useEffect(() => {
-        if (selectedImages.length > 0) {
-            localStorage.setItem('contentCreation_selectedImages', JSON.stringify(selectedImages))
-        }
-    }, [selectedImages])
-
     const showToast = (message, type = 'success') => {
         setToast({ message, type })
     }
@@ -165,13 +103,8 @@ export default function ContentCreation() {
     const clearContent = () => {
         setContent('')
         setTitle('')
-        setImageUrls([])
-        setSelectedImages([])
-        setImagePrompts([])
         localStorage.removeItem('contentCreation_content')
         localStorage.removeItem('contentCreation_title')
-        localStorage.removeItem('contentCreation_images')
-        localStorage.removeItem('contentCreation_selectedImages')
         showToast('Content cleared', 'success')
     }
 
@@ -280,20 +213,15 @@ export default function ContentCreation() {
 
         setWordpressLoading(true)
         try {
-            const images = imageUrls.map((url, index) => ({
-                url,
-                alt: imagePrompts[index] || title
-            }))
-
             const result = await api.publishToWordPress({
                 siteId: selectedWordPressSite,
                 title,
                 content,
-                images
+                images: []
             })
 
             if (result.success) {
-                showToast(`✅ Published! ${result.uploadedImages} images uploaded`, 'success')
+                showToast('✅ Published successfully!', 'success')
                 setShowPublishModal(false)
                 if (result.postUrl) {
                     window.open(result.postUrl, '_blank')
@@ -419,40 +347,15 @@ export default function ContentCreation() {
         setGenerationStep(1)
 
         try {
-            // SINGLE STEP: Generate 100% HUMAN content with high-quality images
-            setGenerationProgress('Generating 100% human content with high-quality images...')
+            // SINGLE STEP: Generate 100% HUMAN content
+            setGenerationProgress('Generating 100% human content...')
             showToast('✨ Generating truly human content...', 'info')
 
-            // SINGLE STEP - Call Python to generate 100% human content
+            // SINGLE STEP - Call API to generate 100% human content
             const result = await api.generateHumanContent(config)
 
             setTitle(result.title || config.topic)
-
-            // DEBUG: Check if content has images
-            console.log('[CONTENT] Content length:', result.content.length)
-            console.log('[CONTENT] Has image markdown:', result.content.includes('!['))
-            console.log('[CONTENT] Number of images in markdown:', (result.content.match(/!\[/g) || []).length)
-
-            // Sanitize content - convert HTTP to HTTPS and filter blocked domains
-            let sanitizedContent = result.content.replace(/http:\/\//gi, 'https://');
-            // Remove images from blocked domains in the content
-            BLOCKED_IMAGE_DOMAINS.forEach(domain => {
-                const regex = new RegExp(`!\\[[^\\]]*\\]\\([^)]*${domain}[^)]*\\)`, 'gi');
-                sanitizedContent = sanitizedContent.replace(regex, '');
-            });
-
-            setContent(sanitizedContent)
-
-            // Set high-quality images from Pexels (sanitized)
-            if (result.images && result.images.length > 0) {
-                console.log('[CONTENT] Received', result.images.length, 'image objects')
-                const rawImageUrls = result.images.map(img => img.url)
-                const imageAlts = result.images.map(img => img.alt)
-                const cleanImageUrls = sanitizeImageUrls(rawImageUrls)
-                setImageUrls(cleanImageUrls)
-                setImagePrompts(imageAlts.slice(0, cleanImageUrls.length))
-                setSelectedImages(cleanImageUrls)
-            }
+            setContent(result.content)
 
             setGenerationStep(0)
             setGenerationProgress('')
@@ -466,201 +369,6 @@ export default function ContentCreation() {
             setGenerationProgress('')
         } finally {
             setAiLoading(false)
-        }
-    }
-
-    // Keep this for backup/manual use
-    const oldGenerateFromScratch = async (config) => {
-        const { topic, wordCount, numImages, tone, targetAudience, includeStats } = config
-
-        setAiLoading(true)
-        setGenerationStep(1)
-
-        try {
-            const step1Prompt = `Write a comprehensive, well-researched article about: "${topic}". 
-
-Structure:
-1. An engaging introduction that hooks the reader
-2. 5 to 7 main sections with detailed explanations
-3. Real-world examples and case studies
-${includeStats ? '4. Statistics and data points (use realistic numbers)' : ''}
-5. Actionable tips and best practices
-6. A strong conclusion
-
-Requirements:
-→ Make it exactly ${wordCount} words (target length)
-→ Use proper headings for each section
-→ Include paragraphs with varied lengths
-→ Add specific examples and real scenarios
-${includeStats ? '→ Use statistics to support your points' : ''}
-→ Writing tone: ${tone}
-→ Target audience: ${targetAudience}
-→ Keep the content engaging and valuable
-
-Write the full article now.`
-
-            const step1Result = await api.generateContent(step1Prompt)
-            setTitle(topic)
-            setContent(step1Result.content)
-            setGenerationStep(2)
-
-            // Wait 2 seconds to show the AI content
-            await new Promise(resolve => setTimeout(resolve, 2000))
-
-            // STEP 2: Humanize the content
-            setGenerationProgress('Step 2/3: Making it sound human-written...')
-            showToast('✍️ Step 2: Humanizing content...', 'info')
-
-            const step2Prompt = `CRITICAL INSTRUCTION: Write the content in a completely human style. Avoid patterns that AI usually produces. Make it sound natural, emotional, conversational, and slightly imperfect like a real person wrote it. Do not use robotic structure, repetitive phrasing, or over-polished sentences.
-
-YOUR MISSION: Rewrite the text below so it scores 100% human written and 0% AI generated.
-
-MANDATORY RULES FOR HUMAN-LIKE WRITING:
-
-1. NATURAL FLOW
-Write like you're talking to a friend over coffee. Not writing an essay. Just sharing thoughts. Some sentences can be fragments. Others longer with multiple ideas flowing together because that's how people actually think and write when they're not trying to be perfect.
-
-2. HUMAN IMPERFECTIONS
-Add small natural touches. Maybe start a sentence with "And" or "But" or "So". Use contractions everywhere (don't, can't, won't, it's, that's). Throw in casual phrases like "you know", "I mean", "honestly", "look", "here's the thing". Real people do this.
-
-3. EMOTIONAL & PERSONAL TONE
-Write like you've experienced this stuff. Add opinions. Say things like "I think", "in my experience", "what I've noticed". Show some personality. Get a bit passionate about certain points. Real humans care about what they write.
-
-4. VARIED SENTENCE RHYTHM
-Mix it up. Short punchy sentences. Then longer ones that flow and connect multiple thoughts together naturally. Then back to short. This creates rhythm. AI loves uniform length. Humans don't.
-
-5. NATURAL VOCABULARY
-Use everyday words. Not fancy ones. Say "use" not "utilize". Say "help" not "facilitate". Say "buy" not "purchase". Throw in some casual expressions. Real people don't talk like textbooks.
-
-6. AVOID AI PATTERNS
-NEVER use these AI giveaways:
-- "delve into" / "dive into" / "explore"
-- "landscape" (as in business landscape)
-- "robust" / "comprehensive" / "leverage"
-- "it's important to note" / "it's worth mentioning"
-- "in conclusion" / "in summary" / "to summarize"
-- "game-changing" / "cutting-edge" / "revolutionary"
-- "seamless" / "streamline" / "optimize"
-- Perfect parallel structure in lists
-- Overly balanced sentences
-- Too many transition words
-
-7. BREAK THE RULES SOMETIMES
-Real humans make small grammar mistakes. Start sentences with conjunctions. End with prepositions. Use sentence fragments for emphasis. Like this. See?
-
-8. ADD REAL-LIFE CONTEXT
-Mention real situations. "When I tried this last month..." or "My friend does this and..." or "You've probably seen this happen...". Make it feel lived-in.
-
-9. NATURAL TRANSITIONS
-Don't use formal transitions. Instead of "Furthermore" say "Plus" or "And another thing". Instead of "However" say "But" or "Though". Instead of "Therefore" say "So". Real people talk this way.
-
-10. CONVERSATIONAL STRUCTURE
-Don't organize too perfectly. Real writing meanders a bit. You might circle back to a point. Or add a side thought in parentheses (like this). Or use em dashes to add extra info. Mix it up.
-
-11. SHOW UNCERTAINTY SOMETIMES
-Real humans aren't always 100% sure. Say things like "probably", "might", "could be", "from what I've seen", "seems like". AI is too confident. Humans hedge a bit.
-
-12. USE ACTIVE VOICE & DIRECT ADDRESS
-Say "you can do this" not "this can be done". Talk directly to the reader. Use "you" and "your" a lot. Make it feel like a conversation.
-
-ABSOLUTE PROHIBITIONS:
-❌ No dashes or hyphens in sentences
-❌ No colons except in time or titles
-❌ No rhetorical questions
-❌ No "X and also Y" structures
-❌ No words like: basically, clearly, obviously, essentially, literally, actually (when used as filler)
-❌ No fake enthusiasm or hype
-❌ No marketing speak
-❌ No perfect symmetry in structure
-❌ No overly formal language
-
-FINAL INSTRUCTION:
-Take the content below and completely rewrite it as if you're a real human who knows this topic well and is just explaining it naturally to someone. Keep all the facts and information but make the writing style completely human. Imperfect. Natural. Conversational. Emotional. Real.
-
-The goal is 0% AI detection. Write like a human who's passionate about the topic but not trying to sound professional or perfect.
-
-CONTENT TO REWRITE:
-${step1Result.content}
-
-NOW REWRITE THIS TO BE 100% HUMAN. Make it natural, imperfect, conversational, and completely undetectable as AI.`
-
-            // Use Python humanization for 0% AI detection
-            const step2Result = await api.humanizeContent(step1Result.content)
-            setContent(step2Result.content)
-            setGenerationStep(3)
-
-            // Wait 2 seconds to show the humanized content
-            await new Promise(resolve => setTimeout(resolve, 2000))
-
-            // STEP 3: Generate images and auto-insert them
-            setGenerationProgress('Step 3/3: Generating and inserting images...')
-            showToast('🎨 Step 3: Generating images...', 'info')
-
-            await generateAndInsertImages(step2Result.content, topic, parseInt(numImages))
-
-            setGenerationStep(0)
-            setGenerationProgress('')
-            showToast('✅ Complete! Content is 100% ready!', 'success')
-
-        } catch (error) {
-            console.error('AI generation error:', error)
-            showToast('Error generating content. Please try again.', 'error')
-            setGenerationStep(0)
-            setGenerationProgress('')
-        } finally {
-            setAiLoading(false)
-        }
-    }
-
-    const generateAndInsertImages = async (contentText, topic, numImages = 4) => {
-        setImageLoading(true)
-        try {
-            // Use Python to get REAL images from Google
-            const imageResult = await api.searchRealImages(contentText, topic, numImages)
-            const realImages = imageResult.images || []
-
-            // Extract prompts/titles from images
-            const prompts = realImages.map(img => img.title || topic)
-            setImagePrompts(prompts)
-
-            // Get image URLs (sanitized)
-            const rawGeneratedImages = realImages.map(img => img.url)
-            const generatedImages = sanitizeImageUrls(rawGeneratedImages)
-            setImageUrls(generatedImages)
-
-            // Auto-insert images into content at strategic positions
-            const paragraphs = contentText.split('\n\n')
-            const step = 1 / (numImages + 1)
-            const insertPositions = Array.from({ length: numImages }, (_, i) =>
-                Math.floor(paragraphs.length * step * (i + 1))
-            )
-
-            let newContent = contentText
-            let insertedImages = []
-
-            for (let i = 0; i < generatedImages.length && i < insertPositions.length; i++) {
-                const imageUrl = generatedImages[i]
-                const caption = prompts[i]
-                const imageMarkdown = `\n\n![${caption}](${imageUrl})\n*${caption}*\n\n`
-
-                // Find the position in the full text
-                const paragraphIndex = insertPositions[i]
-                const beforeParagraphs = paragraphs.slice(0, paragraphIndex).join('\n\n')
-                const afterParagraphs = paragraphs.slice(paragraphIndex).join('\n\n')
-
-                newContent = beforeParagraphs + imageMarkdown + afterParagraphs
-                paragraphs.splice(paragraphIndex, 0, imageMarkdown.trim())
-                insertedImages.push(imageUrl)
-            }
-
-            setContent(newContent)
-            setSelectedImages(insertedImages)
-
-        } catch (error) {
-            console.error('Error generating AI images:', error)
-            generateFallbackImages(topic)
-        } finally {
-            setImageLoading(false)
         }
     }
 
@@ -693,121 +401,6 @@ Make it:
             showToast('Error improving content. Please try again.', 'error')
         } finally {
             setAiLoading(false)
-        }
-    }
-
-    const generateAIImages = async (contentText, topic) => {
-        setImageLoading(true)
-        try {
-            // Analyze content to extract key visual concepts
-            const analysisPrompt = `Analyze this content and suggest 4 specific, detailed image descriptions that would perfectly illustrate the key concepts. Each description should be vivid, specific, and suitable for AI image generation.
-
-Content: "${contentText.substring(0, 1000)}..."
-
-Provide 4 image descriptions in this exact format:
-1. [First detailed image description]
-2. [Second detailed image description]
-3. [Third detailed image description]
-4. [Fourth detailed image description]
-
-Make each description specific, visual, and relevant to the content's main points.`
-
-            const analysisResult = await api.generateContent(analysisPrompt)
-
-            // Extract image prompts from the analysis
-            const prompts = extractImagePrompts(analysisResult.content)
-            setImagePrompts(prompts)
-
-            // Generate images using Pollinations AI (free, no API key needed)
-            const generatedImages = prompts.map((prompt, index) => {
-                const encodedPrompt = encodeURIComponent(prompt)
-                return `https://image.pollinations.ai/prompt/${encodedPrompt}?width=800&height=600&seed=${Date.now() + index}&nologo=true`
-            })
-
-            setImageUrls(generatedImages)
-            showToast('🎨 AI images generated successfully!', 'success')
-        } catch (error) {
-            console.error('Error generating AI images:', error)
-            // Fallback to topic-based images
-            generateFallbackImages(topic)
-            showToast('Generated fallback images', 'info')
-        } finally {
-            setImageLoading(false)
-        }
-    }
-
-    const extractImagePrompts = (analysisText) => {
-        // Extract numbered descriptions from AI response
-        const lines = analysisText.split('\n')
-        const prompts = []
-
-        for (const line of lines) {
-            const match = line.match(/^\d+\.\s*(.+)/)
-            if (match && match[1]) {
-                prompts.push(match[1].trim())
-            }
-        }
-
-        // If extraction failed, create generic prompts
-        if (prompts.length < 4) {
-            return [
-                'Professional business concept with modern design, high quality, detailed',
-                'Technology and innovation theme, futuristic, clean aesthetic',
-                'Team collaboration and success, professional environment',
-                'Growth and progress visualization, inspiring, motivational'
-            ]
-        }
-
-        return prompts.slice(0, 4)
-    }
-
-    const generateFallbackImages = (topic) => {
-        const randomSeed = Date.now()
-        const suggestions = [
-            `https://picsum.photos/800/600?random=${randomSeed}`,
-            `https://picsum.photos/800/600?random=${randomSeed + 1}`,
-            `https://picsum.photos/800/600?random=${randomSeed + 2}`,
-            `https://picsum.photos/800/600?random=${randomSeed + 3}`,
-        ]
-        setImageUrls(suggestions)
-        setImagePrompts([
-            `${topic} - Image 1`,
-            `${topic} - Image 2`,
-            `${topic} - Image 3`,
-            `${topic} - Image 4`
-        ])
-    }
-
-    const regenerateImages = async () => {
-        if (!content.trim() && !title.trim()) {
-            showToast('Please add content or title first', 'warning')
-            return
-        }
-        await generateAIImages(content || title, title || 'content')
-    }
-
-    const insertImage = (imageUrl, index) => {
-        const caption = imagePrompts[index] || 'Generated Image'
-        const imageMarkdown = `\n\n![${caption}](${imageUrl})\n*${caption}*\n\n`
-        setContent(content + imageMarkdown)
-        setSelectedImages([...selectedImages, imageUrl])
-        showToast('✅ Image inserted into content', 'success')
-    }
-
-    const downloadImage = async (imageUrl, index) => {
-        try {
-            const response = await fetch(imageUrl)
-            const blob = await response.blob()
-            const url = URL.createObjectURL(blob)
-            const a = document.createElement('a')
-            a.href = url
-            a.download = `ai-image-${index + 1}.png`
-            a.click()
-            URL.revokeObjectURL(url)
-            showToast('📥 Image downloaded!', 'success')
-        } catch (error) {
-            console.error('Error downloading image:', error)
-            showToast('Error downloading image', 'error')
         }
     }
 
@@ -854,34 +447,6 @@ Make each description specific, visual, and relevant to the content's main point
         }
 
         try {
-            console.log('[PDF] ===== STARTING PDF GENERATION =====')
-            console.log('[PDF] Content length:', content.length)
-            console.log('[PDF] Content first 300 chars:', content.substring(0, 300))
-            console.log('[PDF] Title:', title)
-
-            showToast('📄 Preparing images...', 'info')
-
-            // PRE-DOWNLOAD ALL IMAGES FIRST
-            const imageMatches = [...content.matchAll(/!\[([^\]]*)\]\(([^)]+)\)/g)]
-            const imageCache = {}
-
-            console.log(`[PDF] Found ${imageMatches.length} images to download`)
-            console.log('[PDF] Image matches:', imageMatches.map(m => m[2]))
-
-            for (const match of imageMatches) {
-                const imageUrl = match[2]
-                try {
-                    console.log(`[PDF] Pre-downloading: ${imageUrl}`)
-                    const imgData = await loadImageAsBase64(imageUrl)
-                    imageCache[imageUrl] = imgData
-                    console.log(`[PDF] Cached: ${imageUrl}`)
-                } catch (error) {
-                    console.error(`[PDF] Failed to cache: ${imageUrl}`, error)
-                    imageCache[imageUrl] = null
-                }
-            }
-
-            console.log(`[PDF] Cached ${Object.keys(imageCache).length} images`)
             showToast('📄 Generating PDF...', 'info')
 
             const pdf = new jsPDF({
@@ -897,7 +462,7 @@ Make each description specific, visual, and relevant to the content's main point
             let yPosition = margin
 
             // Header with gradient effect (simulated with rectangles)
-            pdf.setFillColor(147, 51, 234) // Purple
+            pdf.setFillColor(82, 178, 191) // Primary color #52b2bf
             pdf.rect(0, 0, pageWidth, 40, 'F')
 
             // Company/Author name
@@ -926,7 +491,7 @@ Make each description specific, visual, and relevant to the content's main point
             yPosition += 10
 
             // Separator line
-            pdf.setDrawColor(147, 51, 234)
+            pdf.setDrawColor(82, 178, 191)
             pdf.setLineWidth(0.5)
             pdf.line(margin, yPosition, pageWidth - margin, yPosition)
             yPosition += 10
@@ -938,81 +503,19 @@ Make each description specific, visual, and relevant to the content's main point
 
             // Split content into paragraphs and process
             const paragraphs = content.split('\n\n')
-            console.log(`[PDF] Processing ${paragraphs.length} paragraphs`)
 
             for (let i = 0; i < paragraphs.length; i++) {
                 let paragraph = paragraphs[i].trim()
                 if (!paragraph) continue
 
-                console.log(`[PDF] Paragraph ${i}: ${paragraph.substring(0, 100)}...`)
-
-                // Check if it's an image markdown
-                const imageMatch = paragraph.match(/!\[([^\]]*)\]\(([^)]+)\)/)
-                if (imageMatch) {
-                    const imageCaption = imageMatch[1]
-                    const imageUrl = imageMatch[2]
-
-                    console.log(`[PDF] Found image: ${imageUrl}`)
-
-                    // Add space before image
-                    yPosition += 5
-
-                    // Check if we need a new page
-                    if (yPosition + 80 > pageHeight - margin) {
-                        pdf.addPage()
-                        yPosition = margin
-                    }
-
-                    // Use pre-downloaded image from cache
-                    const imgData = imageCache[imageUrl]
-
-                    if (imgData) {
-                        try {
-                            console.log('[PDF] Adding cached image to PDF')
-                            pdf.addImage(imgData, 'JPEG', margin, yPosition, contentWidth, 60)
-                            yPosition += 65
-                            console.log('[PDF] Image added successfully')
-                        } catch (error) {
-                            console.error('[PDF] Failed to add image to PDF:', error)
-                            pdf.setFontSize(9)
-                            pdf.setTextColor(150, 150, 150)
-                            pdf.text(`[Image: ${imageCaption || 'Image'}]`, margin, yPosition)
-                            yPosition += 5
-                            pdf.setFontSize(11)
-                            pdf.setTextColor(0, 0, 0)
-                        }
-                    } else {
-                        console.warn('[PDF] Image not in cache:', imageUrl)
-                        pdf.setFontSize(9)
-                        pdf.setTextColor(150, 150, 150)
-                        pdf.text(`[Image: ${imageCaption || 'Image'}]`, margin, yPosition)
-                        yPosition += 5
-                        pdf.setFontSize(11)
-                        pdf.setTextColor(0, 0, 0)
-                    }
-
-                    yPosition += 5
-
-                    // IMPORTANT: Check if there's text after the image in the same paragraph
-                    const textAfterImage = paragraph.replace(/!\[([^\]]*)\]\(([^)]+)\)/, '').trim()
-                    if (textAfterImage) {
-                        console.log(`[PDF] Text after image: ${textAfterImage.substring(0, 50)}...`)
-                        paragraph = textAfterImage
-                        // Continue processing this text below
-                    } else {
-                        continue
-                    }
-                }
-
-                // Check if it's a heading (starts with # or is all caps and short)
-                const isHeading = paragraph.startsWith('#') ||
-                    (paragraph.length < 100 && paragraph === paragraph.toUpperCase())
+                // Check if it's a heading (starts with #)
+                const isHeading = paragraph.startsWith('#')
 
                 if (isHeading) {
                     yPosition += 5
                     pdf.setFont('helvetica', 'bold')
                     pdf.setFontSize(14)
-                    pdf.setTextColor(147, 51, 234)
+                    pdf.setTextColor(82, 178, 191)
                     const headingText = paragraph.replace(/^#+\s*/, '')
                     const headingLines = pdf.splitTextToSize(headingText, contentWidth)
 
@@ -1028,9 +531,7 @@ Make each description specific, visual, and relevant to the content's main point
                     pdf.setFontSize(11)
                     pdf.setTextColor(0, 0, 0)
                 } else {
-                    // Regular paragraph - clean any remaining markdown
-                    paragraph = paragraph.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '').trim()
-
+                    // Regular paragraph
                     if (paragraph) {
                         const lines = pdf.splitTextToSize(paragraph, contentWidth)
 
@@ -1042,12 +543,9 @@ Make each description specific, visual, and relevant to the content's main point
 
                         pdf.text(lines, margin, yPosition)
                         yPosition += lines.length * 6 + 5
-                        console.log(`[PDF] Added text paragraph, new yPosition: ${yPosition}`)
                     }
                 }
             }
-
-            console.log(`[PDF] Finished processing all paragraphs`)
 
             // Footer on last page
             const totalPages = pdf.internal.pages.length - 1
@@ -1080,85 +578,6 @@ Make each description specific, visual, and relevant to the content's main point
         }
     }
 
-    const loadImageAsBase64 = async (url) => {
-        try {
-            console.log('[IMAGE LOADER] Loading image:', url)
-            // Use backend proxy to avoid CORS issues
-            const apiBase = import.meta.env.VITE_API_URL ||
-                (import.meta.env.PROD ? 'https://blogapi.scalezix.com/api' : 'http://localhost:3001/api')
-            const proxyUrl = `${apiBase}/proxy-image?url=${encodeURIComponent(url)}`
-            console.log('[IMAGE LOADER] Using proxy:', proxyUrl)
-
-            const response = await fetch(proxyUrl)
-            console.log('[IMAGE LOADER] Proxy response status:', response.status)
-
-            if (!response.ok) {
-                throw new Error(`Failed to load image: ${response.status} ${response.statusText}`)
-            }
-
-            const blob = await response.blob()
-            console.log('[IMAGE LOADER] Blob size:', blob.size, 'bytes')
-
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader()
-                reader.onloadend = () => {
-                    console.log('[IMAGE LOADER] Image converted to base64')
-                    resolve(reader.result)
-                }
-                reader.onerror = (error) => {
-                    console.error('[IMAGE LOADER] FileReader error:', error)
-                    reject(error)
-                }
-                reader.readAsDataURL(blob)
-            })
-        } catch (error) {
-            console.error('[IMAGE LOADER] Error loading image:', error)
-            throw error
-        }
-    }
-
-    const loadImageAsArrayBuffer = async (url) => {
-        try {
-            // Use backend proxy to avoid CORS issues
-            const apiBase = import.meta.env.VITE_API_URL ||
-                (import.meta.env.PROD ? 'https://blogapi.scalezix.com/api' : 'http://localhost:3001/api')
-            const proxyUrl = `${apiBase}/proxy-image?url=${encodeURIComponent(url)}`
-
-            const response = await fetch(proxyUrl)
-            if (!response.ok) throw new Error('Failed to load image')
-
-            const blob = await response.blob()
-            return await blob.arrayBuffer()
-        } catch (error) {
-            console.error('Error loading image:', error)
-            return null
-        }
-    }
-
-    const loadImageViaCanvas = async (url) => {
-        return new Promise((resolve, reject) => {
-            const img = new Image()
-            img.crossOrigin = 'anonymous'
-            img.onload = () => {
-                const canvas = document.createElement('canvas')
-                canvas.width = img.width
-                canvas.height = img.height
-                const ctx = canvas.getContext('2d')
-                ctx.drawImage(img, 0, 0)
-                canvas.toBlob(async (blob) => {
-                    if (blob) {
-                        const buffer = await blob.arrayBuffer()
-                        resolve(buffer)
-                    } else {
-                        reject(new Error('Failed to convert to blob'))
-                    }
-                }, 'image/png')
-            }
-            img.onerror = reject
-            img.src = url
-        })
-    }
-
     const downloadAsWord = async () => {
         if (!content.trim()) {
             showToast('No content to download', 'warning')
@@ -1166,28 +585,6 @@ Make each description specific, visual, and relevant to the content's main point
         }
 
         try {
-            showToast('📄 Preparing images...', 'info')
-
-            // PRE-DOWNLOAD ALL IMAGES FIRST
-            const imageMatches = [...content.matchAll(/!\[([^\]]*)\]\(([^)]+)\)/g)]
-            const imageBufferCache = {}
-
-            console.log(`[WORD] Found ${imageMatches.length} images to download`)
-
-            for (const match of imageMatches) {
-                const imageUrl = match[2]
-                try {
-                    console.log(`[WORD] Pre-downloading: ${imageUrl}`)
-                    const buffer = await loadImageAsArrayBuffer(imageUrl)
-                    imageBufferCache[imageUrl] = buffer
-                    console.log(`[WORD] Cached: ${imageUrl}`)
-                } catch (error) {
-                    console.error(`[WORD] Failed to cache: ${imageUrl}`, error)
-                    imageBufferCache[imageUrl] = null
-                }
-            }
-
-            console.log(`[WORD] Cached ${Object.keys(imageBufferCache).length} images`)
             showToast('📄 Generating Word document...', 'info')
 
             const docChildren = []
@@ -1238,69 +635,8 @@ Make each description specific, visual, and relevant to the content's main point
                 const paragraph = paragraphs[i].trim()
                 if (!paragraph) continue
 
-                // Check if it's an image markdown
-                const imageMatch = paragraph.match(/!\[([^\]]*)\]\(([^)]+)\)/)
-                if (imageMatch) {
-                    const imageCaption = imageMatch[1]
-                    const imageUrl = imageMatch[2]
-
-                    // Use pre-downloaded image from cache
-                    const imageBuffer = imageBufferCache[imageUrl]
-
-                    if (imageBuffer) {
-                        try {
-                            console.log('[WORD] Adding cached image')
-                            docChildren.push(
-                                new Paragraph({
-                                    children: [
-                                        new ImageRun({
-                                            data: imageBuffer,
-                                            transformation: {
-                                                width: 500,
-                                                height: 375
-                                            }
-                                        })
-                                    ],
-                                    alignment: AlignmentType.CENTER,
-                                    spacing: { before: 200, after: 100 }
-                                })
-                            )
-                            console.log('[WORD] Image added successfully')
-                        } catch (error) {
-                            console.error('[WORD] Error adding image:', error)
-                            // Add placeholder text if image fails
-                            docChildren.push(
-                                new Paragraph({
-                                    children: [
-                                        new TextRun({
-                                            text: `[Image: ${imageCaption || 'Image'}]`,
-                                            color: '999999'
-                                        })
-                                    ],
-                                    spacing: { after: 200 }
-                                })
-                            )
-                        }
-                    } else {
-                        console.warn('[WORD] Image not in cache:', imageUrl)
-                        docChildren.push(
-                            new Paragraph({
-                                children: [
-                                    new TextRun({
-                                        text: `[Image: ${imageCaption || 'Image'}]`,
-                                        color: '999999'
-                                    })
-                                ],
-                                spacing: { after: 200 }
-                            })
-                        )
-                    }
-                    continue
-                }
-
                 // Check if it's a heading
-                const isHeading = paragraph.startsWith('#') ||
-                    (paragraph.length < 100 && paragraph === paragraph.toUpperCase())
+                const isHeading = paragraph.startsWith('#')
 
                 if (isHeading) {
                     const headingText = paragraph.replace(/^#+\s*/, '')
@@ -1516,36 +852,9 @@ Make each description specific, visual, and relevant to the content's main point
                                 <div
                                     className="whitespace-pre-wrap"
                                     dangerouslySetInnerHTML={{
-                                        __html: content
-                                            .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="w-full max-w-3xl mx-auto my-6 rounded-lg shadow-lg" style="max-height: 400px; object-fit: contain;" onerror="this.style.display=\'none\'" />')
-                                            .replace(/\n/g, '<br />')
+                                        __html: content.replace(/\n/g, '<br />')
                                     }}
                                 />
-                            </div>
-                        )}
-
-                        {/* Image Gallery */}
-                        {imageUrls.length > 0 && !preview && (
-                            <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
-                                <h3 className="text-sm font-semibold text-gray-700 mb-3">📸 Images in Content ({imageUrls.filter(url => !failedImages.has(url)).length})</h3>
-                                <div className="grid grid-cols-4 gap-3">
-                                    {imageUrls.filter(url => !failedImages.has(url)).map((url, i) => (
-                                        <div key={i} className="relative group">
-                                            <img
-                                                src={url}
-                                                alt={imagePrompts[i] || `Image ${i + 1}`}
-                                                className="w-full h-24 object-cover rounded border"
-                                                onError={(e) => {
-                                                    handleImageError(url);
-                                                    e.target.style.display = 'none';
-                                                }}
-                                            />
-                                            <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded flex items-center justify-center">
-                                                <span className="text-white text-xs text-center px-2">{imagePrompts[i]}</span>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
                             </div>
                         )}
 
@@ -1592,7 +901,7 @@ Make each description specific, visual, and relevant to the content's main point
                         </div>
                     </div>
 
-                    {/* 3-Step Generation Progress */}
+                    {/* Generation Progress */}
                     {aiLoading && generationStep > 0 && (
                         <div className="bg-gradient-to-br from-primary-50 to-primary-100 p-6 rounded-lg shadow-lg border-2 border-primary-200">
                             <div className="flex items-center gap-3 mb-4">
@@ -1610,146 +919,18 @@ Make each description specific, visual, and relevant to the content's main point
                                         {generationStep > 1 ? '✓' : '1'}
                                     </div>
                                     <div className="flex-1">
-                                        <p className="font-semibold text-gray-900">Generate AI Content</p>
+                                        <p className="font-semibold text-gray-900">Generate Human Content</p>
                                         <p className="text-xs text-gray-600">Creating comprehensive article with research and examples</p>
                                     </div>
                                     {generationStep === 1 && <Loader2 className="animate-spin text-primary-500" size={20} />}
-                                </div>
-
-                                {/* Step 2 */}
-                                <div className={`flex items-center gap-3 p-3 rounded-lg ${generationStep >= 2 ? 'bg-white border-2 border-primary-200' : 'bg-gray-100'}`}>
-                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${generationStep > 2 ? 'bg-green-500 text-white' : generationStep === 2 ? 'bg-primary-400 text-white' : 'bg-gray-300 text-gray-600'}`}>
-                                        {generationStep > 2 ? '✓' : '2'}
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="font-semibold text-gray-900">Humanize Content</p>
-                                        <p className="text-xs text-gray-600">Making it sound 100% human-written with natural language</p>
-                                    </div>
-                                    {generationStep === 2 && <Loader2 className="animate-spin text-primary-600" size={20} />}
-                                </div>
-
-                                {/* Step 3 */}
-                                <div className={`flex items-center gap-3 p-3 rounded-lg ${generationStep >= 3 ? 'bg-white border-2 border-pink-300' : 'bg-gray-100'}`}>
-                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${generationStep > 3 ? 'bg-green-500 text-white' : generationStep === 3 ? 'bg-pink-600 text-white' : 'bg-gray-300 text-gray-600'}`}>
-                                        {generationStep > 3 ? '✓' : '3'}
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="font-semibold text-gray-900">Generate & Insert Images</p>
-                                        <p className="text-xs text-gray-600">Creating relevant images and placing them perfectly</p>
-                                    </div>
-                                    {generationStep === 3 && <Loader2 className="animate-spin text-pink-600" size={20} />}
                                 </div>
                             </div>
 
                             <div className="mt-4 p-3 bg-gradient-to-r from-primary-100 to-primary-200 rounded-lg">
                                 <p className="text-xs text-center text-primary-900 font-medium">
-                                    ✨ Creating 100% human-like content with perfect image placement
+                                    ✨ Creating 100% human-like content
                                 </p>
                             </div>
-                        </div>
-                    )}
-
-                    {/* AI Generated Images */}
-                    {(imageUrls.length > 0 || imageLoading) && (
-                        <div className="bg-gradient-to-br from-primary-50 to-primary-100 p-6 rounded-lg shadow-sm border-2 border-primary-200">
-                            <div className="flex items-center gap-2 mb-4">
-                                <div className="p-2 bg-gradient-to-r from-primary-400 to-primary-500 rounded-lg">
-                                    <ImageIcon size={20} className="text-white" />
-                                </div>
-                                <div className="flex-1">
-                                    <h3 className="text-lg font-semibold text-primary-900">AI Generated Images</h3>
-                                    <p className="text-xs text-primary-600">Perfectly matched to your content</p>
-                                </div>
-                                <button
-                                    onClick={regenerateImages}
-                                    disabled={imageLoading}
-                                    className="flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-primary-400 to-primary-500 text-white rounded-lg hover:from-primary-500 hover:to-primary-600 disabled:opacity-50 text-sm"
-                                >
-                                    {imageLoading ? (
-                                        <Loader2 className="animate-spin" size={14} />
-                                    ) : (
-                                        <RefreshCw size={14} />
-                                    )}
-                                    Regenerate
-                                </button>
-                            </div>
-
-                            {imageLoading ? (
-                                <div className="flex items-center justify-center h-64 bg-white rounded-lg border-2 border-dashed border-primary-300">
-                                    <div className="text-center">
-                                        <Loader2 className="animate-spin mx-auto mb-3 text-primary-600" size={32} />
-                                        <p className="text-purple-700 font-medium">Generating AI Images...</p>
-                                        <p className="text-sm text-primary-600 mt-1">Analyzing your content</p>
-                                    </div>
-                                </div>
-                            ) : (
-                                <>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        {imageUrls.filter(url => !failedImages.has(url)).map((url, i) => (
-                                            <div key={i} className="relative group bg-white rounded-lg overflow-hidden shadow-md border-2 border-purple-100 hover:border-primary-300 transition-all">
-                                                <img
-                                                    src={url}
-                                                    alt={imagePrompts[i] || `AI Generated ${i + 1}`}
-                                                    className="w-full h-48 object-cover"
-                                                    onError={(e) => {
-                                                        handleImageError(url);
-                                                        e.target.style.display = 'none';
-                                                    }}
-                                                />
-                                                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <div className="absolute bottom-0 left-0 right-0 p-3">
-                                                        <p className="text-white text-xs mb-2 line-clamp-2">
-                                                            {imagePrompts[i] || 'AI Generated Image'}
-                                                        </p>
-                                                        <div className="flex gap-2">
-                                                            <button
-                                                                onClick={() => insertImage(url, i)}
-                                                                className="flex-1 bg-gradient-to-r from-primary-400 to-primary-500 text-white px-3 py-1.5 rounded text-sm font-medium hover:from-primary-500 hover:to-primary-600"
-                                                            >
-                                                                Insert
-                                                            </button>
-                                                            <button
-                                                                onClick={() => downloadImage(url, i)}
-                                                                className="bg-white text-primary-600 px-3 py-1.5 rounded text-sm font-medium hover:bg-purple-50"
-                                                            >
-                                                                <Download size={14} />
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                {selectedImages.includes(url) && (
-                                                    <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium">
-                                                        ✓ Inserted
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <div className="mt-4 p-3 bg-white rounded-lg border border-primary-200">
-                                        <p className="text-xs text-purple-700 flex items-center gap-2">
-                                            <Sparkles size={14} className="text-primary-600" />
-                                            <span className="font-medium">AI-Powered:</span>
-                                            Images are generated based on your content's key concepts and themes
-                                        </p>
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                    )}
-
-                    {/* Generate Images Button */}
-                    {imageUrls.length === 0 && !imageLoading && content && typeof content === 'string' && content.trim() && (
-                        <div className="bg-white p-6 rounded-lg shadow-sm border">
-                            <button
-                                onClick={regenerateImages}
-                                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-primary-400 to-primary-500 text-white rounded-lg hover:from-primary-500 hover:to-primary-600 font-medium"
-                            >
-                                <Sparkles size={18} />
-                                Generate AI Images for Content
-                            </button>
-                            <p className="text-xs text-gray-500 text-center mt-2">
-                                AI will analyze your content and create relevant images
-                            </p>
                         </div>
                     )}
 

@@ -93,8 +93,7 @@ POST /api/content/generate-human
   "keywords": "coffee machine, espresso",
   "references": "https://example.com",
   "eeat": "Written by certified barista",
-  "minWords": 10000,
-  "numImages": 4
+  "minWords": 10000
 }
 ```
 
@@ -156,9 +155,6 @@ GET /api/wordpress/bulk-import/:jobId
 ```env
 # AI (Required - at least one)
 GOOGLE_AI_KEY=your-gemini-api-key
-
-# Images (Optional but recommended)
-SERPAPI_KEY=your-serpapi-key
 ```
 
 ### No WordPress in .env

@@ -66,7 +66,6 @@ export const TOKEN_COSTS = {
     blogPost: 3500,
     socialPost: 200,
     seoAnalysis: 500,
-    imageSearch: 50,
     contentHumanize: 1000,
     chatMessage: 100
 }

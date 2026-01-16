@@ -45,7 +45,6 @@ export const TOKEN_COSTS = {
   blogPost: 3500,              // ~3500 tokens per blog post (5000 words)
   socialPost: 200,             // ~200 tokens per social post
   seoAnalysis: 500,            // ~500 tokens per SEO analysis
-  imageSearch: 50,             // ~50 tokens per image search
   contentHumanize: 1000,       // ~1000 tokens per humanization
   chatMessage: 100             // ~100 tokens per chat message
 };
@@ -166,7 +165,7 @@ const usageLogSchema = new mongoose.Schema({
   },
   operation: {
     type: String,
-    enum: ['blogPost', 'socialPost', 'seoAnalysis', 'imageSearch', 'contentHumanize', 'chatMessage'],
+    enum: ['blogPost', 'socialPost', 'seoAnalysis', 'contentHumanize', 'chatMessage'],
     required: true
   },
   tokensUsed: {

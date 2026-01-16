@@ -28,7 +28,7 @@ Your Excel file MUST have these columns:
 2. Column names are case-insensitive (Title, title, TITLE all work)
 3. Save as .xlsx or .xls format
 4. Each row = one blog post
-5. Content will be 1500+ words with images automatically
+5. Content will be 1500+ words automatically
 
 ## How to Use
 

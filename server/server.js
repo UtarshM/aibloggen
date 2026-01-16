@@ -1855,154 +1855,318 @@ app.post('/api/content/generate', aiLimiter, async (req, res) => {
   }
 });
 
-// Helper function to fetch EXACT topic images using Google Images via SerpAPI
-async function fetchTopicImages(topic, count = 4) {
-  const images = [];
-  const searchQuery = encodeURIComponent(topic);
-  
-  // Use SerpAPI to search Google Images - returns EXACT images for the topic
-  const SERPAPI_KEY = process.env.SERPAPI_KEY;
-  
-  if (SERPAPI_KEY) {
-    try {
-      console.log(`[Images] 🔍 Searching Google Images for: "${topic}"`);
-      
-      const serpUrl = `https://serpapi.com/search.json?engine=google_images&q=${searchQuery}&num=${count + 2}&api_key=${SERPAPI_KEY}&safe=active`;
-      
-      const response = await fetch(serpUrl);
-      
-      if (response.ok) {
-        const data = await response.json();
-        
-        if (data.images_results && data.images_results.length > 0) {
-          // Get the first 'count' images
-          const results = data.images_results.slice(0, count);
-          
-          for (const img of results) {
-            // Use original image URL for best quality
-            const imageUrl = img.original || img.thumbnail;
-            
-            if (imageUrl) {
-              images.push({
-                url: imageUrl,
-                alt: img.title || topic,
-                source: img.source || 'Google Images',
-                link: img.link
-              });
-            }
-          }
-          
-          if (images.length > 0) {
-            console.log(`[Images] ✅ Found ${images.length} REAL Google Images for: "${topic}"`);
-            return images;
-          }
-        }
-      } else {
-        console.log('[Images] SerpAPI response not ok:', response.status);
-      }
-    } catch (err) {
-      console.log('[Images] SerpAPI error:', err.message);
-    }
-  } else {
-    console.log('[Images] SERPAPI_KEY not configured');
-  }
-  
-  // Fallback: Use Google Custom Search API if configured
-  const GOOGLE_SEARCH_API_KEY = process.env.GOOGLE_SEARCH_API_KEY;
-  const GOOGLE_SEARCH_CX = process.env.GOOGLE_SEARCH_CX;
-  
-  if (GOOGLE_SEARCH_API_KEY && GOOGLE_SEARCH_CX) {
-    try {
-      console.log(`[Images] 🔍 Trying Google Custom Search for: "${topic}"`);
-      
-      const googleUrl = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_SEARCH_API_KEY}&cx=${GOOGLE_SEARCH_CX}&q=${searchQuery}&searchType=image&num=${count}&imgSize=large&safe=active`;
-      
-      const response = await fetch(googleUrl);
-      
-      if (response.ok) {
-        const data = await response.json();
-        
-        if (data.items && data.items.length > 0) {
-          for (const item of data.items) {
-            images.push({
-              url: item.link,
-              alt: item.title || topic,
-              source: item.displayLink
-            });
-          }
-          
-          console.log(`[Images] ✅ Found ${images.length} Google Custom Search images for: "${topic}"`);
-          return images;
-        }
-      }
-    } catch (err) {
-      console.log('[Images] Google Custom Search error:', err.message);
-    }
-  }
-  
-  // Last fallback - generate placeholder with topic name
-  console.log('[Images] ⚠️ No API keys configured, using placeholder images');
-  console.log('[Images] To get real images, add SERPAPI_KEY to your environment variables');
-  
-  // Use a placeholder service that shows the topic name
-  for (let i = 0; i < count; i++) {
-    const seed = topic.split('').reduce((a, b) => a + b.charCodeAt(0), 0) + i;
-    images.push({
-      url: `https://picsum.photos/seed/${seed}/800/500`,
-      alt: `${topic} - Image ${i + 1}`
-    });
-  }
-  
-  return images;
-}
+// Image functionality has been removed from this platform
+// Content is generated without images for cleaner, text-focused output
 
-// Helper function to add Table of Contents to content
+// ═══════════════════════════════════════════════════════════════
+// ENHANCED TABLE OF CONTENTS - Clickable Navigation with Smooth Scroll
+// ═══════════════════════════════════════════════════════════════
 function addTableOfContents(htmlContent) {
   // Check if TOC already exists
   if (htmlContent.includes('class="toc"') || htmlContent.includes('class="table-of-contents"')) {
     return htmlContent;
   }
   
-  // Extract all h2 headings
-  const h2Regex = /<h2[^>]*id="([^"]*)"[^>]*>([^<]*)<\/h2>/gi;
+  // Extract all h2 and h3 headings for nested TOC
   const headings = [];
-  let match;
+  let sectionIndex = 1;
   
-  while ((match = h2Regex.exec(htmlContent)) !== null) {
+  // First pass: Add IDs to headings without them and collect all headings
+  htmlContent = htmlContent.replace(/<h([23])([^>]*)>([^<]*)<\/h[23]>/gi, (match, level, attrs, text) => {
+    const cleanText = text.trim();
+    let id = '';
+    
+    // Check if ID already exists
+    const idMatch = attrs.match(/id="([^"]*)"/);
+    if (idMatch) {
+      id = idMatch[1];
+    } else {
+      // Generate SEO-friendly ID from text
+      id = cleanText
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .substring(0, 50);
+      
+      // Ensure unique ID
+      if (headings.some(h => h.id === id)) {
+        id = `${id}-${sectionIndex}`;
+      }
+      attrs = ` id="${id}"${attrs}`;
+    }
+    
     headings.push({
-      id: match[1],
-      text: match[2].trim()
+      id,
+      text: cleanText,
+      level: parseInt(level),
+      index: sectionIndex
     });
-  }
-  
-  // If no headings with IDs, try to find h2 without IDs and add them
-  if (headings.length === 0) {
-    const simpleH2Regex = /<h2[^>]*>([^<]*)<\/h2>/gi;
-    let index = 1;
-    htmlContent = htmlContent.replace(simpleH2Regex, (match, text) => {
-      const id = `section-${index}`;
-      headings.push({ id, text: text.trim() });
-      index++;
-      return `<h2 id="${id}">${text}</h2>`;
-    });
-  }
+    
+    sectionIndex++;
+    return `<h${level}${attrs}>${text}</h${level}>`;
+  });
   
   if (headings.length < 2) {
     return htmlContent; // Not enough headings for TOC
   }
   
-  // Build TOC HTML
-  const tocItems = headings.map(h => 
-    `<li><a href="#${h.id}">${h.text}</a></li>`
-  ).join('\n');
+  // Build nested TOC HTML with clickable links
+  let tocItems = '';
+  let currentLevel = 2;
   
+  headings.forEach((h, index) => {
+    const isH2 = h.level === 2;
+    const nextIsH3 = headings[index + 1]?.level === 3;
+    const prevWasH3 = headings[index - 1]?.level === 3;
+    
+    if (isH2) {
+      if (prevWasH3) {
+        tocItems += '</ul></li>\n';
+      }
+      tocItems += `<li class="toc-h2">
+        <a href="#${h.id}" class="toc-link" data-section="${h.index}">${h.text}</a>`;
+      if (nextIsH3) {
+        tocItems += '\n<ul class="toc-sub">';
+      } else {
+        tocItems += '</li>\n';
+      }
+    } else {
+      // H3 - sub-item
+      tocItems += `<li class="toc-h3">
+        <a href="#${h.id}" class="toc-link toc-sub-link" data-section="${h.index}">${h.text}</a>
+      </li>\n`;
+      
+      // Close sub-list if next is H2 or end
+      if (!headings[index + 1] || headings[index + 1].level === 2) {
+        tocItems += '</ul></li>\n';
+      }
+    }
+  });
+  
+  // Enhanced TOC with smooth scroll and active state tracking
   const tocHtml = `
-<div class="table-of-contents" style="background: #f8f9fa; border-left: 4px solid #52b2bf; padding: 20px; margin: 20px 0; border-radius: 8px;">
-  <h3 style="margin-top: 0; color: #333; font-size: 18px;">📑 Table of Contents</h3>
-  <ul style="list-style: none; padding-left: 0; margin-bottom: 0;">
+<nav class="table-of-contents" id="article-toc" aria-label="Table of Contents" itemscope itemtype="https://schema.org/SiteNavigationElement">
+  <div class="toc-header">
+    <span class="toc-icon">📑</span>
+    <h3 class="toc-title" itemprop="name">Table of Contents</h3>
+    <button class="toc-toggle" aria-expanded="true" aria-controls="toc-list">
+      <span class="toc-toggle-icon">▼</span>
+    </button>
+  </div>
+  <ul class="toc-list" id="toc-list" role="list">
     ${tocItems}
   </ul>
-</div>
+</nav>
+
+<style>
+.table-of-contents {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-left: 4px solid #52b2bf;
+  border-radius: 12px;
+  padding: 24px;
+  margin: 32px 0;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+  position: relative;
+}
+
+.toc-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.toc-icon {
+  font-size: 24px;
+}
+
+.toc-title {
+  margin: 0;
+  color: #1a1a2e;
+  font-size: 20px;
+  font-weight: 700;
+  flex-grow: 1;
+}
+
+.toc-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.toc-toggle:hover {
+  background: rgba(82, 178, 191, 0.2);
+}
+
+.toc-toggle-icon {
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.toc-toggle[aria-expanded="false"] .toc-toggle-icon {
+  transform: rotate(-90deg);
+}
+
+.toc-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 500px;
+  overflow-y: auto;
+  transition: max-height 0.3s ease;
+}
+
+.toc-list.collapsed {
+  max-height: 0;
+  overflow: hidden;
+}
+
+.toc-h2 {
+  margin: 8px 0;
+}
+
+.toc-link {
+  display: block;
+  padding: 10px 16px;
+  color: #333;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  position: relative;
+}
+
+.toc-link:hover {
+  background: rgba(82, 178, 191, 0.15);
+  color: #52b2bf;
+  transform: translateX(4px);
+}
+
+.toc-link.active {
+  background: #52b2bf;
+  color: white;
+  font-weight: 600;
+}
+
+.toc-link::before {
+  content: '→';
+  position: absolute;
+  left: 0;
+  opacity: 0;
+  transition: all 0.2s ease;
+}
+
+.toc-link:hover::before {
+  opacity: 1;
+  left: 4px;
+}
+
+.toc-sub {
+  list-style: none;
+  padding-left: 20px;
+  margin: 4px 0;
+  border-left: 2px solid rgba(82, 178, 191, 0.3);
+}
+
+.toc-sub-link {
+  font-size: 14px;
+  font-weight: 400;
+  padding: 8px 12px;
+}
+
+.toc-h3 {
+  margin: 4px 0;
+}
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Scroll margin for fixed headers */
+h2[id], h3[id] {
+  scroll-margin-top: 100px;
+}
+
+/* Reading progress indicator */
+.toc-progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 4px;
+  background: #52b2bf;
+  border-radius: 4px 0 0 0;
+  width: 0%;
+  transition: width 0.1s ease;
+}
+</style>
+
+<script>
+(function() {
+  // TOC Toggle functionality
+  const tocToggle = document.querySelector('.toc-toggle');
+  const tocList = document.getElementById('toc-list');
+  
+  if (tocToggle && tocList) {
+    tocToggle.addEventListener('click', function() {
+      const isExpanded = this.getAttribute('aria-expanded') === 'true';
+      this.setAttribute('aria-expanded', !isExpanded);
+      tocList.classList.toggle('collapsed');
+    });
+  }
+  
+  // Smooth scroll and active state tracking
+  const tocLinks = document.querySelectorAll('.toc-link');
+  const sections = [];
+  
+  tocLinks.forEach(link => {
+    const targetId = link.getAttribute('href').substring(1);
+    const target = document.getElementById(targetId);
+    if (target) {
+      sections.push({ link, target });
+      
+      // Click handler for smooth scroll
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        
+        // Update URL without jumping
+        history.pushState(null, null, '#' + targetId);
+        
+        // Update active state
+        tocLinks.forEach(l => l.classList.remove('active'));
+        this.classList.add('active');
+      });
+    }
+  });
+  
+  // Intersection Observer for active state
+  if (sections.length > 0 && 'IntersectionObserver' in window) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const activeSection = sections.find(s => s.target === entry.target);
+          if (activeSection) {
+            tocLinks.forEach(l => l.classList.remove('active'));
+            activeSection.link.classList.add('active');
+          }
+        }
+      });
+    }, {
+      rootMargin: '-20% 0px -70% 0px',
+      threshold: 0
+    });
+    
+    sections.forEach(s => observer.observe(s.target));
+  }
+})();
+</script>
 `;
   
   // Insert TOC after first paragraph
@@ -2015,96 +2179,296 @@ function addTableOfContents(htmlContent) {
   return tocHtml + htmlContent;
 }
 
-// Helper function to generate SEO Schema markup
+// ═══════════════════════════════════════════════════════════════
+// ADVANCED SEO SCHEMA - Full Article, FAQ, HowTo, BreadcrumbList
+// ═══════════════════════════════════════════════════════════════
 function generateSEOSchema(config) {
-  const { title, description, keywords, wordCount, images } = config;
+  const { title, description, keywords, wordCount, content, author, datePublished } = config;
   
-  const schema = {
+  const publishDate = datePublished || new Date().toISOString();
+  const modifiedDate = new Date().toISOString();
+  const keywordArray = keywords ? keywords.split(',').map(k => k.trim()) : [title];
+  
+  // 1. Main Article Schema (Enhanced)
+  const articleSchema = {
     "@context": "https://schema.org",
     "@type": "Article",
+    "@id": `#article-${title.toLowerCase().replace(/\s+/g, '-')}`,
     "headline": title,
-    "description": description,
-    "keywords": keywords,
-    "wordCount": wordCount,
-    "articleBody": description,
+    "name": title,
+    "description": description || title,
+    "keywords": keywordArray.join(', '),
+    "wordCount": wordCount || 0,
+    "articleSection": keywordArray[0] || "General",
+    "inLanguage": "en-US",
+    "isAccessibleForFree": true,
     "author": {
-      "@type": "Organization",
-      "name": "Scalezix"
+      "@type": "Person",
+      "name": author || "Scalezix Expert",
+      "url": "https://aiblog.scalezix.com/about",
+      "jobTitle": "Content Specialist",
+      "worksFor": {
+        "@type": "Organization",
+        "name": "Scalezix"
+      }
     },
     "publisher": {
       "@type": "Organization",
       "name": "Scalezix",
+      "url": "https://aiblog.scalezix.com",
       "logo": {
         "@type": "ImageObject",
-        "url": "https://aiblog.scalezix.com/scalezix_logo.png"
-      }
+        "url": "https://aiblog.scalezix.com/scalezix_logo.png",
+        "width": 200,
+        "height": 60
+      },
+      "sameAs": [
+        "https://twitter.com/scalezix",
+        "https://linkedin.com/company/scalezix",
+        "https://facebook.com/scalezix"
+      ]
     },
-    "datePublished": new Date().toISOString(),
-    "dateModified": new Date().toISOString()
+    "datePublished": publishDate,
+    "dateModified": modifiedDate,
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://aiblog.scalezix.com"
+    }
   };
   
-  // Add image if available
-  if (images && images.length > 0) {
-    schema.image = images.map(img => ({
-      "@type": "ImageObject",
-      "url": img.url,
-      "caption": img.alt
-    }));
+  // 2. BreadcrumbList Schema
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://aiblog.scalezix.com"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Blog",
+        "item": "https://aiblog.scalezix.com/blog"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": title,
+        "item": `https://aiblog.scalezix.com/blog/${title.toLowerCase().replace(/\s+/g, '-')}`
+      }
+    ]
+  };
+  
+  // 3. FAQ Schema (Extract from content if available)
+  const faqSchema = extractFAQSchema(content || description, title);
+  
+  // 4. HowTo Schema (If content contains steps/instructions)
+  const howToSchema = extractHowToSchema(content || description, title);
+  
+  // 5. WebPage Schema
+  const webPageSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": title,
+    "description": description || title,
+    "url": `https://aiblog.scalezix.com/blog/${title.toLowerCase().replace(/\s+/g, '-')}`,
+    "isPartOf": {
+      "@type": "WebSite",
+      "name": "Scalezix Blog",
+      "url": "https://aiblog.scalezix.com"
+    },
+    "about": {
+      "@type": "Thing",
+      "name": keywordArray[0] || title
+    },
+    "speakable": {
+      "@type": "SpeakableSpecification",
+      "cssSelector": ["h1", "h2", ".article-intro"]
+    }
+  };
+  
+  // 6. Organization Schema
+  const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Scalezix",
+    "url": "https://aiblog.scalezix.com",
+    "logo": "https://aiblog.scalezix.com/scalezix_logo.png",
+    "description": "AI-powered content generation and marketing automation platform",
+    "foundingDate": "2024",
+    "sameAs": [
+      "https://twitter.com/scalezix",
+      "https://linkedin.com/company/scalezix"
+    ]
+  };
+  
+  // Combine all schemas
+  const combinedSchema = {
+    "@context": "https://schema.org",
+    "@graph": [
+      articleSchema,
+      breadcrumbSchema,
+      webPageSchema,
+      organizationSchema
+    ]
+  };
+  
+  // Add FAQ if extracted
+  if (faqSchema && faqSchema.mainEntity && faqSchema.mainEntity.length > 0) {
+    combinedSchema["@graph"].push(faqSchema);
   }
   
-  return schema;
+  // Add HowTo if extracted
+  if (howToSchema && howToSchema.step && howToSchema.step.length > 0) {
+    combinedSchema["@graph"].push(howToSchema);
+  }
+  
+  return combinedSchema;
 }
 
-// Helper function to insert images into content
-function insertImagesIntoContent(htmlContent, images) {
-  if (!images || images.length === 0) return htmlContent;
+// Helper: Extract FAQ Schema from content
+function extractFAQSchema(content, title) {
+  if (!content) return null;
   
-  // Split content by </h2> tags to find good insertion points
-  const sections = htmlContent.split(/<\/h2>/gi);
+  const faqItems = [];
   
-  if (sections.length <= 1) {
-    // No h2 tags, split by paragraphs
-    const paragraphs = htmlContent.split(/<\/p>/gi);
-    const step = Math.floor(paragraphs.length / (images.length + 1));
-    
-    let result = '';
-    let imageIndex = 0;
-    
-    for (let i = 0; i < paragraphs.length; i++) {
-      result += paragraphs[i] + (paragraphs[i].includes('<p') ? '</p>' : '');
+  // Pattern 1: Look for question-answer patterns
+  const qaPatterns = [
+    // "What is X?" followed by answer
+    /(?:<h[23][^>]*>|<p><strong>|<strong>)([^<]*\?)<\/(?:h[23]|strong|p)>\s*(?:<\/p>)?\s*<p>([^<]+(?:<[^>]+>[^<]+)*)<\/p>/gi,
+    // "Q: X" or "Question: X" patterns
+    /(?:Q:|Question:)\s*([^<\n]+\?)\s*(?:A:|Answer:)?\s*([^<\n]+)/gi
+  ];
+  
+  for (const pattern of qaPatterns) {
+    let match;
+    while ((match = pattern.exec(content)) !== null && faqItems.length < 10) {
+      const question = match[1].replace(/<[^>]*>/g, '').trim();
+      const answer = match[2].replace(/<[^>]*>/g, '').trim();
       
-      if (imageIndex < images.length && (i + 1) % step === 0 && i > 0 && i < paragraphs.length - 1) {
-        const img = images[imageIndex];
-        result += `\n<figure style="margin: 20px 0; text-align: center;">
-          <img src="${img.url}" alt="${img.alt}" style="max-width: 100%; height: auto; border-radius: 8px;" />
-          <figcaption style="font-size: 14px; color: #666; margin-top: 8px;">${img.alt}</figcaption>
-        </figure>\n`;
-        imageIndex++;
+      if (question.length > 10 && answer.length > 20) {
+        // Avoid duplicates
+        if (!faqItems.some(f => f.name === question)) {
+          faqItems.push({
+            "@type": "Question",
+            "name": question,
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": answer.substring(0, 500) // Limit answer length
+            }
+          });
+        }
       }
     }
-    return result;
   }
   
-  // Insert images after h2 sections
-  let result = '';
-  let imageIndex = 0;
-  const step = Math.max(1, Math.floor(sections.length / images.length));
-  
-  for (let i = 0; i < sections.length; i++) {
-    result += sections[i] + (i < sections.length - 1 ? '</h2>' : '');
+  // Generate common FAQs based on title if none found
+  if (faqItems.length === 0) {
+    const commonQuestions = [
+      `What is ${title}?`,
+      `Why is ${title} important?`,
+      `How do I get started with ${title}?`
+    ];
     
-    if (imageIndex < images.length && (i + 1) % step === 0 && i < sections.length - 1) {
-      const img = images[imageIndex];
-      result += `\n<figure style="margin: 20px 0; text-align: center;">
-        <img src="${img.url}" alt="${img.alt}" style="max-width: 100%; height: auto; border-radius: 8px;" />
-        <figcaption style="font-size: 14px; color: #666; margin-top: 8px;">${img.alt}</figcaption>
-      </figure>\n`;
-      imageIndex++;
+    // Only add if we have meaningful content
+    if (content.length > 500) {
+      const contentSnippet = content.replace(/<[^>]*>/g, ' ').substring(0, 300).trim();
+      faqItems.push({
+        "@type": "Question",
+        "name": commonQuestions[0],
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": contentSnippet + "..."
+        }
+      });
     }
   }
   
-  return result;
+  if (faqItems.length === 0) return null;
+  
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqItems
+  };
 }
+
+// Helper: Extract HowTo Schema from content
+function extractHowToSchema(content, title) {
+  if (!content) return null;
+  
+  const steps = [];
+  
+  // Look for numbered steps or step patterns
+  const stepPatterns = [
+    // "Step 1:", "Step 2:", etc.
+    /<(?:h[23]|p|li)[^>]*>(?:Step\s*)?(\d+)[.:]\s*([^<]+)<\/(?:h[23]|p|li)>/gi,
+    // Ordered list items
+    /<li[^>]*>([^<]+)<\/li>/gi
+  ];
+  
+  // Try to find steps
+  const stepPattern = /<(?:h[23]|p)[^>]*>(?:Step\s*)?(\d+)[.:]\s*([^<]+)<\/(?:h[23]|p)>/gi;
+  let match;
+  
+  while ((match = stepPattern.exec(content)) !== null && steps.length < 15) {
+    const stepNum = parseInt(match[1]);
+    const stepText = match[2].replace(/<[^>]*>/g, '').trim();
+    
+    if (stepText.length > 10) {
+      steps.push({
+        "@type": "HowToStep",
+        "position": stepNum,
+        "name": `Step ${stepNum}`,
+        "text": stepText,
+        "url": `#step-${stepNum}`
+      });
+    }
+  }
+  
+  // If no numbered steps, look for action verbs at start of list items
+  if (steps.length === 0) {
+    const listPattern = /<li[^>]*>([^<]+)<\/li>/gi;
+    let position = 1;
+    
+    while ((match = listPattern.exec(content)) !== null && steps.length < 10) {
+      const text = match[1].trim();
+      // Check if starts with action verb
+      if (/^(Create|Set up|Configure|Install|Add|Remove|Update|Check|Verify|Open|Click|Select|Enter|Type|Navigate|Go to|Find|Search|Download|Upload|Save|Submit|Review|Test|Run|Execute|Build|Deploy)/i.test(text)) {
+        steps.push({
+          "@type": "HowToStep",
+          "position": position,
+          "name": text.substring(0, 50),
+          "text": text
+        });
+        position++;
+      }
+    }
+  }
+  
+  if (steps.length < 2) return null;
+  
+  const howToSchema = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": title.includes('How') ? title : `How to ${title}`,
+    "description": `A comprehensive guide on ${title}`,
+    "totalTime": `PT${Math.max(5, steps.length * 2)}M`,
+    "estimatedCost": {
+      "@type": "MonetaryAmount",
+      "currency": "USD",
+      "value": "0"
+    },
+    "step": steps
+  };
+  
+  return howToSchema;
+}
+
+// Image insertion removed - content is text-only
 
 // ULTIMATE HUMAN CONTENT GENERATION - PROFESSIONAL JOURNALIST STYLE
 app.post('/api/content/generate-human', authenticateToken, aiLimiter, async (req, res) => {
@@ -2139,7 +2503,6 @@ app.post('/api/content/generate-human', authenticateToken, aiLimiter, async (req
     const tone = config.tone || 'conversational';
     // Support both minWords and wordCount for backward compatibility
     const minWords = parseInt(config.minWords) || parseInt(config.wordCount) || 5000;
-    const numImages = parseInt(config.numImages) || 4;
     
     // Excel data fields
     const customHeadings = config.headings || '';
@@ -2505,21 +2868,14 @@ app.post('/api/content/generate-human', authenticateToken, aiLimiter, async (req
       console.log(`[Content] After Layer 3 - AI Risk Score: ${aiRiskAnalysis.score}/100`);
     }
 
-    // Fetch topic-relevant images
-    console.log('[Content] Fetching images for topic:', topic);
-    const images = await fetchTopicImages(topic, numImages);
-    
-    // Insert images into content
-    const contentWithImages = insertImagesIntoContent(cleanContent, images);
-    
     // Generate title
     const title = topic.charAt(0).toUpperCase() + topic.slice(1);
     
     // Count words
-    const textOnly = contentWithImages.replace(/<[^>]*>/g, ' ');
+    const textOnly = cleanContent.replace(/<[^>]*>/g, ' ');
     const wordCount = textOnly.split(/\s+/).filter(w => w.length > 0).length;
 
-    console.log(`[Content] Generated using ${apiUsed}: ${wordCount} words, ${images.length} images`);
+    console.log(`[Content] Generated using ${apiUsed}: ${wordCount} words`);
     console.log(`[Content] Final AI Risk: ${aiRiskAnalysis.riskLevel} (Score: ${aiRiskAnalysis.score})`);
 
     // Deduct tokens after successful generation
@@ -2537,11 +2893,10 @@ app.post('/api/content/generate-human', authenticateToken, aiLimiter, async (req
                           'Local Engine';
 
     res.json({
-      content: contentWithImages,
+      content: cleanContent,
       title: title,
       wordCount: wordCount,
       topic: topic,
-      images: images,
       keywords: config.keywords || topic,
       scheduleDate: config.scheduleDate || null,
       scheduleTime: config.scheduleTime || null,
@@ -2602,7 +2957,6 @@ app.post('/api/content/generate-chaos', authenticateToken, aiLimiter, async (req
 
     const topic = config.topic;
     const minWords = parseInt(config.minWords) || parseInt(config.wordCount) || 5000;
-    const numImages = parseInt(config.numImages) || 4;
     
     // Parse headings
     const customHeadings = config.headings || '';
@@ -2818,26 +3172,23 @@ app.post('/api/content/generate-chaos', authenticateToken, aiLimiter, async (req
       cleanContent = symmetryBreaking(cleanContent);
     }
 
-    // Fetch and insert images
-    console.log('[ChaosEngine] Fetching images...');
-    const images = await fetchTopicImages(topic, numImages);
-    let contentWithImages = insertImagesIntoContent(cleanContent, images);
-    
     // Add Table of Contents if not present
-    contentWithImages = addTableOfContents(contentWithImages);
-    
-    // Generate SEO Schema markup
-    const schemaMarkup = generateSEOSchema({
-      title: topic,
-      description: contentWithImages.substring(0, 160).replace(/<[^>]*>/g, ''),
-      keywords: config.keywords || topic,
-      wordCount: contentWithImages.replace(/<[^>]*>/g, ' ').split(/\s+/).filter(w => w.length > 0).length,
-      images: images
-    });
+    cleanContent = addTableOfContents(cleanContent);
     
     // Final word count
-    const textOnly = contentWithImages.replace(/<[^>]*>/g, ' ');
+    const textOnly = cleanContent.replace(/<[^>]*>/g, ' ');
     const wordCount = textOnly.split(/\s+/).filter(w => w.length > 0).length;
+    
+    // Generate SEO Schema markup (without images)
+    const schemaMarkup = generateSEOSchema({
+      title: topic,
+      description: cleanContent.substring(0, 160).replace(/<[^>]*>/g, ''),
+      keywords: config.keywords || topic,
+      wordCount: wordCount,
+      content: cleanContent, // Pass full content for FAQ/HowTo extraction
+      author: config.author || 'Scalezix Expert',
+      datePublished: new Date().toISOString()
+    });
 
     // Deduct tokens
     const tokenResult = await deductTokens(userId, 'blogPost', {
@@ -2860,11 +3211,10 @@ app.post('/api/content/generate-chaos', authenticateToken, aiLimiter, async (req
     console.log('[ChaosEngine] ═══════════════════════════════════════════════════════════════');
 
     res.json({
-      content: contentWithImages,
+      content: cleanContent,
       title: topic.charAt(0).toUpperCase() + topic.slice(1),
       wordCount: wordCount,
       topic: topic,
-      images: images,
       keywords: config.keywords || topic,
       scheduleDate: config.scheduleDate || null,
       scheduleTime: config.scheduleTime || null,
@@ -3240,122 +3590,7 @@ app.post('/api/content/analyze-risk', async (req, res) => {
   }
 });
 
-// REAL TOPIC IMAGES ENDPOINT - Uses SerpAPI (Google Images) for EXACT topic images
-app.post('/api/images/search', async (req, res) => {
-  try {
-    const { topic, numImages = 4 } = req.body;
-    
-    if (!topic || !topic.trim()) {
-      return res.status(400).json({ error: 'Topic is required' });
-    }
-    
-    console.log(`[Images API] 🔍 Searching Google Images for: "${topic}", count: ${numImages}`);
-    
-    const searchQuery = encodeURIComponent(topic);
-    const SERPAPI_KEY = process.env.SERPAPI_KEY;
-    
-    // Helper function to convert HTTP to HTTPS and validate URLs
-    const sanitizeImageUrl = (url) => {
-      if (!url) return null;
-      // Convert HTTP to HTTPS to avoid mixed content warnings
-      let sanitizedUrl = url.replace(/^http:\/\//i, 'https://');
-      // Filter out problematic domains that block hotlinking
-      const blockedDomains = ['wikia.nocookie.net', 'fandom.com', 'static.wikia.nocookie.net'];
-      try {
-        const urlObj = new URL(sanitizedUrl);
-        if (blockedDomains.some(domain => urlObj.hostname.includes(domain))) {
-          return null;
-        }
-      } catch (e) {
-        return null;
-      }
-      return sanitizedUrl;
-    };
-    
-    // Use SerpAPI to search Google Images - returns EXACT images
-    if (SERPAPI_KEY) {
-      try {
-        const serpUrl = `https://serpapi.com/search.json?engine=google_images&q=${searchQuery}&num=${numImages + 5}&api_key=${SERPAPI_KEY}&safe=active`;
-        
-        const response = await fetch(serpUrl);
-        
-        if (response.ok) {
-          const data = await response.json();
-          
-          if (data.images_results && data.images_results.length > 0) {
-            const images = data.images_results
-              .map(img => {
-                const url = sanitizeImageUrl(img.original || img.thumbnail);
-                if (!url) return null;
-                return {
-                  url,
-                  title: img.title || topic,
-                  alt: img.title || topic,
-                  source: img.source || 'Google Images'
-                };
-              })
-              .filter(img => img !== null)
-              .slice(0, numImages);
-            
-            if (images.length > 0) {
-              console.log(`[Images API] ✅ Found ${images.length} REAL Google Images for: "${topic}"`);
-              return res.json({ images });
-            }
-          }
-        }
-      } catch (err) {
-        console.log('[Images API] SerpAPI error:', err.message);
-      }
-    }
-    
-    // Fallback: Google Custom Search API
-    const GOOGLE_SEARCH_API_KEY = process.env.GOOGLE_SEARCH_API_KEY;
-    const GOOGLE_SEARCH_CX = process.env.GOOGLE_SEARCH_CX;
-    
-    if (GOOGLE_SEARCH_API_KEY && GOOGLE_SEARCH_CX) {
-      try {
-        const googleUrl = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_SEARCH_API_KEY}&cx=${GOOGLE_SEARCH_CX}&q=${searchQuery}&searchType=image&num=${numImages + 3}&imgSize=large&safe=active`;
-        
-        const response = await fetch(googleUrl);
-        
-        if (response.ok) {
-          const data = await response.json();
-          
-          if (data.items && data.items.length > 0) {
-            const images = data.items
-              .map(item => {
-                const url = sanitizeImageUrl(item.link);
-                if (!url) return null;
-                return {
-                  url,
-                  title: item.title || topic,
-                  alt: item.title || topic,
-                  source: item.displayLink
-                };
-              })
-              .filter(img => img !== null)
-              .slice(0, numImages);
-            
-            console.log(`[Images API] ✅ Found ${images.length} Google Custom Search images for: "${topic}"`);
-            return res.json({ images });
-          }
-        }
-      } catch (err) {
-        console.log('[Images API] Google Custom Search error:', err.message);
-      }
-    }
-    
-    // No API keys - return error with instructions
-    console.log('[Images API] ⚠️ No image API keys configured');
-    return res.status(500).json({ 
-      error: 'Image search requires SERPAPI_KEY. Add it to your server .env file.',
-      images: []
-    });
-  } catch (error) {
-    console.error('[Images API] Error:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
+// Image search endpoint removed - images are no longer part of content generation
 
 // CLIENTS ENDPOINTS
 app.get('/api/clients', async (req, res) => {
@@ -3508,48 +3743,7 @@ app.get('/api/analytics/metrics', async (req, res) => {
   }
 });
 
-// IMAGE PROXY ENDPOINT - For downloading images without CORS issues
-app.get('/api/proxy-image', async (req, res) => {
-  try {
-    const { url } = req.query;
-    
-    if (!url) {
-      return res.status(400).json({ error: 'Image URL is required' });
-    }
-
-    console.log(`[IMAGE PROXY] Fetching image: ${url}`);
-
-    // Fetch the image
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      }
-    });
-
-    if (!response.ok) {
-      console.error(`[IMAGE PROXY] Failed to fetch image: ${response.status}`);
-      return res.status(response.status).json({ error: 'Failed to fetch image' });
-    }
-
-    // Get the image buffer
-    const buffer = await response.arrayBuffer();
-    const contentType = response.headers.get('content-type') || 'image/jpeg';
-
-    console.log(`[IMAGE PROXY] Successfully fetched image (${buffer.byteLength} bytes)`);
-
-    // Set appropriate headers
-    res.setHeader('Content-Type', contentType);
-    res.setHeader('Content-Length', buffer.byteLength);
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
-
-    // Send the image
-    res.send(Buffer.from(buffer));
-  } catch (error) {
-    console.error('[IMAGE PROXY] Error:', error);
-    res.status(500).json({ error: 'Failed to proxy image' });
-  }
-});
+// Image proxy endpoint removed - images are no longer part of content generation
 
 // ==================== SOCIAL MEDIA MANAGEMENT ====================
 

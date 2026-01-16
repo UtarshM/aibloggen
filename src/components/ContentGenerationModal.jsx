@@ -6,13 +6,12 @@
  */
 
 import { useState } from 'react'
-import { X, FileText, Image, Target, Zap, BookOpen, Users, AlertTriangle } from 'lucide-react'
+import { X, FileText, Target, Zap, BookOpen, Users, AlertTriangle } from 'lucide-react'
 
 export default function ContentGenerationModal({ isOpen, onClose, onGenerate }) {
     const [formData, setFormData] = useState({
         topic: '',
         minWords: '5000',
-        numImages: '4',
         tone: 'journalistic',
         targetAudience: 'professional',
         includeStats: true,
@@ -128,30 +127,6 @@ export default function ContentGenerationModal({ isOpen, onClose, onGenerate }) 
                             className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-primary-400 focus:outline-none"
                         />
                         <p className="text-xs text-gray-500 mt-1">Deep dive articles: 5,000-10,000+ words recommended for authority</p>
-                    </div>
-
-                    {/* Number of Images */}
-                    <div>
-                        <label className="flex items-center gap-2 text-gray-700 font-semibold mb-2">
-                            <Image size={20} className="text-pink-600" />
-                            Number of Images *
-                        </label>
-                        <div className="grid grid-cols-5 gap-2">
-                            {['2', '4', '5', '6', '8'].map(num => (
-                                <button
-                                    key={num}
-                                    type="button"
-                                    onClick={() => handleChange('numImages', num)}
-                                    className={`px-4 py-2 rounded-lg font-medium transition-all ${formData.numImages === num
-                                        ? 'bg-pink-600 text-white shadow-lg'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                        }`}
-                                >
-                                    {num}
-                                </button>
-                            ))}
-                        </div>
-                        <p className="text-xs text-gray-500 mt-1">Real images from Google, auto-inserted into content</p>
                     </div>
 
                     {/* Tone */}
@@ -275,7 +250,6 @@ export default function ContentGenerationModal({ isOpen, onClose, onGenerate }) 
                         <div className="text-sm text-primary-800 space-y-1">
                             <p>• Topic: <span className="font-medium">{formData.topic || 'Not specified'}</span></p>
                             <p>• Length: <span className="font-medium">{parseInt(formData.minWords).toLocaleString()}+ words</span></p>
-                            <p>• Images: <span className="font-medium">{formData.numImages} real images</span></p>
                             <p>• Style: <span className="font-medium capitalize">{formData.tone}</span></p>
                             <p>• Audience: <span className="font-medium capitalize">{formData.targetAudience.replace('-', ' ')}</span></p>
                             {formData.headings && <p>• Custom Headings: <span className="font-medium text-green-700">✓ Yes</span></p>}

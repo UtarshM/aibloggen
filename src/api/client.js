@@ -194,19 +194,6 @@ export const api = {
     }
     return data;
   },
-  searchRealImages: async (content, topic, numImages = 4) => {
-    const res = await fetch(`${API_BASE}/images/search`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content, topic, numImages }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || 'Failed to search images');
-    }
-    return data;
-  },
-
   // Clients
   getClients: async () => {
     const res = await fetch(`${API_BASE}/clients`);
