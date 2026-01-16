@@ -1292,10 +1292,10 @@ app.get('/api/dashboard/stats', authenticateToken, async (req, res) => {
       .limit(5)
       .select('title createdAt');
     
-    const recentWordPress = await WordPressPost.find({ userId })
+    const recentWordPress = WordPressPost ? await WordPressPost.find({ userId })
       .sort({ createdAt: -1 })
       .limit(5)
-      .select('title createdAt status');
+      .select('title createdAt status') : [];
     
     // Build recent activity list
     const recentActivity = [
