@@ -5,8 +5,8 @@
  * Uses client's WordPress sites stored in database.
  * Generates 10,000+ word human-like content using Chaos Engine v2.0.
  * 
- * @author Scalezix Venture PVT LTD
- * @copyright 2025 Scalezix Venture PVT LTD. All Rights Reserved.
+ * @author HARSH J KUHIKAR
+ * @copyright 2025 HARSH J KUHIKAR. All Rights Reserved.
  */
 
 import axios from 'axios';

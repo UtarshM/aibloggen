@@ -6,7 +6,7 @@
  * 
  * API Documentation: https://help.undetectable.ai/en/article/humanization-api-v2-p28b2n
  * 
- * @author Scalezix Venture PVT LTD
+ * @author HARSH J KUHIKAR
  * @copyright 2025 All Rights Reserved
  */
 

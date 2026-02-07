@@ -1,7 +1,7 @@
 /**
  * Scalezix AI Tool - Professional Email Service
  * Complete email system for all notifications
- * @author Scalezix Venture PVT LTD
+ * @author HARSH J KUHIKAR
  * @copyright 2025 All Rights Reserved
  */
 
@@ -109,7 +109,7 @@ function getEmailTemplate(content, preheader = '') {
           <a href="${FRONTEND_URL}/affiliate/apply">Become an Affiliate</a> • 
           <a href="mailto:${SUPPORT_EMAIL}">Contact Support</a>
         </p>
-        <p>© ${new Date().getFullYear()} Scalezix Venture PVT LTD. All rights reserved.</p>
+        <p>© ${new Date().getFullYear()} HARSH J KUHIKAR. All rights reserved.</p>
         <p style="font-size: 11px; color: #666;">
           You're receiving this email because you signed up for ${BRAND_NAME}.<br>
           <a href="${FRONTEND_URL}/unsubscribe" style="color: #86868b;">Unsubscribe</a> from marketing emails

@@ -1,7 +1,7 @@
 /**
  * WordPress Integration Routes
- * @author Scalezix Venture PVT LTD
- * @copyright 2025 Scalezix Venture PVT LTD. All Rights Reserved.
+ * @author HARSH J KUHIKAR
+ * @copyright 2025 HARSH J KUHIKAR. All Rights Reserved.
  */
 
 import express from 'express';

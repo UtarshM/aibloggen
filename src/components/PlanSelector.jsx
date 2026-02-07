@@ -2,7 +2,7 @@
  * Plan Selector - MacBook Style Premium UI 2025
  * Primary Color: #52B2BF
  * 
- * @author Scalezix Venture PVT LTD
+ * @author HARSH J KUHIKAR
  * @copyright 2025 All Rights Reserved
  */
 
@@ -31,8 +31,8 @@ export default function PlanSelector() {
                                 key={plan}
                                 onClick={() => setCurrentPlan(plan)}
                                 className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all ${currentPlan === plan
-                                        ? 'bg-white text-primary-600 shadow-lg'
-                                        : 'bg-white/10 hover:bg-white/20'
+                                    ? 'bg-white text-primary-600 shadow-lg'
+                                    : 'bg-white/10 hover:bg-white/20'
                                     }`}
                             >
                                 {plan.charAt(0).toUpperCase() + plan.slice(1)}

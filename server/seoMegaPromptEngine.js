@@ -13,7 +13,7 @@
  * - FAQ section (schema-ready)
  * - AI Detection Safe writing
  * 
- * @author Scalezix Venture PVT LTD
+ * @author HARSH J KUHIKAR
  * @copyright 2025-2026 All Rights Reserved
  */
 

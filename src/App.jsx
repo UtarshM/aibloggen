@@ -2,8 +2,8 @@
  * AI Marketing Platform - Main Application
  * MacBook-style UI/UX with Primary Color #52b2bf
  * 
- * @author Scalezix Venture PVT LTD
- * @copyright 2025 Scalezix Venture PVT LTD. All Rights Reserved.
+ * @author HARSH J KUHIKAR
+ * @copyright 2025 HARSH J KUHIKAR. All Rights Reserved.
  * @license Proprietary
  */
 
@@ -72,7 +72,7 @@ function MaintenanceWrapper({ children }) {
     return children;
 }
 
-// Created by: Scalezix Venture PVT LTD
+// Created by: HARSH J KUHIKAR
 function AppRoutes() {
     return (
         <MaintenanceWrapper>
@@ -175,4 +175,4 @@ function App() {
 
 export default App
 
-/* Copyright © 2025 Scalezix Venture PVT LTD - All Rights Reserved */
+/* Copyright © 2025 HARSH J KUHIKAR - All Rights Reserved */

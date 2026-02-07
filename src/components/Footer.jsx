@@ -3,7 +3,7 @@
  * Primary Color: #52B2BF
  * Clean, modern footer design
  * 
- * @author Scalezix Venture PVT LTD
+ * @author HARSH J KUHIKAR
  * @copyright 2025 All Rights Reserved
  */
 
@@ -160,7 +160,7 @@ export default function Footer() {
 
                 {/* Bottom */}
                 <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-400">
-                    <p>© {currentYear} Scalezix Venture PVT LTD. All rights reserved.</p>
+                    <p>© {currentYear} HARSH J KUHIKAR. All rights reserved.</p>
                     <p>Made with ❤️ for marketers worldwide</p>
                 </div>
             </div>

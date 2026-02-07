@@ -3,7 +3,7 @@
  * Beautiful animated modals with bounce effect
  * Replaces all confirm() and prompt() calls
  * 
- * @author Scalezix Venture PVT LTD
+ * @author HARSH J KUHIKAR
  * @copyright 2025 All Rights Reserved
  */
 

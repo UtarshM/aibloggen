@@ -2,7 +2,7 @@
  * Affiliate Login Page - MacBook Style Premium UI 2025
  * Primary Color: #52B2BF
  * 
- * @author Scalezix Venture PVT LTD
+ * @author HARSH J KUHIKAR
  * @copyright 2025 All Rights Reserved
  */
 

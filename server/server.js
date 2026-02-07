@@ -1,11 +1,11 @@
 /**
  * AI Marketing Platform - Backend Server
  * 
- * @author Scalezix Venture PVT LTD
- * @copyright 2025 Scalezix Venture PVT LTD. All Rights Reserved.
- * @license Proprietary - All rights reserved to Scalezix Venture PVT LTD
+ * @author HARSH J KUHIKAR
+ * @copyright 2025 HARSH J KUHIKAR. All Rights Reserved.
+ * @license Proprietary - All rights reserved to HARSH J KUHIKAR
  * 
- * This software is the exclusive property of Scalezix Venture PVT LTD.
+ * This software is the exclusive property of HARSH J KUHIKAR.
  * Unauthorized copying, modification, distribution, or use is strictly prohibited.
  */
 
@@ -50,7 +50,7 @@ import { humanizeWithStealth, generateStealthArticle, humanizeLongContent, check
 // Undetectable.ai Integration - Premium AI Humanizer
 import { humanizeWithUndetectable, humanizeLongContentUndetectable, checkUndetectableCredits } from './undetectableService.js';
 
-// Created by: Scalezix Venture PVT LTD
+// Created by: HARSH J KUHIKAR
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -3009,6 +3009,7 @@ app.post('/api/content/generate-chaos', authenticateToken, aiLimiter, async (req
     let apiUsed = '';
     const GOOGLE_AI_KEY = process.env.GOOGLE_AI_KEY;
     const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+    const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
     // Try Google AI first (Gemini 2.0 Flash with high temperature)
     if (GOOGLE_AI_KEY) {
@@ -3042,6 +3043,42 @@ app.post('/api/content/generate-chaos', authenticateToken, aiLimiter, async (req
         }
       } catch (err) {
         console.log('[ChaosEngine] Google AI error:', err.message);
+      }
+    }
+
+    // Try Anthropic API directly (if key provided)
+    if (!content && ANTHROPIC_API_KEY) {
+      console.log('[ChaosEngine] Trying Anthropic API (Claude 3.5 Sonnet)...');
+      try {
+        const anthropicResponse = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'x-api-key': ANTHROPIC_API_KEY,
+            'anthropic-version': '2023-06-01',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: 'claude-3-5-sonnet-20241022',
+            max_tokens: 8192,
+            temperature: 0.95,
+            messages: [{
+              role: 'user',
+              content: prompt
+            }]
+          })
+        });
+
+        const anthropicData = await anthropicResponse.json();
+        
+        if (anthropicData.content?.[0]?.text) {
+          content = anthropicData.content[0].text;
+          apiUsed = 'Anthropic (Claude 3.5 Sonnet)';
+          console.log('[ChaosEngine] Anthropic API success');
+        } else {
+          console.log('[ChaosEngine] Anthropic response:', JSON.stringify(anthropicData).substring(0, 300));
+        }
+      } catch (err) {
+        console.log('[ChaosEngine] Anthropic error:', err.message);
       }
     }
 
@@ -3088,7 +3125,7 @@ app.post('/api/content/generate-chaos', authenticateToken, aiLimiter, async (req
 
     if (!content) {
       return res.status(500).json({ 
-        error: 'AI services unavailable. Please check your API keys.' 
+        error: 'AI services unavailable. Please check your API keys (GOOGLE_AI_KEY, ANTHROPIC_API_KEY, or OPENROUTER_API_KEY).' 
       });
     }
 
@@ -3115,7 +3152,7 @@ app.post('/api/content/generate-chaos', authenticateToken, aiLimiter, async (req
     console.log('[ChaosEngine] Phase 3: Advanced Humanization v2.0...');
     console.log('[ChaosEngine] Applying human writing patterns...');
     
-    // First pass: Advanced Humanizer (new engine)
+    // First pass: Advanced Humanizer (new engine) - MORE AGGRESSIVE SETTINGS
     const humanizeResult = humanizeBlog(cleanContent, {
       removeCliches: true,
       casualize: true,
@@ -3128,26 +3165,26 @@ app.post('/api/content/generate-chaos', authenticateToken, aiLimiter, async (req
       addAsides: true,
       fixThreeRule: true,
       addRepetition: true,
-      starterFrequency: 0.08,
-      voiceFrequency: 0.10,
-      hedgeFrequency: 0.06,
-      questionFrequency: 0.06,
-      asideFrequency: 0.04,
-      repetitionFrequency: 0.03,
+      starterFrequency: 0.10, // Increased from 0.08
+      voiceFrequency: 0.12, // Increased from 0.10
+      hedgeFrequency: 0.08, // Increased from 0.06
+      questionFrequency: 0.08, // Increased from 0.06
+      asideFrequency: 0.06, // Increased from 0.04
+      repetitionFrequency: 0.04, // Increased from 0.03
       verbose: true
     });
     
     cleanContent = humanizeResult.content;
     console.log(`[ChaosEngine] Advanced Humanization complete in ${humanizeResult.metadata.processingTime}ms`);
     
-    // Second pass: Chaos Engine for additional randomization
-    console.log('[ChaosEngine] Applying Chaos Engine randomization...');
+    // Second pass: Chaos Engine for additional randomization (MORE AGGRESSIVE)
+    console.log('[ChaosEngine] Applying Chaos Engine randomization (3 passes)...');
     const chaosResult = await advancedHumanize(cleanContent, {
-      passes: 2,
-      delayBetweenPasses: 10000, // 10 seconds between passes
-      voiceFrequency: 0.08,
-      hedgeFrequency: 0.04,
-      questionFrequency: 0.05,
+      passes: 3, // Increased from 2 to 3 for more thorough humanization
+      delayBetweenPasses: 15000, // Increased from 10s to 15s for better quality
+      voiceFrequency: 0.12, // Increased from 0.08 for more human voice
+      hedgeFrequency: 0.06, // Increased from 0.04 for more uncertainty
+      questionFrequency: 0.08, // Increased from 0.05 for more engagement
       verbose: true
     });
     
@@ -3832,8 +3869,8 @@ app.listen(PORT, () => {
   console.log(`✅ AI Services: Google AI, Llama API, OpenRouter`);
   console.log(`✅ Affiliate System: Active`);
   console.log(`✅ SuperAdmin Panel: Active`);
-  console.log(`\n© 2025 Scalezix Venture PVT LTD - All Rights Reserved\n`);
+  console.log(`\n© 2025 HARSH J KUHIKAR - All Rights Reserved\n`);
 });
 
-/* Copyright © 2025 Scalezix Venture PVT LTD - All Rights Reserved */
+/* Copyright © 2025 HARSH J KUHIKAR - All Rights Reserved */
 

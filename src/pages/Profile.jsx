@@ -2,8 +2,8 @@
  * AI Marketing Platform - Profile Page
  * MacBook-style UI/UX with Primary Color #52b2bf
  * 
- * @author Scalezix Venture PVT LTD
- * @copyright 2025 Scalezix Venture PVT LTD. All Rights Reserved.
+ * @author HARSH J KUHIKAR
+ * @copyright 2025 HARSH J KUHIKAR. All Rights Reserved.
  */
 
 import { useState, useEffect } from 'react'
@@ -710,4 +710,4 @@ export default function Profile() {
     )
 }
 
-/* Copyright © 2025 Scalezix Venture PVT LTD - All Rights Reserved */
+/* Copyright © 2025 HARSH J KUHIKAR - All Rights Reserved */

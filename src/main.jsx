@@ -1,8 +1,8 @@
 /**
  * AI Marketing Platform - Entry Point
  * 
- * @author Scalezix Venture PVT LTD
- * @copyright 2025 Scalezix Venture PVT LTD. All Rights Reserved.
+ * @author HARSH J KUHIKAR
+ * @copyright 2025 HARSH J KUHIKAR. All Rights Reserved.
  */
 
 import React from 'react'
@@ -19,11 +19,11 @@ if (import.meta.env.PROD) {
     // Keep console.warn and console.error for critical issues
 }
 
-// Developed by: Scalezix Venture PVT LTD
+// Developed by: HARSH J KUHIKAR
 ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>
         <App />
     </React.StrictMode>,
 )
 
-/* Copyright © 2025 Scalezix Venture PVT LTD */
+/* Copyright © 2025 HARSH J KUHIKAR */

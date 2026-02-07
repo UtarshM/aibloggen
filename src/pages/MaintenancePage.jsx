@@ -1,7 +1,7 @@
 /**
  * Maintenance Page - Shown when platform is under maintenance
  * 
- * @author Scalezix Venture PVT LTD
+ * @author HARSH J KUHIKAR
  * @copyright 2025 All Rights Reserved
  */
 
@@ -138,7 +138,7 @@ export default function MaintenancePage({ message }) {
 
                 {/* Footer */}
                 <p className="text-center text-gray-500 text-sm mt-8">
-                    © 2025 Scalezix Venture PVT LTD. All rights reserved.
+                    © 2025 HARSH J KUHIKAR. All rights reserved.
                 </p>
             </div>
         </div>

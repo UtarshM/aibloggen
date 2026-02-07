@@ -3,8 +3,8 @@
  * This is a standalone component for backward compatibility
  * For new code, use useToast() hook from ToastContext
  * 
- * @author Scalezix Venture PVT LTD
- * @copyright 2025 Scalezix Venture PVT LTD. All Rights Reserved.
+ * @author HARSH J KUHIKAR
+ * @copyright 2025 HARSH J KUHIKAR. All Rights Reserved.
  */
 
 import { motion } from 'framer-motion'
@@ -69,4 +69,4 @@ export default function Toast({ message, type = 'success', onClose }) {
     )
 }
 
-/* Copyright © 2025 Scalezix Venture PVT LTD - All Rights Reserved */
+/* Copyright © 2025 HARSH J KUHIKAR - All Rights Reserved */

@@ -2,7 +2,7 @@
  * Affiliate Application Page - MacBook Style Premium UI 2025
  * Primary Color: #52B2BF
  * 
- * @author Scalezix Venture PVT LTD
+ * @author HARSH J KUHIKAR
  * @copyright 2025 All Rights Reserved
  */
 
@@ -260,8 +260,8 @@ export default function AffiliateApply() {
                                         type="button"
                                         onClick={() => setForm({ ...form, audienceSize: size.value })}
                                         className={`px-3 py-2.5 border rounded-xl text-sm transition-all ${form.audienceSize === size.value
-                                                ? 'border-primary-400 bg-primary-50 text-primary-600'
-                                                : 'border-gray-200 hover:bg-gray-50'
+                                            ? 'border-primary-400 bg-primary-50 text-primary-600'
+                                            : 'border-gray-200 hover:bg-gray-50'
                                             }`}
                                     >
                                         {size.label}
@@ -280,8 +280,8 @@ export default function AffiliateApply() {
                                         type="button"
                                         onClick={() => toggleChannel(channel)}
                                         className={`px-4 py-2 border rounded-full text-sm transition-all ${form.promotionChannels.includes(channel)
-                                                ? 'border-primary-400 bg-primary-400 text-white'
-                                                : 'border-gray-200 hover:bg-gray-50'
+                                            ? 'border-primary-400 bg-primary-400 text-white'
+                                            : 'border-gray-200 hover:bg-gray-50'
                                             }`}
                                     >
                                         {channel}

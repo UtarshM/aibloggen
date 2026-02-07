@@ -1,6 +1,6 @@
 /**
  * App Loader - Logo with Progress Bar
- * @author Scalezix Venture PVT LTD
+ * @author HARSH J KUHIKAR
  * @copyright 2025 All Rights Reserved
  */
 

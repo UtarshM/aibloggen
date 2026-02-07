@@ -184,4 +184,4 @@ LINKEDIN_CALLBACK_URL=https://yourdomain.com/api/social/callback/linkedin
 
 **Once you add your LinkedIn credentials, the "Connect" button will work!**
 
-© 2025 Scalezix Venture PVT LTD - All Rights Reserved
+© 2025 HARSH J KUHIKAR - All Rights Reserved

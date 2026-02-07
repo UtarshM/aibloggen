@@ -4,7 +4,7 @@
  * Based on research into perplexity, burstiness, and linguistic markers
  * that distinguish human writing from AI-generated content.
  * 
- * @author Scalezix Venture PVT LTD
+ * @author HARSH J KUHIKAR
  * @copyright 2025 All Rights Reserved
  */
 

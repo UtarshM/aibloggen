@@ -2,7 +2,7 @@
  * Home Dashboard - MacBook Style Premium UI 2025
  * Multi-Color Scheme: Primary (Teal), Secondary (Purple), Accent (Amber), Success (Emerald)
  * 
- * @author Scalezix Venture PVT LTD
+ * @author HARSH J KUHIKAR
  * @copyright 2025 All Rights Reserved
  */
 

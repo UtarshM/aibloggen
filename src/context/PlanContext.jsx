@@ -1,8 +1,8 @@
 /**
  * AI Marketing Platform - Plan Context with Token Management
  * 
- * @author Scalezix Venture PVT LTD
- * @copyright 2025 Scalezix Venture PVT LTD. All Rights Reserved.
+ * @author HARSH J KUHIKAR
+ * @copyright 2025 HARSH J KUHIKAR. All Rights Reserved.
  */
 
 import { createContext, useContext, useState, useEffect } from 'react'
@@ -209,4 +209,4 @@ export function usePlan() {
     return context
 }
 
-/* Copyright © 2025 Scalezix Venture PVT LTD - All Rights Reserved */
+/* Copyright © 2025 HARSH J KUHIKAR - All Rights Reserved */

@@ -113,7 +113,7 @@ export default function AboutPage() {
                 <MapPin className="w-6 h-6 text-[#52B2BF] flex-shrink-0" />
                 <div>
                   <h3 className="font-semibold text-gray-900">Location</h3>
-                  <p className="text-gray-600">Scalezix Venture PVT LTD</p>
+                  <p className="text-gray-600">HARSH J KUHIKAR</p>
                   <p className="text-gray-600">India</p>
                 </div>
               </CardContent>

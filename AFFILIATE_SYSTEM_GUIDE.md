@@ -1,7 +1,7 @@
 # Affiliate System Guide
 ## Complete Documentation for AI Marketing Platform
 
-**Author:** Scalezix Venture PVT LTD  
+**Author:** HARSH J KUHIKAR  
 **Version:** 1.0.0  
 **Last Updated:** December 2025
 
@@ -330,8 +330,8 @@ When a referred user makes a purchase:
 
 ## Support
 
-For issues, contact: Scalezix Venture PVT LTD
+For issues, contact: HARSH J KUHIKAR
 
 ---
 
-*© 2025 Scalezix Venture PVT LTD - All Rights Reserved*
+*© 2025 HARSH J KUHIKAR - All Rights Reserved*

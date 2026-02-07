@@ -11,7 +11,7 @@
  * - High perplexity and burstiness
  * - E-E-A-T authority signals
  * 
- * @author Scalezix Venture PVT LTD
+ * @author HARSH J KUHIKAR
  * @copyright 2026 All Rights Reserved
  */
 

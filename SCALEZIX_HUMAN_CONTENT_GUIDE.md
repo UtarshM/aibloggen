@@ -278,4 +278,4 @@ The system analyzes content for AI detection risk:
 
 ---
 
-© 2025-2026 Scalezix Venture PVT LTD - All Rights Reserved
+© 2025-2026 HARSH J KUHIKAR - All Rights Reserved

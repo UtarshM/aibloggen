@@ -3,7 +3,7 @@
  * Primary Color: #52B2BF
  * Clean, modern registration design
  * 
- * @author Scalezix Venture PVT LTD
+ * @author HARSH J KUHIKAR
  * @copyright 2025 All Rights Reserved
  */
 

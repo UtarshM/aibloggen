@@ -4,7 +4,7 @@
  * Uses StealthGPT API to humanize AI-generated content and bypass
  * AI detectors like Originality.ai, GPTZero, Turnitin, etc.
  * 
- * @author Scalezix Venture PVT LTD
+ * @author HARSH J KUHIKAR
  * @copyright 2025 All Rights Reserved
  */
 

@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     "marketing automation",
     "AI marketing",
   ],
-  authors: [{ name: "Scalezix Venture PVT LTD" }],
+  authors: [{ name: "HARSH J KUHIKAR" }],
   creator: "Scalezix",
   openGraph: {
     type: "website",

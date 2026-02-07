@@ -2,8 +2,8 @@
  * AI Marketing Platform - Pricing Page
  * MacBook-style UI/UX with Primary Color #52b2bf
  * 
- * @author Scalezix Venture PVT LTD
- * @copyright 2025 Scalezix Venture PVT LTD. All Rights Reserved.
+ * @author HARSH J KUHIKAR
+ * @copyright 2025 HARSH J KUHIKAR. All Rights Reserved.
  */
 
 import { Check, Lock } from 'lucide-react'
@@ -263,6 +263,6 @@ export default function Pricing() {
 }
 
 /* 
- * Copyright © 2025 Scalezix Venture PVT LTD
+ * Copyright © 2025 HARSH J KUHIKAR
  * All Rights Reserved
  */

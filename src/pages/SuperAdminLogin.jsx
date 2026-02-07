@@ -1,7 +1,7 @@
 /**
  * SuperAdmin Login Page
  * Apple-inspired minimal design
- * @author Scalezix Venture PVT LTD
+ * @author HARSH J KUHIKAR
  * @copyright 2025 All Rights Reserved
  */
 
@@ -145,7 +145,7 @@ export default function SuperAdminLogin() {
 
                 {/* Footer */}
                 <p className="text-center text-xs text-gray-400 mt-8">
-                    © 2025 Scalezix Venture PVT LTD • All Rights Reserved
+                    © 2025 HARSH J KUHIKAR • All Rights Reserved
                 </p>
             </motion.div>
         </div>

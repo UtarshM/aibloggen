@@ -6,7 +6,7 @@
  * 
  * ENHANCED: Deep humanization with advanced linguistic patterns
  * 
- * @author Scalezix Venture PVT LTD
+ * @author HARSH J KUHIKAR
  * @copyright 2025-2026 All Rights Reserved
  */
 

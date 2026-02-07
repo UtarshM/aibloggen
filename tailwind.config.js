@@ -7,7 +7,7 @@
  * - Accent: #F59E0B (Amber) - Warnings, stars, attention elements
  * - Success: #10B981 (Emerald) - Success states, positive indicators
  * 
- * @author Scalezix Venture PVT LTD
+ * @author HARSH J KUHIKAR
  * @copyright 2025 All Rights Reserved
  */
 

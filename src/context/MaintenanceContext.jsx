@@ -5,7 +5,7 @@
  * When SuperAdmin enables maintenance, it saves to localStorage
  * All browser tabs/windows check localStorage for maintenance status
  * 
- * @author Scalezix Venture PVT LTD
+ * @author HARSH J KUHIKAR
  * @copyright 2025 All Rights Reserved
  */
 

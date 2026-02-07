@@ -3,7 +3,7 @@
  * Primary Color: #52B2BF
  * Clean sidebar navigation with smooth animations
  * 
- * @author Scalezix Venture PVT LTD
+ * @author HARSH J KUHIKAR
  * @copyright 2025 All Rights Reserved
  */
 

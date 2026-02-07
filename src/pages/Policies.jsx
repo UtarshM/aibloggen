@@ -1,8 +1,8 @@
 /**
  * AI Marketing Platform - Policies Page
  * 
- * @author Scalezix Venture PVT LTD
- * @copyright 2025 Scalezix Venture PVT LTD. All Rights Reserved.
+ * @author HARSH J KUHIKAR
+ * @copyright 2025 HARSH J KUHIKAR. All Rights Reserved.
  */
 
 import { useState } from 'react'
@@ -180,7 +180,7 @@ export default function Policies() {
 
                                 <section>
                                     <h3 className="text-2xl font-semibold mb-3">5. Intellectual Property</h3>
-                                    <p className="text-gray-700">All content, features, and functionality are owned by Scalezix Venture PVT LTD and protected by copyright, trademark, and other intellectual property laws.</p>
+                                    <p className="text-gray-700">All content, features, and functionality are owned by HARSH J KUHIKAR and protected by copyright, trademark, and other intellectual property laws.</p>
                                 </section>
 
                                 <section>
@@ -350,4 +350,4 @@ export default function Policies() {
     )
 }
 
-/* Copyright © 2025 Scalezix Venture PVT LTD - All Rights Reserved */
+/* Copyright © 2025 HARSH J KUHIKAR - All Rights Reserved */

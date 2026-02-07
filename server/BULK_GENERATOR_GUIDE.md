@@ -213,10 +213,10 @@ The prompt explicitly bans these AI giveaway words:
 
 ## Support
 
-**Developed by:** Scalezix Venture PVT LTD  
+**Developed by:** HARSH J KUHIKAR  
 **Platform:** https://aiblog.scalezix.com  
 **API:** https://blogapi.scalezix.com
 
 ---
 
-*© 2025 Scalezix Venture PVT LTD. All Rights Reserved.*
+*© 2025 HARSH J KUHIKAR. All Rights Reserved.*

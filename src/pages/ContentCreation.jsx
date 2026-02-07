@@ -1,8 +1,8 @@
 /**
  * Content Creation & Publishing Tool
  * MacBook-style UI/UX with Primary Color #52b2bf
- * @author Scalezix Venture PVT LTD
- * @copyright 2025 Scalezix Venture PVT LTD. All Rights Reserved.
+ * @author HARSH J KUHIKAR
+ * @copyright 2025 HARSH J KUHIKAR. All Rights Reserved.
  */
 
 import { useState, useEffect } from 'react'
@@ -468,7 +468,7 @@ Make it:
             // Company/Author name
             pdf.setTextColor(255, 255, 255)
             pdf.setFontSize(12)
-            pdf.text('Scalezix Venture PVT LTD', margin, 15)
+            pdf.text('HARSH J KUHIKAR', margin, 15)
 
             // Title
             pdf.setFontSize(24)
@@ -560,7 +560,7 @@ Make it:
                     { align: 'center' }
                 )
                 pdf.text(
-                    '© 2025 Scalezix Venture PVT LTD - All Rights Reserved',
+                    '© 2025 HARSH J KUHIKAR - All Rights Reserved',
                     pageWidth / 2,
                     pageHeight - 5,
                     { align: 'center' }
@@ -609,7 +609,7 @@ Make it:
                 new Paragraph({
                     children: [
                         new TextRun({
-                            text: `By: Scalezix Venture PVT LTD | Generated on: ${currentDate}`,
+                            text: `By: HARSH J KUHIKAR | Generated on: ${currentDate}`,
                             size: 20,
                             color: '666666'
                         })
@@ -681,7 +681,7 @@ Make it:
                 new Paragraph({
                     children: [
                         new TextRun({
-                            text: '© 2025 Scalezix Venture PVT LTD - All Rights Reserved',
+                            text: '© 2025 HARSH J KUHIKAR - All Rights Reserved',
                             size: 20,
                             color: '666666'
                         })
@@ -1358,4 +1358,4 @@ Make it:
     )
 }
 
-/* Copyright © 2025 Scalezix Venture PVT LTD - All Rights Reserved */
+/* Copyright © 2025 HARSH J KUHIKAR - All Rights Reserved */

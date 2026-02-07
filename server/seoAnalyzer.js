@@ -1,7 +1,7 @@
 /**
  * Real SEO Analysis Engine
- * @author Scalezix Venture PVT LTD
- * @copyright 2025 Scalezix Venture PVT LTD. All Rights Reserved.
+ * @author HARSH J KUHIKAR
+ * @copyright 2025 HARSH J KUHIKAR. All Rights Reserved.
  */
 
 import axios from 'axios';
@@ -190,7 +190,7 @@ export async function analyzeWebsite(url, targetKeyword = '') {
   }
 }
 
-/* Copyright © 2025 Scalezix Venture PVT LTD */
+/* Copyright © 2025 HARSH J KUHIKAR */
 
 
 // Technical SEO Analysis
@@ -342,4 +342,4 @@ export async function compareWithCompetitor(yourUrl, competitorUrl, keyword = ''
   }
 }
 
-/* Copyright © 2025 Scalezix Venture PVT LTD */
+/* Copyright © 2025 HARSH J KUHIKAR */

@@ -1,6 +1,6 @@
 /**
  * Authentication Models - User, OTP, and Usage Tracking
- * @author Scalezix Venture PVT LTD
+ * @author HARSH J KUHIKAR
  * @copyright 2025 All Rights Reserved
  */
 

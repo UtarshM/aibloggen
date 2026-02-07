@@ -2,7 +2,7 @@
  * SuperAdmin Routes - Complete Admin Control Center
  * 25+ Functionalities for Platform Management
  * 
- * @author Scalezix Venture PVT LTD
+ * @author HARSH J KUHIKAR
  * @copyright 2025 All Rights Reserved
  */
 

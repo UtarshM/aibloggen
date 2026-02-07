@@ -1,8 +1,8 @@
 /**
  * Affiliate Dashboard - Main affiliate portal
  * MacBook-style UI/UX with Primary Color #52b2bf
- * @author Scalezix Venture PVT LTD
- * @copyright 2025 Scalezix Venture PVT LTD. All Rights Reserved.
+ * @author HARSH J KUHIKAR
+ * @copyright 2025 HARSH J KUHIKAR. All Rights Reserved.
  */
 
 import { useState, useEffect } from 'react'

@@ -1,7 +1,7 @@
 /**
  * SafeImage Component - Handles broken images gracefully
  * 
- * @author Scalezix Venture PVT LTD
+ * @author HARSH J KUHIKAR
  * @copyright 2025 All Rights Reserved
  */
 
@@ -38,4 +38,4 @@ export default function SafeImage({
     );
 }
 
-/* Copyright © 2025 Scalezix Venture PVT LTD */
+/* Copyright © 2025 HARSH J KUHIKAR */

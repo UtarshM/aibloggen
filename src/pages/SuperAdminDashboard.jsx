@@ -1,7 +1,7 @@
 /**
  * SuperAdmin Dashboard - Complete Control Center
  * MacBook-style UI/UX with Primary Color #52b2bf
- * @author Scalezix Venture PVT LTD
+ * @author HARSH J KUHIKAR
  * @copyright 2025 All Rights Reserved
  */
 

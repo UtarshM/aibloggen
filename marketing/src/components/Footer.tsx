@@ -116,7 +116,7 @@ export default function Footer() {
         {/* Bottom */}
         <div className="mt-12 pt-8 border-t border-gray-800 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-gray-500">
-            © {new Date().getFullYear()} Scalezix Venture PVT LTD. All rights reserved.
+            © {new Date().getFullYear()} HARSH J KUHIKAR. All rights reserved.
           </p>
           <p className="text-sm text-gray-500">
             Made with ❤️ for content creators worldwide

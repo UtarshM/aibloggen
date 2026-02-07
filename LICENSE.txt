@@ -1,16 +1,16 @@
 PROPRIETARY LICENSE
 
-Copyright © 2025 Scalezix Venture PVT LTD. All Rights Reserved.
+Copyright © 2025 HARSH J KUHIKAR. All Rights Reserved.
 
 AI Marketing Platform
 
 This software and associated documentation files (the "Software") are the 
-exclusive property of Scalezix Venture PVT LTD.
+exclusive property of HARSH J KUHIKAR.
 
 TERMS AND CONDITIONS:
 
 1. OWNERSHIP
-   The Software is owned by and is the proprietary property of Scalezix Venture PVT LTD.
+   The Software is owned by and is the proprietary property of HARSH J KUHIKAR.
 
 2. RESTRICTIONS
    You may NOT:
@@ -23,7 +23,7 @@ TERMS AND CONDITIONS:
 3. COPYRIGHT
    All rights, title, and interest in and to the Software, including all 
    intellectual property rights, are and shall remain the exclusive property 
-   of Scalezix Venture PVT LTD.
+   of HARSH J KUHIKAR.
 
 4. TERMINATION
    This license is effective until terminated. Your rights under this license 
@@ -36,14 +36,14 @@ TERMS AND CONDITIONS:
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
 
 6. LIMITATION OF LIABILITY
-   IN NO EVENT SHALL Scalezix Venture PVT LTD BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+   IN NO EVENT SHALL HARSH J KUHIKAR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
    LIABILITY ARISING FROM THE USE OF THE SOFTWARE.
 
 For licensing inquiries or permissions, contact:
-Scalezix Venture PVT LTD
+HARSH J KUHIKAR
 
 ---
 
 UNAUTHORIZED USE, REPRODUCTION, OR DISTRIBUTION IS STRICTLY PROHIBITED.
 
-© 2025 Scalezix Venture PVT LTD. All Rights Reserved.
+© 2025 HARSH J KUHIKAR. All Rights Reserved.
