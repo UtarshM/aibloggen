@@ -150,7 +150,7 @@ export default function AuthModal({ mode: initialMode, onClose, onSuccess }) {
                     {/* Title */}
                     <h2 className="text-3xl font-bold text-center mb-2 bg-gradient-to-r from-primary-400 to-primary-500 bg-clip-text text-transparent">
                         {mode === 'login' && 'Welcome Back'}
-                        {mode === 'signup' && 'Create Account'}
+                        {mode === 'signup' && 'Harsh Random'}
                         {mode === 'verify' && 'Verify Email'}
                     </h2>
                     <p className="text-center text-gray-600 mb-6">
