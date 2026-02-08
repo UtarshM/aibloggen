@@ -84,6 +84,8 @@ function AppRoutes() {
                 <Route path="/oauth/callback" element={<OAuthCallback />} />
 
                 {/* Affiliate Routes */}
+                <Route path="/affiliate" element={<Navigate to="/affiliate/login" replace />} />
+                <Route path="/affiliate/" element={<Navigate to="/affiliate/login" replace />} />
                 <Route path="/affiliate/login" element={<AffiliateLogin />} />
                 <Route path="/affiliate/apply" element={<AffiliateApply />} />
                 <Route path="/affiliate/terms" element={<AffiliateTerms />} />
